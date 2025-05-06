@@ -1,0 +1,627 @@
+<!-- 日记发现页 -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>日记发现 - TravelMate</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2a9d8f;
+            --secondary: #264653;
+            --accent: #e9c46a;
+            --text: #444;
+            --border: #e0e0e0;
+            --shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'PingFang SC', sans-serif;
+        }
+
+        body {
+            background: #f8f9fa;
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        /* 筛选容器 */
+        .filter-container {
+            background: rgba(255,255,255,0.98);
+            padding: 1rem 1rem 1rem;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+
+        /* 搜索栏 */
+        .search-bar {
+            position: relative;
+            margin-bottom: 1rem;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 1rem 2rem 1rem 3rem;
+            border: 2px solid var(--border);
+            border-radius: 30px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .search-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 12px rgba(42, 157, 143, 0.2);
+            outline: none;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 1.2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+        }
+
+        /* 筛选条件 */
+        .filter-group {
+            display: flex;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+
+        .filter-btn {
+            padding: 0.5rem 1.5rem;
+            border: 2px solid var(--border);
+            border-radius: 30px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .filter-btn.active {
+            border-color: var(--primary);
+            background: var(--primary);
+            color: white;
+        }
+
+        /* 排序选项 */
+        .sort-options {
+            display: flex;
+            gap: 0.8rem;
+            align-items: center;
+            padding: 1rem 0;
+            border-top: 1px solid var(--border);
+        }
+
+        .sort-btn {
+            padding: 0.5rem 1.5rem;
+            border-radius: 30px;
+            background: rgba(42, 157, 143, 0.1);
+            color: var(--primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s;
+        }
+
+        .sort-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* 日记列表 */
+        .diary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2rem;
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* 日记卡片 */
+        .diary-card {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .diary-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+        }
+
+        .card-image {
+            height: 240px;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+
+        .hot-badge {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            background: linear-gradient(135deg, var(--primary), #1d7870);
+            color: white;
+            padding: 0.3rem 1.2rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-content {
+            padding: 1.5rem;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .diary-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .author-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid white;
+            box-shadow: var(--shadow);
+        }
+
+        .author-info {
+            flex: 1;
+        }
+
+        .diary-title {
+            color: var(--secondary);
+            margin: 0 0 0.5rem;
+            font-size: 1.3rem;
+            line-height: 1.4;
+        }
+
+        .post-time {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .diary-excerpt {
+            color: #666;
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            line-clamp: 3;
+            overflow: hidden;
+        }
+
+        .interaction-stats {
+            display: flex;
+            gap: 1.5rem;
+            color: #666;
+            margin-top: auto;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .diary-tags {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .tag {
+            background: rgba(42, 157, 143, 0.1);
+            color: var(--primary);
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .diary-grid {
+                grid-template-columns: 1fr;
+                padding: 1rem;
+                gap: 1.5rem;
+            }
+
+            .filter-container {
+                padding: 1.5rem;
+            }
+
+            .filter-btn {
+                flex: 1 1 120px;
+                justify-content: center;
+                padding: 0.8rem;
+            }
+
+            .sort-options {
+                flex-wrap: wrap;
+            }
+        }
+
+        /* 新增发布按钮样式 */
+    .publish-fab {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: var(--primary);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px rgba(42, 157, 143, 0.3);
+        cursor: pointer;
+        transition: all 0.3s;
+        z-index: 1000;
+    }
+
+    .publish-fab:hover {
+        transform: scale(1.1) rotate(180deg);
+        box-shadow: 0 6px 16px rgba(42, 157, 143, 0.4);
+    }
+
+    .publish-fab::before {
+        content: "✏️";
+        font-size: 1.5rem;
+    }
+
+    /* 移动端优化 */
+    @media (max-width: 768px) {
+        .publish-fab {
+            bottom: 1rem;
+            right: 1rem;
+            width: 48px;
+            height: 48px;
+        }
+        
+        /* 调整筛选容器层级 */
+        .filter-container {
+            z-index: 999;
+        }
+    }
+    </style>
+</head>
+<body>
+    <div class="publish-fab" onclick="location.href='publish.html'"></div>
+    <div class="filter-container">
+        <div class="search-bar">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" 
+                   class="search-input"
+                   placeholder="搜索日记关键词或作者...">
+        </div>
+
+        <div class="filter-group">
+            <button class="filter-btn active">
+                <i class="fas fa-globe-asia"></i>
+                全部主题
+            </button>
+            <button class="filter-btn">
+                <i class="fas fa-camera"></i>
+                摄影日记
+            </button>
+            <button class="filter-btn">
+                <i class="fas fa-utensils"></i>
+                美食之旅
+            </button>
+            <button class="filter-btn">
+                <i class="fas fa-hiking"></i>
+                户外探险
+            </button>
+        </div>
+
+        <div class="sort-options">
+            <button class="sort-btn active">
+                <i class="fas fa-fire"></i>
+                热门推荐
+            </button>
+            <button class="sort-btn">
+                <i class="fas fa-clock"></i>
+                最新发布
+            </button>
+            <button class="sort-btn">
+                <i class="fas fa-star"></i>
+                精选合集
+            </button>
+        </div>
+    </div>
+
+    <div class="diary-grid">
+        <!-- 日记卡片1 -->
+        <div class="diary-card">
+            <div class="card-image" style="background-image: url('images/diary7.jpg')">
+                <span class="hot-badge">🔥 本周热门</span>
+            </div>
+            <div class="card-content">
+                <div class="diary-header">
+                    <img src="images/avatar1.jpg" class="author-avatar" alt="作者头像">
+                    <div class="author-info">
+                        <h3 class="diary-title">西藏自驾环线十日深度游</h3>
+                        <p class="post-time">旅行达人小王 · 3天前发布</p>
+                    </div>
+                </div>
+                <p class="diary-excerpt">
+                    从拉萨出发，沿着G318国道穿越雪山草原，记录布达拉宫的晨光、羊卓雍措的碧水、珠峰大本营的星空...
+                </p>
+                <div class="interaction-stats">
+                    <div class="stat-item">
+                        <i class="fas fa-heart"></i>
+                        <span>2.8k</span>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-comment"></i>
+                        <span>356</span>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-bookmark"></i>
+                        <span>689</span>
+                    </div>
+                </div>
+                <div class="diary-tags">
+                    <span class="tag">
+                        <i class="fas fa-mountain"></i>
+                        高原旅行
+                    </span>
+                    <span class="tag">
+                        <i class="fas fa-camera"></i>
+                        摄影攻略
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 日记卡片2 -->
+        <div class="diary-card">
+            <div class="card-image" style="background-image: url('images/diary8.jpg')">
+                <span class="hot-badge">📸 精选摄影</span>
+            </div>
+            <div class="card-content">
+                <div class="diary-header">
+                    <img src="images/avatar2.jpg" class="author-avatar" alt="作者头像">
+                    <div class="author-info">
+                        <h3 class="diary-title">东京街头美食地图</h3>
+                        <p class="post-time">吃货小美 · 1周前发布</p>
+                    </div>
+                </div>
+                <p class="diary-excerpt">
+                    从筑地市场到涩谷小巷，72小时吃遍东京23家必吃小店，包含米其林推荐和本地人私藏清单...
+                </p>
+                <div class="interaction-stats">
+                    <div class="stat-item">
+                        <i class="fas fa-heart"></i>
+                        <span>3.5k</span>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-comment"></i>
+                        <span>428</span>
+                    </div>
+                    <div class="fas fa-bookmark"></i>
+                        <span>891</span>
+                    </div>
+                </div>
+                <div class="diary-tags">
+                    <span class="tag">
+                        <i class="fas fa-utensils"></i>
+                        日本料理
+                    </span>
+                    <span class="tag">
+                        <i class="fas fa-train"></i>
+                        地铁攻略
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 日记卡片3 -->
+        <div class="diary-card">
+            <div class="card-image" style="background-image: url('images/diary9.jpg')">
+                <span class="hot-badge">🏰 欧洲小镇</span>
+            </div>
+            <div class="card-content">
+                <div class="diary-header">
+                    <img src="images/avatar3.jpg" class="author-avatar" alt="作者头像">
+                    <div class="author-info">
+                        <h3 class="diary-title">布拉格老城广场漫步</h3>
+                        <p class="post-time">旅行博主小李 · 5天前发布</p>
+                    </div>
+                </div>
+                <p class="diary-excerpt">
+                    穿梭在布拉格的老街巷中，晨光洒在哥特式教堂的尖顶上，广场上的天文钟每小时敲响，仿佛时光倒流...
+                </p>
+                <div class="interaction-stats">
+                    <div class="stat-item">
+                        <i class="fas fa-heart"></i>
+                        <span>1.9k</span>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-comment"></i>
+                        <span>276</span>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-bookmark"></i>
+                        <span>543</span>
+                    </div>
+                </div>
+                <div class="diary-tags">
+                    <span class="tag">
+                        <i class="fas fa-landmark"></i>
+                        历史建筑
+                    </span>
+                    <span class="tag">
+                        <i class="fas fa-map-marked-alt"></i>
+                        小镇风光
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 日记卡片4 -->
+        <div class="diary-card">
+            <div class="card-image" style="background-image: url('images/diary10.jpg')">
+                <span class="hot-badge">🌸 樱花季</span>
+            </div>
+            <div class="card-content">
+                <div class="diary-header">
+                    <img src="images/avatar4.jpg" class="author-avatar" alt="作者头像">
+                    <div class="author-info">
+                        <h3 class="diary-title">京都樱花季摄影指南</h3>
+                        <p class="post-time">摄影师小陈 · 2周前发布</p>
+                    </div>
+                </div>
+                <p class="diary-excerpt">
+                    从哲学之道到平安神宫，记录樱花盛开的瞬间，分享最佳拍摄地点和时间，捕捉春日的浪漫...
+                </p>
+                <div class="interaction-stats">
+                    <div class="stat-item">
+                        <i class="fas fa-heart"></i>
+                        <span>4.2k</span>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-comment"></i>
+                        <span>512</span>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-bookmark"></i>
+                        <span>1.2k</span>
+                    </div>
+                </div>
+                <div class="diary-tags">
+                    <span class="tag">
+                        <i class="fas fa-camera"></i>
+                        摄影技巧
+                    </span>
+                    <span class="tag">
+                        <i class="fas fa-clock"></i>
+                        樱花季
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 日记卡片5 -->
+        <div class="diary-card">
+            <div class="card-image" style="background-image: url('images/diary11.jpg')">
+                <span class="hot-badge">⛰️ 徒步探险</span>
+            </div>
+            <div class="card-content">
+                <div class="diary-header">
+                    <img src="images/avatar5.jpg" class="author-avatar" alt="作者头像">
+                    <div class="author-info">
+                        <h3 class="diary-title">云南梅里雪山徒步记</h3>
+                        <p class="post-time">户外爱好者小张 · 10天前发布</p>
+                    </div>
+                </div>
+                <p class="diary-excerpt">
+                    从香格里拉出发，徒步穿越原始森林，攀登4000米海拔，近距离感受梅里雪山的壮丽和神圣...
+                </p>
+                <div class="interaction-stats">
+                    <div class="stat-item">
+                        <i class="fas fa-heart"></i>
+                        <span>3.1k</span>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-comment"></i>
+                        <span>408</span>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-bookmark"></i>
+                        <span>756</span>
+                    </div>
+                </div>
+                <div class="diary-tags">
+                    <span class="tag">
+                        <i class="fas fa-hiking"></i>
+                        徒步旅行
+                    </span>
+                    <span class="tag">
+                        <i class="fas fa-campground"></i>
+                        高山露营
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 日记卡片6 -->
+        <div class="diary-card">
+            <div class="card-image" style="background-image: url('images/diary12.jpg')">
+                <span class="hot-badge">🎨 艺术之旅</span>
+            </div>
+            <div class="card-content">
+                <div class="diary-header">
+                    <img src="images/avatar6.jpg" class="author-avatar" alt="作者头像">
+                    <div class="author-info">
+                        <h3 class="diary-title">巴黎艺术博物馆巡礼</h3>
+                        <p class="post-time">艺术评论家小林 · 2周前发布</p>
+                    </div>
+                </div>
+                <p class="diary-excerpt">
+                    从卢浮宫到奥赛博物馆，再到蓬皮杜中心，一场视觉盛宴，探索艺术大师的杰作和现代艺术的前沿...
+                </p>
+                <div class="interaction-stats">
+                    <div class="stat-item">
+                        <i class="fas fa-heart"></i>
+                        <span>2.7k</span>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-comment"></i>
+                        <span>386</span>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-bookmark"></i>
+                        <span>624</span>
+                    </div>
+                </div>
+                <div class="diary-tags">
+                    <span class="tag">
+                        <i class="fas fa-palette"></i>
+                        艺术展览
+                    </span>
+                    <span class="tag">
+                        <i class="fas fa-euro-sign"></i>
+                        欧洲文化
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 更多日记卡片... -->
+    </div>
+</body>
+</html>

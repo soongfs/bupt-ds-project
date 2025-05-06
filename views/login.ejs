@@ -1,0 +1,429 @@
+<!-- 登录页 -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>登录 - TravelMate</title>
+  <!-- 图标库 -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+  <style>
+    :root {
+      --primary: #2a9d8f;
+      --secondary: #264653;
+      --accent: #e9c46a;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Segoe UI", sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      background: linear-gradient(45deg,
+          rgba(42, 157, 143, 0.8),
+          rgba(38, 70, 83, 0.8)),
+        url("login-bg.jpg") center/cover fixed;
+    }
+
+    .login-container {
+      margin: auto;
+      width: 90%;
+      max-width: 800px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 20px;
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+      overflow: hidden;
+      animation: slideUp 0.8s ease;
+    }
+
+    /* 左侧视觉区 */
+    .visual-side {
+      background: linear-gradient(45deg, var(--primary), var(--secondary));
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .welcome-text {
+      color: white;
+      text-align: center;
+    }
+
+    .welcome-text h1 {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .travel-icons {
+      display: flex;
+      gap: 1.5rem;
+      margin-top: 2rem;
+    }
+
+    .travel-icons i {
+      font-size: 2rem;
+      opacity: 0.8;
+      transition: transform 0.3s;
+    }
+
+    .travel-icons i:hover {
+      transform: translateY(-5px);
+    }
+
+    /* 右侧表单区 */
+    .form-side {
+      padding: 3rem 2rem;
+      position: relative;
+    }
+
+    .form-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .form-header h2 {
+      color: var(--secondary);
+      font-size: 2rem;
+    }
+
+    .input-group {
+      margin-bottom: 1.5rem;
+      position: relative;
+    }
+
+    .input-group i {
+      position: absolute;
+      left: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--primary);
+    }
+
+    input {
+      width: 100%;
+      padding: 12px 40px 12px 40px;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: all 0.3s;
+    }
+
+    input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 8px rgba(42, 157, 143, 0.3);
+      outline: none;
+    }
+
+    .password-toggle {
+      position: absolute;
+      right: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      color: #666;
+    }
+
+    .submit-btn {
+      background: var(--primary);
+      color: white;
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: transform 0.3s;
+    }
+
+    .submit-btn:hover {
+      transform: translateY(-2px);
+    }
+
+    .social-login {
+      margin-top: 2rem;
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+    }
+
+    .social-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 1px solid #ddd;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .social-btn:hover {
+      background: var(--primary);
+      color: white;
+    }
+    /*新增部分*/
+    .redirect-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .redirect-card {
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      text-align: center;
+      max-width: 400px;
+      width: 90%;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      transform: translateY(20px);
+      transition: all 0.3s ease;
+    }
+
+    .redirect-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .redirect-overlay.active .redirect-card {
+      transform: translateY(0);
+    }
+
+    .redirect-icon {
+      font-size: 60px;
+      color: #2a9d8f;
+      margin-bottom: 20px;
+    }
+
+    .redirect-title {
+      font-size: 24px;
+      color: #264653;
+      margin-bottom: 15px;
+    }
+
+    .redirect-message {
+      color: #666;
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+
+    .redirect-timer {
+      font-size: 18px;
+      color: #2a9d8f;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+
+    .redirect-btn {
+      display: inline-block;
+      padding: 10px 20px;
+      background: #2a9d8f;
+      color: white;
+      border-radius: 5px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: background 0.3s;
+    }
+
+    .redirect-btn:hover {
+      background: #21867a;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(50px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .login-container {
+        grid-template-columns: 1fr;
+      }
+
+      .visual-side {
+        display: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="login-container">
+    <!-- 左侧视觉区域 -->
+    <div class="visual-side">
+      <div class="welcome-text">
+        <h1>欢迎回来</h1>
+        <p>开启你的下一段旅程</p>
+      </div>
+      <div class="travel-icons">
+        <i class="fas fa-mountain"></i>
+        <i class="fas fa-camera"></i>
+        <i class="fas fa-map-marked-alt"></i>
+      </div>
+    </div>
+
+    <!-- 右侧表单区域 -->
+    <div class="form-side">
+      <div class="form-header">
+        <h2>用户登录</h2>
+        <p>使用以下方式登录账号</p>
+      </div>
+
+      <form id = "loginForm" action="/api/login" method="POST">
+        <div class="input-group">
+          <i class="fas fa-user"></i>
+          <input type="text" name="username" placeholder="用户名/手机号" required />
+        </div>
+
+        <div class="input-group">
+          <i class="fas fa-lock"></i>
+          <input type="password" name="password" id="password" placeholder="密码" required />
+          <!-- <i
+              class="fas fa-eye password-toggle"
+              onclick="togglePassword()"
+            ></i> -->
+          <!-- 密码显示开关，图标显示不正常，暂时注释掉 -->
+        </div>
+
+        <button type="submit" class="submit-btn">立即登录</button>
+
+        <div class="social-login">
+          <div class="social-btn">
+            <i class="fab fa-weixin"></i>
+          </div>
+          <div class="social-btn">
+            <i class="fab fa-qq"></i>
+          </div>
+          <div class="social-btn">
+            <i class="fab fa-weibo"></i>
+          </div>
+        </div>
+      </form>
+
+      <div class="extra-links">
+        <a href="#">忘记密码？</a>
+        <a href="/register">注册新账号</a>
+      </div>
+    </div>
+  </div>
+
+<!--  新增部分-->
+  <div class="redirect-overlay" id="redirectOverlay">
+    <div class="redirect-card">
+      <i class="fas fa-check-circle redirect-icon"></i>
+      <h2 class="redirect-title">登录成功!</h2>
+      <p class="redirect-message">您已成功登录TravelMate账号</p>
+      <div class="redirect-timer" id="redirectTimer">5秒后自动跳转</div>
+      <a href="/" class="redirect-btn">立即跳转</a>
+    </div>
+  </div>
+
+
+  <script>
+<!--    新增部分-->
+    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const formData = {
+        username: document.querySelector('input[name="username"]').value,
+        password: document.querySelector('input[name="password"]').value
+      };
+
+      try {
+        const response = await fetch('/api/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formData)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          // 显示跳转提示
+          showRedirectOverlay();
+          // 开始倒计时
+          startCountdown(5, '/');
+        } else {
+          alert(result.message || '登录失败');
+        }
+      } catch (error) {
+        console.error('登录请求失败:', error);
+        alert('网络错误，请检查连接后重试');
+      }
+    });
+
+    // 显示跳转提示
+    function showRedirectOverlay() {
+      const overlay = document.getElementById('redirectOverlay');
+      overlay.classList.add('active');
+    }
+
+    // 倒计时跳转
+    function startCountdown(seconds, redirectUrl) {
+      const timerElement = document.getElementById('redirectTimer');
+      let remaining = seconds;
+
+      timerElement.textContent = `${remaining}秒后自动跳转`;
+
+      const countdown = setInterval(() => {
+        remaining--;
+        timerElement.textContent = `${remaining}秒后自动跳转`;
+
+        if (remaining <= 0) {
+          clearInterval(countdown);
+          window.location.href = redirectUrl;
+        }
+      }, 1000);
+
+      // 如果用户点击立即跳转按钮，清除倒计时
+      document.querySelector('.redirect-btn').addEventListener('click', () => {
+        clearInterval(countdown);
+      });
+    }
+    // 密码显示切换
+    function togglePassword() {
+      const passwordField = document.getElementById("password");
+      const eyeIcon = document.querySelector(".password-toggle");
+      if (passwordField.type === "password") {
+        passwordField.type = "text";
+        eyeIcon.classList.replace("fa-eye", "fa-eye-slash");
+      } else {
+        passwordField.type = "password";
+        eyeIcon.classList.replace("fa-eye-slash", "fa-eye");
+      }
+    }
+
+  </script>
+</body>
+
+</html>

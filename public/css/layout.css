@@ -1,0 +1,23 @@
+/* layout.css */
+header,
+footer {
+    background: var(--primary);
+    color: #fff;
+    padding: 1rem;
+    box-shadow: var(--shadow);
+}
+
+.container {
+    width: 90%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.grid {
+    display: grid;
+    gap: 1rem;
+}
+
+.grid-3 {
+    grid-template-columns: repeat(3, 1fr);
+}

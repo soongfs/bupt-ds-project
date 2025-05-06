@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>景点探索 - TravelMate</title>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --primary: #2a9d8f;
+        --secondary: #264653;
+        --accent: #e9c46a;
+        --text: #444;
+        --border: #e0e0e0;
+        --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Segoe UI", "PingFang SC", sans-serif;
+      }
+
+      body {
+        background: #f8f9fa;
+        color: var(--text);
+        line-height: 1.6;
+      }
+
+      /* 筛选容器 */
+      .filter-container {
+        background: rgba(255, 255, 255, 0.98);
+        padding: 1rem 1rem 1rem;
+        box-shadow: var(--shadow);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        backdrop-filter: blur(10px);
+      }
+
+      /* 搜索栏 */
+      .search-bar {
+        position: relative;
+        margin-bottom: 1rem;
+      }
+
+      .search-input {
+        width: 100%;
+        padding: 1rem 2rem 1rem 3rem;
+        border: 2px solid var(--border);
+        border-radius: 30px;
+        font-size: 1rem;
+        transition: all 0.3s;
+      }
+
+      .search-input:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 12px rgba(42, 157, 143, 0.2);
+        outline: none;
+      }
+
+      .search-icon {
+        position: absolute;
+        left: 1.2rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #999;
+      }
+
+      /* 筛选条件 */
+      .filter-group {
+        display: flex;
+        gap: 0.8rem;
+        flex-wrap: wrap;
+        margin-bottom: 1rem;
+      }
+
+      .filter-btn {
+        padding: 0.5rem 1.5rem;
+        border: 2px solid var(--border);
+        border-radius: 30px;
+        background: white;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .filter-btn.active {
+        border-color: var(--primary);
+        background: var(--primary);
+        color: white;
+      }
+
+      .filter-btn i {
+        font-size: 0.9em;
+      }
+
+      /* 排序选项 */
+      .sort-options {
+        display: flex;
+        gap: 0.8rem;
+        align-items: center;
+        padding: 1rem 0;
+        border-top: 1px solid var(--border);
+      }
+
+      .sort-btn {
+        padding: 0.5rem 1.5rem;
+        border-radius: 30px;
+        background: rgba(42, 157, 143, 0.1);
+        color: var(--primary);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s;
+      }
+
+      .sort-btn.active {
+        background: var(--primary);
+        color: white;
+      }
+
+      /* 景点列表 */
+      .poi-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 2rem;
+        padding: 2rem;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      /* 景点卡片 */
+      .poi-card {
+        background: white;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: var(--shadow);
+        transition: all 0.3s;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .poi-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+      }
+
+      .card-image {
+        height: 240px;
+        background-size: cover;
+        background-position: center;
+        position: relative;
+      }
+
+      .hot-badge {
+        position: absolute;
+        top: 1rem;
+        left: 1rem;
+        background: linear-gradient(135deg, var(--primary), #1d7870);
+        color: white;
+        padding: 0.3rem 1.2rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        box-shadow: var(--shadow);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .hot-badge::before {
+        content: "🔥";
+      }
+
+      .card-content {
+        padding: 1.5rem;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .poi-title {
+        color: var(--secondary);
+        margin: 0 0 1rem;
+        font-size: 1.3rem;
+        line-height: 1.4;
+      }
+
+      .poi-stats {
+        display: flex;
+        gap: 1.5rem;
+        color: #666;
+        margin-bottom: 1rem;
+        align-items: center;
+      }
+
+      .stat-item {
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+      }
+
+      .poi-desc {
+        color: #666;
+        margin-bottom: 1.5rem;
+        line-height: 1.6;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        line-clamp: 3;
+        overflow: hidden;
+      }
+
+      .poi-tags {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        margin-top: auto;
+      }
+
+      .tag {
+        background: rgba(42, 157, 143, 0.1);
+        color: var(--primary);
+        padding: 0.4rem 1rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+      }
+
+      .tag i {
+        font-size: 0.8em;
+      }
+
+      /* 响应式设计 */
+      @media (max-width: 768px) {
+        .poi-grid {
+          grid-template-columns: 1fr;
+          padding: 1rem;
+          gap: 1.5rem;
+        }
+
+        .filter-container {
+          padding: 1.5rem;
+        }
+
+        .filter-btn {
+          flex: 1 1 120px;
+          justify-content: center;
+          padding: 0.8rem;
+        }
+
+        .sort-options {
+          flex-wrap: wrap;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .hot-badge {
+          font-size: 0.8rem;
+          padding: 0.3rem 1rem;
+        }
+
+        .poi-title {
+          font-size: 1.2rem;
+        }
+      }
+
+      a {
+        text-decoration: none;
+      }
+
+      .diary-title h3 {
+        color: #444444;
+        text-decoration: none;
+      }
+      .card-title h3 {
+        color: #444444;
+        text-decoration: none;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 筛选容器保持不变 -->
+    <div class="filter-container">
+      <div class="search-bar">
+        <i class="fas fa-search search-icon"></i>
+        <input
+          type="text"
+          class="search-input"
+          placeholder="搜索景点名称或关键词..."
+        />
+      </div>
+
+      <div class="filter-group">
+        <button class="filter-btn active">
+          <i class="fas fa-map-marker-alt"></i>
+          全部景点
+        </button>
+        <button class="filter-btn">
+          <i class="fas fa-mountain"></i>
+          自然风光
+        </button>
+        <button class="filter-btn">
+          <i class="fas fa-landmark"></i>
+          历史人文
+        </button>
+        <button class="filter-btn">
+          <i class="fas fa-city"></i>
+          城市地标
+        </button>
+      </div>
+
+      <div class="sort-options">
+        <button class="sort-btn active">
+          <i class="fas fa-fire"></i>
+          热度优先
+        </button>
+        <button class="sort-btn">
+          <i class="fas fa-star"></i>
+          评分最高
+        </button>
+        <button class="sort-btn">
+          <i class="fas fa-location-dot"></i>
+          距离最近
+        </button>
+      </div>
+    </div>
+
+    <!-- 优化后的景点卡片示例 -->
+    <div class="poi-grid">
+      <!-- 景点卡片1 -->
+      <div class="poi-card">
+        <div
+          class="card-image"
+          style="background-image: url('images/scenery1.jpg')"
+        >
+          <span class="hot-badge">TOP 1</span>
+        </div>
+        <div class="card-content">
+          <a href="attraction-detail.html" class="card-title"
+            ><h3 class="poi-title">杭州西湖</h3></a
+          >
+          <div class="poi-stats">
+            <div class="stat-item">
+              <i class="fas fa-star"></i>
+              <span>4.8</span>
+            </div>
+            <div class="stat-item">
+              <i class="fas fa-eye"></i>
+              <span>12.3万</span>
+            </div>
+          </div>
+          <p class="poi-desc">
+            中国首批国家重点风景名胜区，集自然山水与人文景观于一体，
+            西湖十景各具特色，春有苏堤春晓，冬有断桥残雪。
+          </p>
+          <div class="poi-tags">
+            <span class="tag">
+              <i class="fas fa-award"></i>
+              5A景区
+            </span>
+            <span class="tag">
+              <i class="fas fa-tag"></i>
+              免费开放
+            </span>
+            <span class="tag">
+              <i class="fas fa-clock"></i>
+              全天开放
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 景点卡片2 -->
+      <div class="poi-card">
+        <div
+          class="card-image"
+          style="background-image: url('images/scenery2.jpg')"
+        >
+          <span class="hot-badge">TOP 2</span>
+        </div>
+        <div class="card-content">
+          <h3 class="poi-title">黄山风景区</h3>
+          <div class="poi-stats">
+            <div class="stat-item">
+              <i class="fas fa-star"></i>
+              <span>4.9</span>
+            </div>
+            <div class="stat-item">
+              <i class="fas fa-eye"></i>
+              <span>9.8万</span>
+            </div>
+          </div>
+          <p class="poi-desc">五岳归来不看山，黄山归来不看岳"的绝美山景。</p>
+          <div class="poi-tags">
+            <span class="tag">
+              <i class="fas fa-award"></i>
+              世界遗产
+            </span>
+            <span class="tag">
+              <i class="fas fa-tag"></i>
+              自然奇观
+            </span>
+            <span class="tag">
+              <i class="fas fa-hiking"></i>
+              徒步圣地
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 景点卡片3 -->
+      <div class="poi-card">
+        <div
+          class="card-image"
+          style="background-image: url('images/scenery3.jpg')"
+        >
+          <span class="hot-badge">TOP 3</span>
+        </div>
+        <div class="card-content">
+          <h3 class="poi-title">张家界国家森林公园</h3>
+          <div class="poi-stats">
+            <div class="stat-item">
+              <i class="fas fa-star"></i>
+              <span>4.7</span>
+            </div>
+            <div class="stat-item">
+              <i class="fas fa-eye"></i>
+              <span>8.5万</span>
+            </div>
+          </div>
+          <p class="poi-desc">电影《阿凡达》取景地，奇峰林立的自然奇观。</p>
+          <div class="poi-tags">
+            <span class="tag">
+              <i class="fas fa-award"></i>
+              世界自然遗产
+            </span>
+            <span class="tag">
+              <i class="fas fa-hiking"></i>
+              玻璃栈道
+            </span>
+            <span class="tag">
+              <i class="fas fa-campground"></i>
+              山水风光
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 景点卡片4 -->
+      <div class="poi-card">
+        <div
+          class="card-image"
+          style="background-image: url('images/scenery4.jpg')"
+        >
+          <span class="hot-badge">TOP 4</span>
+        </div>
+        <div class="card-content">
+          <h3 class="poi-title">故宫博物院</h3>
+          <div class="poi-stats">
+            <div class="stat-item">
+              <i class="fas fa-star"></i>
+              <span>4.9</span>
+            </div>
+            <div class="stat-item">
+              <i class="fas fa-eye"></i>
+              <span>15.7万</span>
+            </div>
+          </div>
+          <p class="poi-desc">
+            中国明清两代的皇家宫殿，世界上现存规模最大、保存最为完整的木质结构古建筑之一。
+          </p>
+          <div class="poi-tags">
+            <span class="tag">
+              <i class="fas fa-award"></i>
+              世界遗产
+            </span>
+            <span class="tag">
+              <i class="fas fa-tag"></i>
+              历史文化
+            </span>
+            <span class="tag">
+              <i class="fas fa-landmark"></i>
+              古建筑
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 景点卡片5 -->
+      <div class="poi-card">
+        <div
+          class="card-image"
+          style="background-image: url('images/scenery5.jpg')"
+        >
+          <span class="hot-badge">TOP 5</span>
+        </div>
+        <div class="card-content">
+          <h3 class="poi-title">九寨沟风景区</h3>
+          <div class="poi-stats">
+            <div class="stat-item">
+              <i class="fas fa-star"></i>
+              <span>4.8</span>
+            </div>
+            <div class="stat-item">
+              <i class="fas fa-eye"></i>
+              <span>7.9万</span>
+            </div>
+          </div>
+          <p class="poi-desc">
+            以彩池、瀑布、雪山、森林闻名于世，被誉为"童话世界"。
+          </p>
+          <div class="poi-tags">
+            <span class="tag">
+              <i class="fas fa-award"></i>
+              世界自然遗产
+            </span>
+            <span class="tag">
+              <i class="fas fa-mountain"></i>
+              高山湖泊
+            </span>
+            <span class="tag">
+              <i class="fas fa-map-marked-alt"></i>
+              自然风光
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 景点卡片6 -->
+      <div class="poi-card">
+        <div
+          class="card-image"
+          style="background-image: url('images/scenery6.jpg')"
+        >
+          <span class="hot-badge">TOP 6</span>
+        </div>
+        <div class="card-content">
+          <h3 class="poi-title">丽江古城</h3>
+          <div class="poi-stats">
+            <div class="stat-item">
+              <i class="fas fa-star"></i>
+              <span>4.6</span>
+            </div>
+            <div class="stat-item">
+              <i class="fas fa-eye"></i>
+              <span>11.2万</span>
+            </div>
+          </div>
+          <p class="poi-desc">
+            保存完好的少数民族古城，以"小桥流水人家"的风貌著称。
+          </p>
+          <div class="poi-tags">
+            <span class="tag">
+              <i class="fas fa-award"></i>
+              世界遗产
+            </span>
+            <span class="tag">
+              <i class="fas fa-tag"></i>
+              古城风貌
+            </span>
+            <span class="tag">
+              <i class="fas fa-tag"></i>
+              纳西文化
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 其他景点卡片保持类似结构 -->
+    </div>
+  </body>
+</html>

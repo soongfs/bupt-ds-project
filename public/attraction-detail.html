@@ -1,0 +1,331 @@
+<!-- 景点详情页 -->
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>西湖风景区 - TravelMate</title>
+    <script src="https://map.qq.com/api/gljs?v=1.exp&key=3HGBZ-SKRCT-UKNXT-V7KT6-T5LI2-XGF5F"></script>
+    <style>
+      :root {
+        --primary-color: #4caf50;
+        --secondary-color: #2196f3;
+      }
+
+      body {
+        margin: 0;
+        padding: 20px;
+        background: #f5f5f5;
+      }
+
+      .poi-container {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 2rem;
+        max-width: 1600px;
+        margin: 0 auto;
+        height: 90vh;
+      }
+
+      /* 地图容器样式 */
+      #map-container {
+        height: 100%;
+        border-radius: 15px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+      }
+
+      /* 信息面板美化 */
+      .info-panel {
+        background: #fff;
+        padding: 1.5rem;
+        border-radius: 15px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        overflow-y: auto;
+        overflow-x: hidden;
+      }
+
+      .poi-header {
+        border-bottom: 2px solid #eee;
+        padding-bottom: 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .poi-title {
+        color: var(--primary-color);
+        margin: 0;
+        font-size: 2.2rem;
+      }
+
+      .tag-list {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        margin: 1rem 0;
+      }
+
+      .tag {
+        background: #f0f9ff;
+        color: var(--secondary-color);
+        padding: 0.3rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+      }
+
+      .stats-box {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 10px;
+        margin: 1rem 0;
+      }
+
+      .diary-card {
+        display: flex;
+        gap: 1rem;
+        padding: 1rem;
+        border: 1px solid #eee;
+        border-radius: 10px;
+        margin: 1rem 0;
+        transition: transform 0.2s;
+      }
+
+      .diary-card:hover {
+        transform: translateY(-3px);
+      }
+
+      /* 地图控件样式 */
+      .map-controls {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        z-index: 1000;
+        background: white;
+        padding: 10px;
+        border-radius: 8px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      }
+
+      /* 新增导航按钮样式 */
+      .navigation-control {
+        margin: 1rem 0 2rem;
+      }
+
+      .nav-button {
+        width: 90%;
+        padding: 1rem;
+        background: var(--primary-color);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-size: 1.1rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.8rem;
+        transition: all 0.3s;
+        box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+      }
+
+      .nav-button:hover {
+        background: #45a049;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(76, 175, 80, 0.4);
+      }
+
+      .nav-button i {
+        font-size: 1.2em;
+      }
+
+      /* 微调原有布局 */
+      .info-panel {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .poi-header {
+        order: 1;
+      }
+
+      .navigation-control {
+        order: 2;
+      }
+
+      .stats-box {
+        order: 3;
+      }
+
+      .hot-diaries {
+        order: 4;
+        margin-top: auto;
+      }
+
+      a {
+        text-decoration: none;
+      }
+
+      .card-title h4 {
+        color: #444444;
+        text-decoration: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="poi-container">
+      <!-- 腾讯地图容器 -->
+      <div id="map-container"></div>
+
+      <!-- 信息面板 -->
+      <div class="info-panel">
+        <div class="poi-header">
+          <h1 class="poi-title">西湖风景区</h1>
+          <div class="tag-list">
+            <span class="tag">⭐ 4.8分</span>
+            <span class="tag">🔥 本周1.2万人游览</span>
+            <span class="tag">🏞️ 5A景区</span>
+          </div>
+        </div>
+
+        <!-- 新增导航按钮 -->
+        <div class="navigation-control">
+          <a href="navigation.html" class="nav-button">
+            <i class="fas fa-route"></i>
+            开始景区导航
+          </a>
+        </div>
+
+        <div class="stats-box">
+          <h3>📌 基本信息</h3>
+          <p>📍 地址：杭州市西湖区龙井路1号</p>
+          <p>🕒 开放时间：全天开放</p>
+          <p>🎫 建议游玩时间：3-4小时</p>
+        </div>
+
+        <div class="hot-diaries">
+          <!-- 原有热门日记内容保持不变 -->
+          <h3>📝 热门日记</h3>
+          <div class="diary-card">
+            <img
+              src="images/avatar1.jpg"
+              width="60"
+              height="60"
+              style="border-radius: 50%"
+            />
+            <div>
+              <a href="diary.html" class="card-title"
+                ><h4>西湖边的浪漫日落</h4></a
+              >
+              <p>❤️ 1.2k点赞 · 💬 356评论</p>
+            </div>
+          </div>
+          <div class="diary-card">
+            <img
+              src="images/avatar2.jpg"
+              width="60"
+              height="60"
+              style="border-radius: 50%"
+            />
+            <div>
+              <h4>避开人流的秘密路线</h4>
+              <p>❤️ 892点赞 · 💬 215评论</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // 初始化地图
+      let map = null;
+      let markers = [];
+
+      function initMap() {
+        // 设置西湖的默认坐标
+        const defaultCenter = new TMap.LatLng(30.25, 120.13);
+
+        map = new TMap.Map(document.getElementById("map-container"), {
+          center: defaultCenter,
+          zoom: 15,
+          pitch: 43.5,
+          rotation: 45,
+        });
+
+        // 添加地图控件
+        const controls = new TMap.Control({
+          position: TMap.constants.controlPosition.TOP_LEFT,
+          scale: true,
+          zoom: true,
+          rotate: true,
+        });
+        map.addControl(controls);
+
+        // 添加标记
+        addMarker(defaultCenter, "西湖主入口");
+        addMarker(new TMap.LatLng(30.24, 120.14), "雷峰塔");
+        addMarker(new TMap.LatLng(30.23, 120.135), "断桥残雪");
+
+        // 添加导航路径
+        addNavigationPath([
+          defaultCenter,
+          new TMap.LatLng(30.24, 120.14),
+          new TMap.LatLng(30.23, 120.135),
+        ]);
+      }
+
+      function addMarker(position, title) {
+        const marker = new TMap.MultiMarker({
+          map: map,
+          geometries: [
+            {
+              position: position,
+              id: "marker-" + Date.now(),
+              styleId: "default",
+              content: title,
+            },
+          ],
+          styles: {
+            default: new TMap.MarkerStyle({
+              width: 30,
+              height: 30,
+              anchor: { x: 15, y: 15 },
+              src: "https://mapapi.qq.com/web/lbs/javascriptGL/demo/img/markerDefault.png",
+            }),
+          },
+        });
+        markers.push(marker);
+      }
+
+      function addNavigationPath(paths) {
+        new TMap.MultiPolyline({
+          map: map,
+          geometries: [
+            {
+              id: "route-line",
+              styleId: "style1",
+              paths: paths,
+            },
+          ],
+          styles: {
+            style1: new TMap.PolylineStyle({
+              color: "#3777FF",
+              width: 6,
+              borderWidth: 2,
+              borderColor: "#FFFFFF",
+            }),
+          },
+        });
+      }
+
+      // 自动初始化地图
+      window.onload = initMap;
+
+      // 添加导航按钮点击事件（示例）
+      document
+        .getElementById("startNavigation")
+        .addEventListener("click", () => {
+          // 后续可在此处添加导航功能逻辑
+          alert("导航功能即将上线，敬请期待！");
+        });
+    </script>
+  </body>
+</html>

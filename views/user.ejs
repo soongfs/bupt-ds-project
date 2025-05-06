@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TravelMate - <%= user?.username || '新用户' %>的个人主页</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+    />
+    <style>
+      /* ========== 基础变量和样式 ========== */
+      :root {
+        --primary: #2a9d8f;
+        --secondary: #264653;
+        --accent: #e9c46a;
+        --text: #444;
+        --border: #eee;
+        --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Segoe UI", "PingFang SC", sans-serif;
+      }
+
+      body {
+        background: #f8f9fa;
+        color: var(--text);
+        line-height: 1.6;
+      }
+
+      /* ========== 通用组件样式 ========== */
+      /* 导航栏 */
+      .global-nav {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 5%;
+        background: rgba(255, 255, 255, 0.95);
+        box-shadow: var(--shadow);
+        z-index: 1000;
+      }
+
+      .logo {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--primary);
+        transition: transform 0.3s;
+      }
+
+      .nav-links {
+        display: flex;
+        gap: 2rem;
+      }
+
+      .nav-links a {
+        color: var(--text);
+        text-decoration: none;
+        font-weight: 500;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        transition: all 0.3s;
+      }
+
+      .nav-links a:hover {
+        background: rgba(42, 157, 143, 0.1);
+        color: var(--primary);
+      }
+
+      .user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--primary);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: transform 0.3s;
+        position: relative;
+      }
+
+      /* 下拉菜单样式 */
+      .dropdown-menu {
+        position: absolute;
+        top: 120%;
+        right: 0;
+        width: 200px;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(-10px);
+        transition: all 0.3s ease;
+        z-index: 1001;
+        padding: 10px 0;
+      }
+
+      .user-avatar:hover .dropdown-menu {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+      }
+
+      .dropdown-menu::before {
+        content: '';
+        position: absolute;
+        bottom: 100%;
+        right: 15px;
+        border-width: 8px;
+        border-style: solid;
+        border-color: transparent transparent white transparent;
+      }
+
+      .dropdown-item {
+        display: flex;
+        align-items: center;
+        padding: 10px 20px;
+        color: var(--text);
+        text-decoration: none;
+        transition: all 0.2s;
+      }
+
+      .dropdown-item:hover {
+        background: rgba(42, 157, 143, 0.1);
+        color: var(--primary);
+      }
+
+      .dropdown-item i {
+        margin-right: 10px;
+        width: 20px;
+        text-align: center;
+      }
+
+      .dropdown-divider {
+        height: 1px;
+        background: var(--border);
+        margin: 8px 0;
+      }
+
+      /* ========== 用户信息页专属样式 ========== */
+      .profile-section {
+        max-width: 1200px;
+        margin: 120px auto 2rem;
+        padding: 0 2rem;
+      }
+
+      .profile-header {
+        display: flex;
+        gap: 3rem;
+        padding: 2.5rem;
+        background: linear-gradient(
+          135deg,
+          rgba(42, 157, 143, 0.1),
+          rgba(233, 196, 106, 0.05)
+        );
+        border: 1px solid rgba(42, 157, 143, 0.15);
+        border-radius: 20px;
+        box-shadow: var(--shadow);
+        margin-bottom: 2rem;
+      }
+
+      .avatar-wrapper {
+        position: relative;
+        flex-shrink: 0;
+      }
+
+      .profile-avatar {
+        width: 160px;
+        height: 160px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 4px solid white;
+        box-shadow: 0 8px 24px rgba(38, 70, 83, 0.1);
+        transition: transform 0.3s;
+      }
+
+      .profile-avatar:hover {
+        transform: rotate(5deg) scale(1.02);
+      }
+
+      .edit-button {
+        position: absolute;
+        bottom: 10px;
+        right: 10px;
+        padding: 0.5rem 1.2rem;
+        background: var(--accent);
+        color: white;
+        border: none;
+        border-radius: 20px;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+
+      .edit-button:hover {
+        background: #e76f51;
+        box-shadow: 0 4px 12px rgba(231, 111, 81, 0.3);
+      }
+
+      .profile-info {
+        flex: 1;
+      }
+
+      .profile-name {
+        font-size: 2.2rem;
+        margin-bottom: 1rem;
+        color: var(--secondary);
+        position: relative;
+        display: inline-block;
+        padding-bottom: 0.5rem;
+      }
+
+      .profile-name::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 60%;
+        height: 3px;
+        background: var(--accent);
+      }
+
+      /* 用户数据统计 */
+      .profile-stats {
+        display: flex;
+        gap: 2.5rem;
+        padding: 1.5rem;
+        margin: 1.5rem 0;
+        background: white;
+        border-radius: 15px;
+        box-shadow: var(--shadow);
+      }
+
+      .stat-item {
+        position: relative;
+        text-align: center;
+        padding: 0 1.5rem;
+      }
+
+      .stat-item:not(:last-child)::after {
+        content: "";
+        position: absolute;
+        right: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        height: 30px;
+        width: 1px;
+        background: var(--border);
+      }
+
+      .stat-number {
+        font-size: 1.6rem;
+        font-weight: 600;
+        color: var(--primary);
+        position: relative;
+        padding-left: 28px;
+      }
+
+      .stat-number::before {
+        content: "•";
+        position: absolute;
+        left: 0;
+        color: var(--accent);
+        font-size: 1.8em;
+        top: -0.1em;
+      }
+
+      .stat-label {
+        color: #666;
+        font-size: 0.9rem;
+      }
+
+      /* 用户徽章 */
+      .badge-collection {
+        display: flex;
+        gap: 1rem;
+        margin: 1.5rem 0;
+      }
+
+      .badge {
+        padding: 0.5rem 1.2rem;
+        border-radius: 20px;
+        background: rgba(233, 196, 106, 0.15);
+        color: var(--secondary);
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s;
+      }
+
+      .badge:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .badge i {
+        color: var(--accent);
+      }
+
+      /* 用户简介 */
+      .profile-bio {
+        position: relative;
+        padding: 2rem;
+        background: white;
+        border-left: 4px solid var(--accent);
+        border-radius: 15px;
+        box-shadow: var(--shadow);
+        line-height: 1.8;
+        color: #555;
+      }
+
+      .profile-bio::before {
+        content: "“";
+        position: absolute;
+        left: 1rem;
+        top: -0.5rem;
+        font-size: 4rem;
+        color: rgba(42, 157, 143, 0.15);
+      }
+
+      /* ========== 日记卡片样式 ========== */
+      .user-diaries {
+        margin-top: 2rem;
+      }
+
+      .section-title {
+        font-size: 1.5rem;
+        color: var(--secondary);
+        margin-bottom: 2rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid var(--primary);
+      }
+
+      .content-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+      }
+
+      .diary-card {
+        position: relative;
+        border-radius: 16px;
+        overflow: hidden;
+        background: white;
+        transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+      }
+
+      .diary-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 12px 24px rgba(38, 70, 83, 0.15);
+      }
+
+      .card-image {
+        height: 240px;
+        background-size: cover;
+        background-position: center;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .card-image::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(
+          180deg,
+          rgba(0, 0, 0, 0) 60%,
+          rgba(0, 0, 0, 0.6) 100%
+        );
+        z-index: 1;
+      }
+
+      .card-badge {
+        position: absolute;
+        top: 16px;
+        left: 16px;
+        padding: 6px 14px;
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(4px);
+        color: var(--primary);
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        z-index: 2;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .card-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 16px;
+        z-index: 2;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .overlay-text {
+        color: white;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      }
+
+      .card-content {
+        padding: 20px;
+        position: relative;
+      }
+
+      .card-content h3 {
+        font-size: 1.1rem;
+        line-height: 1.5;
+        margin: 0 0 12px;
+        color: var(--secondary);
+        display: -webkit-box;
+        line-clamp: 2;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        transition: color 0.3s;
+      }
+
+      .diary-card:hover .card-content h3 {
+        color: var(--primary);
+      }
+
+      .stats {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+        color: #666;
+        font-size: 0.9rem;
+      }
+
+      .stats span {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding: 6px 10px;
+        background: rgba(233, 196, 106, 0.1);
+        border-radius: 20px;
+        transition: all 0.3s;
+      }
+
+      .stats span:hover {
+        background: rgba(233, 196, 106, 0.2);
+        transform: translateY(-1px);
+      }
+
+      .card-link {
+        display: block;
+        text-decoration: none;
+        color: inherit;
+      }
+
+      .card-link:hover {
+        opacity: 0.9;
+      }
+
+      /* ========== 响应式设计 ========== */
+      @media (max-width: 768px) {
+        .profile-header {
+          flex-direction: column;
+          align-items: center;
+          text-align: center;
+          padding: 2rem;
+        }
+
+        .profile-stats {
+          flex-wrap: wrap;
+          justify-content: center;
+          gap: 1.5rem;
+        }
+
+        .stat-item {
+          padding: 0 1rem;
+        }
+
+        .stat-number {
+          font-size: 1.2rem;
+          padding-left: 24px;
+        }
+
+        .card-image {
+          height: 180px;
+        }
+
+        .card-content {
+          padding: 16px;
+        }
+
+        .stats {
+          flex-wrap: wrap;
+          gap: 8px;
+        }
+
+        .stats span {
+          font-size: 0.85rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 导航栏 -->
+    <nav class="global-nav">
+      <a href="/" class="logo">✈️ TravelMate</a>
+      <div class="nav-links">
+        <a href="#recommend">推荐</a>
+        <a href="#plan">规划</a>
+        <a href="#diary">日记</a>
+      </div>
+      <div class="user-avatar">
+        <% if (user?.avatar) { %>
+          <img src="<%= '/uploads/' + user.avatar %>" alt="用户头像" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
+        <% } else { %>
+          👤
+        <% } %>
+        <!-- 下拉菜单 -->
+        <div class="dropdown-menu">
+          <a href="/" class="dropdown-item">
+            <i class="fas fa-home"></i> 回到主页
+          </a>
+          <a href="/user/<%= user.id %>" class="dropdown-item">
+            <i class="fas fa-user"></i> 个人主页
+          </a>
+          <a href="/user/<%= user.id %>/edit" class="dropdown-item">
+            <i class="fas fa-cog"></i> 账户设置
+          </a>
+          <div class="dropdown-divider"></div>
+          <a href="/api/logout" class="dropdown-item">
+            <i class="fas fa-sign-out-alt"></i> 退出登录
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- 用户信息主体 -->
+    <main class="profile-section">
+      <div class="profile-header">
+        <div class="avatar-wrapper">
+          <img
+            src="<%= '/uploads/' + user?.avatar || '/images/default-avatar.jpg' %>"
+            class="profile-avatar"
+            alt="<%= user?.username || '新用户' %>的头像"
+          />
+          <button class="edit-button">
+            <a href="/user/<%= user.id %>/edit" class="dropdown-item">
+              <i class="fas fa-edit"></i> 编辑资料
+            </a>
+          </button>
+        </div>
+
+        <div class="profile-info">
+          <h1 class="profile-name"><%= user?.username || '新用户' %></h1>
+
+          <div class="profile-stats">
+            <div class="stat-item">
+              <div class="stat-number"><%= (stats?.followers || 0).toLocaleString() %></div>
+              <div class="stat-label">粉丝</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-number"><%= (stats?.following || 0).toLocaleString() %></div>
+              <div class="stat-label">关注</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-number"><%= (stats?.diaries_count || 0).toLocaleString() %></div>
+              <div class="stat-label">日记</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-number"><%= (stats?.rating || 0).toFixed(1) %></div>
+              <div class="stat-label">评分</div>
+            </div>
+          </div>
+
+          <div class="badge-collection">
+            <% if ((stats?.diaries_count || 0) > 20) { %>
+              <div class="badge">
+                <i class="fas fa-globe-asia"></i>
+                环球旅行者
+              </div>
+            <% } %>
+            <% if ((stats?.rating || 0) >= 4.5) { %>
+              <div class="badge">
+                <i class="fas fa-medal"></i>
+                年度创作者
+              </div>
+            <% } %>
+            <div class="badge">
+              <i class="fas fa-camera"></i>
+              摄影达人
+            </div>
+          </div>
+
+          <div class="profile-bio">
+            <% if (user?.is_verified) { %>
+              🌟 平台认证旅行家 |
+            <% } %>
+            📅 加入<%= user?.join_time ? ' ' + user.join_time : '不久' %><br />
+            <% if ((stats?.diaries_count || 0) > 10) { %>
+              🏆 连续12个月优质内容创作者<br />
+            <% } %>
+            📍 当前位置：<%= user?.current_location || '未设置' %><br />
+            ✈️ 下一个目的地：<%= user?.next_destination || '未设置' %>
+          </div>
+        </div>
+      </div>
+
+      <!-- 用户日记 -->
+      <% if (diaries?.length > 0) { %>
+        <div class="user-diaries">
+          <h2 class="section-title">最新游记（<%= stats?.diaries_count || 0 %>篇）</h2>
+          <div class="content-grid">
+            <% diaries.forEach(diary => { %>
+              <article class="diary-card">
+                <a href="/diary-detail/<%= diary.id %>" class="card-link">
+                <div
+                  class="card-image"
+                  style="background-image: url('<%= diary.cover_image || '/images/default-diary.jpg' %>')"
+                >
+                  <% if (diary.is_featured) { %>
+                    <span class="card-badge">🔥 热门精选</span>
+                  <% } %>
+                  <div class="card-overlay">
+                    <span class="overlay-text">
+                      <i class="fas fa-map-marker-alt"></i>
+                      <%= diary.location || '未知地点' %>
+                      <i class="fas fa-clock"></i>
+                      <%= diary.created_at ? new Date(diary.created_at).toLocaleDateString() : '未知日期' %>
+                    </span>
+                    <span class="overlay-text">
+                      <i class="fas fa-eye"></i>
+                      <%= (diary.view_count || 0).toLocaleString() %>
+                    </span>
+                  </div>
+                </div>
+                <div class="card-content">
+                  <h3><%= diary.title || '未命名游记' %></h3>
+                  <div class="stats">
+                    <span><i class="fas fa-heart"></i><%= (diary.like_count || 0).toLocaleString() %></span>
+                    <span><i class="fas fa-comment"></i><%= (diary.comment_count || 0).toLocaleString() %></span>
+                    <span><i class="fas fa-star"></i><%= (diary.rating || 0).toFixed(1) %></span>
+                  </div>
+                </div>
+                </a>
+              </article>
+            <% }); %>
+          </div>
+        </div>
+      <% } else { %>
+        <div class="no-diaries" style="text-align: center; padding: 2rem; background: white; border-radius: 15px; box-shadow: var(--shadow);">
+          <i class="fas fa-book-open" style="font-size: 3rem; color: var(--primary); margin-bottom: 1rem;"></i>
+          <h3 style="color: var(--secondary);">还没有游记</h3>
+          <p style="color: #666;">分享你的第一个旅行故事吧！</p>
+          <button style="margin-top: 1rem; padding: 0.8rem 1.5rem; background: var(--primary); color: white; border: none; border-radius: 20px; cursor: pointer; transition: all 0.3s;">
+            <i class="fas fa-plus"></i> 创建游记
+          </button>
+        </div>
+      <% } %>
+    </main>
+  </body>
+</html>

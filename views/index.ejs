@@ -1,0 +1,617 @@
+<!-- 首页 -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TravelMate - 首页</title>
+  <style>
+    :root {
+      --primary: #2a9d8f;
+      --secondary: #264653;
+      --accent: #e9c46a;
+      --text: #444;
+      --border: #eee;
+      --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    /* 基础重置 */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Segoe UI", "PingFang SC", sans-serif;
+    }
+
+    body {
+      background: #f8f9fa;
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    /* 导航栏 */
+    .global-nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 5%;
+      background: rgba(255, 255, 255, 0.95);
+      box-shadow: var(--shadow);
+      z-index: 1000;
+    }
+
+    .logo {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--primary);
+      transition: transform 0.3s;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+    }
+
+    .nav-links a {
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 500;
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      transition: all 0.3s;
+    }
+
+    .nav-links a:hover {
+      background: rgba(42, 157, 143, 0.1);
+      color: var(--primary);
+    }
+
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.3s;
+    }
+    .card-link {
+            display: block;
+            text-decoration: none;
+            color: inherit;
+          }
+
+    /*卡片链接*/
+    .card-link:hover {
+        opacity: 0.9;
+    }
+
+
+
+    /* 英雄区域 */
+    .hero-section {
+      padding: 2rem 2rem 2rem;
+      min-height: 80vh;
+      background: linear-gradient(135deg,
+          rgba(42, 157, 143, 0.9),
+          rgba(38, 70, 83, 0.9)),
+        url("images/hero-bg.jpg") center/cover;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .title {
+      color: white;
+      font-size: clamp(2.5rem, 6vw, 3.5rem);
+      line-height: 1.2;
+      margin-bottom: 2rem;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .hero-search {
+      width: min(90%, 600px);
+      position: relative;
+    }
+
+    .hero-search input {
+      width: 100%;
+      padding: 1.2rem 2rem;
+      border: none;
+      border-radius: 50px;
+      font-size: 1.1rem;
+      box-shadow: var(--shadow);
+      transition: all 0.3s;
+    }
+
+    .hero-search input:focus {
+      outline: 2px solid var(--accent);
+    }
+
+    .search-btn {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      padding: 0.8rem 1.5rem;
+      border: none;
+      border-radius: 30px;
+      background: var(--accent);
+      color: white;
+      cursor: pointer;
+      transition: transform 0.3s;
+    }
+
+    /* 分类导航 */
+    .category-nav {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1.5rem;
+      padding: 0 2rem;
+      max-width: 1200px;
+      margin: -40px auto 3rem;
+    }
+
+    .category-card {
+      padding: 1.5rem;
+      background: white;
+      border-radius: 20px;
+      text-align: center;
+      box-shadow: var(--shadow);
+      transition: all 0.3s;
+    }
+
+    .category-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+    }
+
+    .category-icon {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+    }
+
+    /* 内容瀑布流 */
+    .content-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+      padding: 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .diary-card {
+      background: white;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      transition: all 0.3s;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .diary-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    }
+
+    .card-image {
+      height: 220px;
+      background-size: cover;
+      background-position: center;
+      position: relative;
+    }
+
+    .card-badge {
+      position: absolute;
+      top: 1rem;
+      left: 1rem;
+      background: var(--primary);
+      color: white;
+      padding: 0.3rem 1rem;
+      border-radius: 20px;
+      font-size: 0.9rem;
+    }
+
+    .card-content {
+      padding: 1.5rem;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card-content h3 {
+      margin: 0 0 1rem;
+      font-size: 1.2rem;
+      line-height: 1.4;
+      flex: 1;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      margin: 1rem 0;
+    }
+
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid white;
+      box-shadow: var(--shadow);
+    }
+
+    .stats {
+      display: flex;
+      gap: 1.5rem;
+      color: #666;
+      margin-top: auto;
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+
+    .tags span {
+      background: rgba(42, 157, 143, 0.1);
+      color: var(--primary);
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.9rem;
+    }
+
+    /*用户头像菜单*/
+    .user-menu-container {
+  position: relative;
+  display: inline-block;
+}
+
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.user-avatar:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 0 3px rgba(42, 157, 143, 0.3);
+}
+
+.dropdown-menu {
+  position: absolute;
+  right: 0;
+  top: 50px;
+  width: 200px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: all 0.3s ease;
+  z-index: 1001;
+}
+
+.dropdown-menu.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  color: var(--text);
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.dropdown-item i {
+  width: 20px;
+  margin-right: 12px;
+  color: var(--primary);
+}
+
+.dropdown-item:hover {
+  background: rgba(42, 157, 143, 0.1);
+  color: var(--primary);
+}
+
+.dropdown-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 5px 0;
+}
+/* 头像样式 */
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  overflow: hidden;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f5f5f5;
+  border: 2px solid #ddd;
+}
+
+.avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-fallback {
+  font-weight: bold;
+  color: #555;
+  font-size: 18px;
+}
+
+/* 登录/未登录元素控制 */
+.auth-only { display: none; }
+.guest-only { display: block; }
+
+.logged-in .auth-only { display: block; }
+.logged-in .guest-only { display: none; }
+
+    /* 响应式设计 */
+    @media (max-width: 768px) {
+      .nav-links {
+        display: none;
+      }
+
+      .hero-section {
+        padding-top: 80px;
+        min-height: 60vh;
+      }
+
+      .category-nav {
+        margin-top: -20px;
+      }
+
+      .content-grid {
+        padding: 1rem;
+        gap: 1.5rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .card-content h3 {
+        font-size: 1.1rem;
+      }
+
+      .stats {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+    }
+
+    a {
+      text-decoration: none;
+    }
+
+    .diary-title h3 {
+      color: #444444;
+      text-decoration: none;
+      /* 去掉链接的下划线 */
+    }
+
+    .card-title h3 {
+      color: #444444;
+      text-decoration: none;
+      /* 去掉链接的下划线 */
+    }
+  </style>
+</head>
+
+<body>
+  <!-- 导航栏 -->
+  <nav class="global-nav">
+    <!-- <div class="logo">✈️ TravelMate</div> -->
+    <a href="index.html" class="logo">✈️ TravelMate</a>
+    <div class="nav-links">
+      <a href="#recommend">推荐</a>
+      <a href="#plan">规划</a>
+      <a href="#diary">日记</a>
+    </div>
+
+    <div class="user-menu-container">
+  <% if (user) { %>
+    <!-- 已登录状态 -->
+    <div class="user-avatar" id="userAvatar">
+      <% if (user.avatar) { %>
+        <img src="<%= '/uploads/' + user.avatar %>" alt="<%= user.username %>" class="avatar-image">
+      <% } else { %>
+        <!-- 使用用户名的首字母作为默认头像 -->
+        <div class="avatar-fallback"><%= user.username.charAt(0).toUpperCase() %></div>
+      <% } %>
+    </div>
+    <div class="dropdown-menu" id="dropdownMenu">
+      <a href="/user/<%= user.id %>" class="dropdown-item">
+        <i class="fas fa-user"></i> 我的主页
+      </a>
+      <a href="/settings" class="dropdown-item">
+        <i class="fas fa-cog"></i> 设置
+      </a>
+      <div class="dropdown-divider"></div>
+      <a href="#" class="dropdown-item" id="logoutBtn">
+        <i class="fas fa-sign-out-alt"></i> 退出登录
+      </a>
+    </div>
+  <% } else { %>
+    <!-- 未登录状态 -->
+    <div class="user-avatar" id="userAvatar">
+      <i class="fas fa-user-circle"></i>
+    </div>
+    <div class="dropdown-menu" id="dropdownMenu">
+      <a href="/login" class="dropdown-item">
+        <i class="fas fa-sign-in-alt"></i> 登录
+      </a>
+      <a href="/register" class="dropdown-item">
+        <i class="fas fa-user-plus"></i> 注册
+      </a>
+    </div>
+  <% } %>
+</div>
+
+  </nav>
+
+  <!-- 英雄区域 -->
+  <section class="hero-section">
+    <h1 class="title">探索世界的新方式</h1>
+    <div class="hero-search">
+      <input type="text" placeholder="输入你想去的目的地，例如「杭州西湖」" />
+      <!-- <button class="search-btn">开始探索</button> -->
+      <a href="attraction-detail.html" class="search-btn">开始探索</a>
+    </div>
+  </section>
+
+  <!-- 分类导航 -->
+  <div class="category-nav">
+    <div class="category-card">
+      <div class="category-icon">🏞️</div>
+      <a href="/attraction-explorer" class="card-title">
+        <h3>景点探索</h3>
+      </a>
+      <p>发现热门目的地</p>
+    </div>
+    <div class="category-card">
+      <div class="category-icon">🗺️</div>
+      <a href="navigation.html" class="card-title">
+        <h3>路线规划</h3>
+      </a>
+      <p>智能行程安排</p>
+    </div>
+    <div class="category-card">
+      <div class="category-icon">📸</div>
+      <a href="diary-discovery.html" class="card-title">
+        <h3>旅行日记</h3>
+      </a>
+      <p>记录精彩瞬间</p>
+    </div>
+
+  </div>
+
+  <!-- 内容瀑布流 -->
+  <main class="content-grid">
+     <% diaries.forEach(diary => { %>
+    <article class="diary-card">
+<!--      <a href="/diary-detail/<%= diary.id %>" class="card-link">-->
+        <div class="card-image" style="background-image: url('<%= diary.cover_image %>')">
+          <span class="card-badge"><%= diary.badge %></span>
+        </div>
+        <div class="card-content">
+          <a href="/diary-detail/<%= diary.id %>" class="card-link">
+          <h3><%= diary.title %></h3>
+          </a>
+          <div class="user-info">
+            <img src="<%= diary.avatar %>" class="user-avatar" alt="用户头像" />
+            <span class="user-name"><%= diary.username %></span>
+          </div>
+          <div class="stats">
+            <span>❤️ <%= diary.like_count %></span>
+            <span>💬 <%= diary.comment_count %></span>
+          </div>
+          <div class="tags">
+            <% if (diary.tags) { %>
+              <% diary.tags.split(',').forEach(tag => { %>
+                <span>#<%= tag %></span>
+              <% }) %>
+            <% } else { %>
+              <span>#旅行</span>
+              <span>#记录</span>
+            <% } %>
+          </div>
+        </div>
+<!--        <a>-->
+    </article>
+    <% }) %>
+
+  </main>
+
+  <script>
+  // 下拉菜单功能
+  const userAvatar = document.getElementById('userAvatar');
+  const dropdownMenu = document.getElementById('dropdownMenu');
+
+  // 鼠标悬停显示菜单
+  userAvatar.addEventListener('mouseenter', () => {
+    dropdownMenu.classList.add('show');
+  });
+
+  // 鼠标离开隐藏菜单
+  userAvatar.addEventListener('mouseleave', () => {
+    setTimeout(() => {
+      if (!dropdownMenu.matches(':hover')) {
+        dropdownMenu.classList.remove('show');
+      }
+    }, 100);
+  });
+
+  // 菜单本身的事件
+  dropdownMenu.addEventListener('mouseenter', () => {
+    dropdownMenu.classList.add('show');
+  });
+
+  dropdownMenu.addEventListener('mouseleave', () => {
+    dropdownMenu.classList.remove('show');
+  });
+
+  // 点击菜单项关闭菜单
+  document.querySelectorAll('.dropdown-item').forEach(item => {
+    item.addEventListener('click', () => {
+      dropdownMenu.classList.remove('show');
+    });
+  });
+
+  // 显式定义全局函数
+window.logout = async function() {
+  console.log("退出登录函数被调用");
+  try {
+    const response = await fetch('/api/logout', {
+      method: 'POST',
+      credentials: 'same-origin'
+    });
+    const data = await response.json();
+    if (data.success) {
+      window.location.href = "/";
+    }
+  } catch (error) {
+    console.error("退出登录失败:", error);
+  }
+};
+
+// 动态绑定事件
+document.getElementById('logoutBtn')?.addEventListener('click', (e) => {
+  e.preventDefault();
+  logout();
+});
+</script>
+</body>
+
+</html>

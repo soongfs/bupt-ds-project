@@ -1,0 +1,630 @@
+<!-- 日记详情页 -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>西湖三日深度游 - TravelMate</title>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --primary: #2a9d8f;
+        --secondary: #264653;
+        --accent: #e9c46a;
+        --text: #444;
+        --border: #eee;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Segoe UI", "PingFang SC", sans-serif;
+      }
+
+      body {
+        background: #f8f9fa;
+        color: var(--text);
+        line-height: 1.6;
+      }
+
+      /* 日记容器 */
+      .diary-container {
+        max-width: 1200px;
+        margin: 2rem auto;
+        display: grid;
+        grid-template-columns: minmax(0, 3fr) 1fr;
+        gap: 2rem;
+        padding: 0 1rem;
+      }
+
+      /* 头部区域 */
+      .diary-header {
+        padding: 2rem 2rem 3rem;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        border-radius: 20px 20px 0 0;
+        color: white;
+        text-align: center;
+        position: relative;
+      }
+
+      .diary-header h1 {
+        font-size: clamp(1.8rem, 4vw, 2.5rem);
+        margin-bottom: 1.5rem;
+        display: inline-block;
+        position: relative;
+      }
+
+      .diary-header h1::after {
+        content: "";
+        position: absolute;
+        bottom: -0.8rem;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 80px;
+        height: 4px;
+        background: var(--accent);
+      }
+
+      .author-info {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1.5rem;
+        margin-top: 1.5rem;
+      }
+
+      .author-avatar {
+        width: 70px;
+        height: 70px;
+        border-radius: 50%;
+        border: 3px solid rgba(255, 255, 255, 0.8);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      }
+
+      /* 轮播图 */
+      .media-carousel {
+        position: relative;
+        height: 60vh;
+        margin: 0 -2rem;
+        background: #000;
+      }
+
+      .carousel-item {
+        height: 100%;
+        background-size: cover;
+        background-position: center;
+        opacity: 0.9;
+      }
+
+      .carousel-nav {
+        position: absolute;
+        bottom: 1.5rem;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 0.8rem;
+        z-index: 10;
+      }
+
+      .carousel-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.5);
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+
+      .carousel-dot.active {
+        background: var(--accent);
+        transform: scale(1.2);
+      }
+
+      /* 正文内容 */
+      .main-content {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+      }
+
+      .diary-body {
+        padding: 2rem;
+      }
+
+      .diary-body > * + * {
+        margin-top: 1.5rem;
+      }
+
+      h2 {
+        color: var(--secondary);
+        font-size: 1.5rem;
+        padding-bottom: 0.8rem;
+        border-bottom: 2px solid var(--primary);
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+      }
+
+      h2::before {
+        content: "📍";
+        font-size: 1.1em;
+      }
+
+      h3 {
+        color: var(--primary);
+        font-size: 1.2rem;
+        padding-left: 1.2rem;
+        position: relative;
+      }
+
+      h3::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 5px;
+        height: 1.2em;
+        background: var(--accent);
+        border-radius: 3px;
+      }
+
+      h4 {
+        padding-left: 1rem;
+        position: relative;
+      }
+
+      p {
+        padding-left: 1rem;
+        position: relative;
+      }
+
+      p::before {
+        content: "·";
+        position: absolute;
+        left: -0.8rem;
+        color: var(--primary);
+        font-weight: 700;
+      }
+
+      .poi-tag {
+        color: var(--primary);
+        border-bottom: 2px dotted;
+        cursor: help;
+      }
+
+      /* 交互栏 */
+      .action-bar {
+        display: flex;
+        gap: 2rem;
+        padding: 1.5rem 2rem;
+        border-top: 1px solid var(--border);
+      }
+
+      .action-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.8rem 1.2rem;
+        border-radius: 30px;
+        background: rgba(42, 157, 143, 0.1);
+        color: var(--primary);
+        transition: all 0.3s;
+      }
+
+      .action-btn:hover {
+        background: var(--primary);
+        color: white;
+        transform: translateY(-2px);
+      }
+
+      /* 侧边栏 */
+      .sidebar {
+        position: sticky;
+        top: 1rem;
+        height: fit-content;
+      }
+
+      .metadata-box {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.06);
+        margin-bottom: 1.5rem;
+      }
+
+      .stats-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.8rem 0;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .poi-list {
+        list-style: none;
+      }
+
+      .poi-list li {
+        padding: 0.8rem;
+        margin: 0.5rem 0;
+        background: rgba(42, 157, 143, 0.05);
+        border-radius: 8px;
+        transition: transform 0.2s;
+      }
+
+      .poi-list li:hover {
+        transform: translateX(5px);
+        background: rgba(42, 157, 143, 0.1);
+      }
+
+      /* 评论区 */
+      .comment-section {
+        padding: 2rem;
+        background: rgba(250, 250, 250, 0.8);
+        border-radius: 0 0 20px 20px;
+      }
+
+      .comment-card {
+        position: relative;
+        padding: 1.5rem 1.5rem 1.5rem 5rem;
+        background: white;
+        border-radius: 12px;
+        margin: 1.5rem 0;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      }
+
+      .comment-card img {
+        position: absolute;
+        left: 1.5rem;
+        top: 1.5rem;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        border: 2px solid var(--primary);
+      }
+
+      .comment-actions {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-top: 1rem;
+      }
+
+      .comment-actions button {
+        padding: 0.4rem 1rem;
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        background: none;
+        transition: all 0.2s;
+      }
+
+      .comment-actions button:hover {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+      }
+
+      .comment-input {
+        width: 100%;
+        padding: 1rem;
+        border: 2px solid var(--border);
+        border-radius: 12px;
+        margin: 1.5rem 0;
+        transition: border-color 0.3s;
+      }
+
+      .comment-input:focus {
+        border-color: var(--primary);
+        outline: none;
+      }
+
+      /* 响应式设计 */
+      @media (max-width: 768px) {
+        .diary-container {
+          grid-template-columns: 1fr;
+          padding: 0;
+        }
+
+        .media-carousel {
+          height: 40vh;
+          margin: 0;
+          border-radius: 0;
+        }
+
+        .diary-header {
+          border-radius: 0;
+          padding: 1.5rem;
+        }
+
+        .main-content {
+          border-radius: 0;
+          box-shadow: none;
+        }
+
+        .diary-body {
+          padding: 1.5rem;
+        }
+
+        .action-bar {
+          flex-wrap: wrap;
+          gap: 1rem;
+          padding: 1rem;
+        }
+
+        .action-btn {
+          flex: 1 1 120px;
+          justify-content: center;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="diary-container">
+      <!-- 主内容区 -->
+      <main class="main-content">
+        <!-- 头部 -->
+        <div class="diary-header">
+          <h1>西湖三日深度游全记录 🌄</h1>
+          <div class="author-info">
+            <img src="images/avatar1.jpg" class="author-avatar" />
+            <div>
+              <h3>旅行达人小王</h3>
+              <p>发布于 2023年10月5日 • 阅读量 12.3k</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 多媒体轮播 -->
+        <div class="media-carousel">
+          <div
+            class="carousel-item"
+            style="background-image: url('images/scenery1.jpg')"
+          ></div>
+          <div class="carousel-nav">
+            <div class="carousel-dot active"></div>
+            <div class="carousel-dot"></div>
+            <div class="carousel-dot"></div>
+          </div>
+        </div>
+
+        <!-- 正文内容 -->
+        <article class="diary-body">
+          <h2>Day 1：雷峰塔，邂逅历史与日落的完美结合</h2>
+          <p>
+            第一天来到<span class="poi-tag">雷峰塔</span
+            >，这座始建于北宋的古塔是西湖十景之一。登上塔顶可以俯瞰整个西湖全景，建议选择傍晚时分参观，可以看到绝美的日落🌇。
+          </p>
+
+          <h3>雷峰塔：千年古塔的前世今生</h3>
+          <p>
+            雷峰塔因《白蛇传》的故事而闻名，相传白娘子曾被镇压于此。塔内展示了大量历史文物和多媒体互动展览，让人深入了解这座古塔的前世今生。
+          </p>
+
+          <h3>塔顶全景：日落时分的绝美体验</h3>
+          <p>
+            傍晚时分，我登上塔顶，俯瞰整个西湖全景。夕阳的余晖洒在湖面上，波光粼粼，远处的群山和城市建筑在暮色中若隐若现。这一刻，仿佛时间静止，美得令人心醉。
+          </p>
+
+          <p>
+            <strong>建议：</strong
+            >雷峰塔的灯光在夜晚会亮起，与日落形成独特的光影交错，非常适合拍照打卡。
+          </p>
+
+          <h2>Day 2：苏堤春晓，骑行在诗意的堤岸上</h2>
+          <p>
+            第二天重点游览<span class="poi-tag">苏堤春晓</span
+            >，这条2.8公里长的堤岸非常适合骑行🚴♀️。沿途会经过六座拱桥，每座桥都有独特的景观设计。
+          </p>
+
+          <h3>骑行体验：感受沿途的自然与人文</h3>
+          <p>
+            租了一辆自行车，沿着苏堤骑行，沿途经过六座拱桥，每座桥都有独特的景观设计。春天的苏堤，柳树随风摇曳，湖面波光粼粼，仿佛置身于一幅流动的画卷中。
+          </p>
+
+          <h3>六桥烟柳：每座桥都有一个故事</h3>
+          <p>
+            <strong>映波桥：</strong>桥下波光粼粼，倒映着远处的雷峰塔。<br />
+            <strong>锁澜桥：</strong>桥旁的荷花池在夏季尤为美丽。<br />
+            <strong>望山桥：</strong>站在桥上，可以远眺西湖群山。<br />
+            <strong>压堤桥：</strong>这里是苏堤的中点，视野开阔。<br />
+            <strong>东浦桥：</strong>桥边的芦苇随风摇曳，充满诗意。<br />
+            <strong>跨虹桥：</strong>傍晚时分，桥上夕阳余晖，美不胜收。<br />
+          </p>
+
+          <h3>午餐推荐：湖畔茶室，品味杭帮菜</h3>
+          <p>
+            在苏堤旁的“湖畔茶室”享用了午餐，推荐菜品：<br />
+            <strong>西湖醋鱼：</strong>酸甜适中，鱼肉鲜嫩。<br />
+            <strong>龙井虾仁：</strong>虾仁清脆，茶香四溢。
+          </p>
+
+          <h2>Day 3：灵隐寺，感受千年古刹的宁静与禅意</h2>
+          <p>
+            最后一天探访<span class="poi-tag">灵隐寺</span
+            >，这是杭州最古老的佛教寺庙。寺内的飞来峰石刻造像非常值得一看，记得穿舒适的鞋子哦👟！
+          </p>
+
+          <h3>灵隐寺：千年古刹的庄严与宁静</h3>
+          <p>
+            灵隐寺始建于东晋，是中国佛教禅宗的重要道场之一。寺内香火缭绕，古木参天，给人一种庄严而宁静的感觉。
+          </p>
+
+          <h3>飞来峰石刻：艺术与信仰的结晶</h3>
+          <p>
+            寺旁的飞来峰是一座天然的石刻艺术宝库，山上的石刻造像栩栩如生，展现了佛教艺术的精湛工艺。建议穿舒适的鞋子，因为飞来峰的山路较为陡峭。
+          </p>
+
+          <h3>禅意时光：素斋与茶道体验</h3>
+          <p>
+            在灵隐寺旁的“素斋馆”享用了午餐，推荐菜品：<br />
+            <strong>素鸭：</strong>口感鲜嫩，味道清淡。<br />
+            <strong>素面：</strong>面条劲道，汤底鲜美。<br />
+            下午，我参加了一场茶道体验，品一杯龙井茶，感受禅意时光。
+          </p>
+
+          <h2>旅行小贴士</h2>
+          <p>
+            <strong>1.最佳游览时间：</strong
+            >春季（3-5月）和秋季（9-11月），气候宜人，景色最美。<br />
+            <strong>2.交通：</strong
+            >杭州市内公交、地铁发达，建议使用“杭州公共交通APP”查询路线。<br />
+            <strong>3.住宿：</strong
+            >湖滨路附近有许多酒店，方便游览；预算有限可以选择青年旅舍。<br />
+            <strong>4.注意事项：</strong><br />
+            西湖周边游客较多，建议错峰出行。<br />
+            雨天记得带伞，西湖的雨景也很美。
+          </p>
+        </article>
+
+        <!-- 互动栏 -->
+        <div class="action-bar">
+          <div class="action-btn">
+            <i class="fas fa-heart"></i>
+            <span>1.2k</span>
+          </div>
+          <div class="action-btn">
+            <i class="fas fa-comment"></i>
+            <span>356</span>
+          </div>
+          <div class="action-btn">
+            <i class="fas fa-share"></i>
+            <span>分享</span>
+          </div>
+        </div>
+
+        <!-- 评论区 -->
+        <section class="comment-section">
+          <h2>💬 精彩评论（5）</h2>
+          <textarea
+            class="comment-input"
+            placeholder="写下你的旅行见解..."
+          ></textarea>
+
+          <div class="comment-card">
+            <img
+              src="images/avatar7.jpg"
+              width="50"
+              height="50"
+              style="border-radius: 50%"
+            />
+            <div>
+              <h4>旅行爱好者Mia</h4>
+              <p>攻略超详细！按照这个路线玩省时又省心 👍</p>
+              <div class="comment-actions">
+                <span>2小时前</span>
+                <button>❤️ 42</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="comment-card">
+            <img
+              src="images/avatar8.jpg"
+              width="50"
+              height="50"
+              style="border-radius: 50%"
+            />
+            <div>
+              <h4>摄影师Alex</h4>
+              <p>照片拍得太棒了！构图和光线处理都很专业 📸</p>
+              <div class="comment-actions">
+                <span>1小时前</span>
+                <button>❤️ 38</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="comment-card">
+            <img
+              src="images/avatar9.jpg"
+              width="50"
+              height="50"
+              style="border-radius: 50%"
+            />
+            <div>
+              <h4>美食博主Leo</h4>
+              <p>
+                推荐的餐厅我都试过了，味道真的很赞！特别喜欢那家隐藏在小巷里的甜品店
+                😍
+              </p>
+              <div class="comment-actions">
+                <span>3小时前</span>
+                <button>❤️ 56</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="comment-card">
+            <img
+              src="images/avatar10.jpg"
+              width="50"
+              height="50"
+              style="border-radius: 50%"
+            />
+            <div>
+              <h4>徒步爱好者Sarah</h4>
+              <p>
+                路线规划很合理，沿途的风景让人流连忘返！下次还会按照这个路线走
+                🏞️
+              </p>
+              <div class="comment-actions">
+                <span>5小时前</span>
+                <button>❤️ 47</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="comment-card">
+            <img
+              src="images/avatar11.jpg"
+              width="50"
+              height="50"
+              style="border-radius: 50%"
+            />
+            <div>
+              <h4>自由行达人Ella</h4>
+              <p>攻略真的很实用！尤其是那些小贴士，帮我解决了很多问题 👍</p>
+              <div class="comment-actions">
+                <span>1天前</span>
+                <button>❤️ 63</button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <!-- 侧边栏 -->
+      <aside class="sidebar">
+        <div class="metadata-box">
+          <h3>📊 数据概览</h3>
+          <div class="stats-item">
+            <span>热度指数</span>
+            <span class="hotness">🔥 92.5</span>
+          </div>
+          <div class="stats-item">
+            <span>收藏次数</span>
+            <span>⭐ 689</span>
+          </div>
+          <div class="stats-item">
+            <span>平均评分</span>
+            <span>★★★★☆ 4.6</span>
+          </div>
+        </div>
+
+        <div class="metadata-box">
+          <h3><i class="fas fa-map-marked-alt"></i>行程地点</h3>
+          <ul class="poi-list">
+            <li>🏯 雷峰塔 | 西湖十景之一</li>
+            <li>🌸 苏堤春晓 | 诗意堤岸</li>
+            <li>🙏 灵隐寺 | 千年古刹</li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </body>
+</html>

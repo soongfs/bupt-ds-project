@@ -1,0 +1,263 @@
+:root {
+      --primary: #2a9d8f;
+      --secondary: #264653;
+      --accent: #e9c46a;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Segoe UI", sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      background: linear-gradient(45deg,
+          rgba(42, 157, 143, 0.8),
+          rgba(38, 70, 83, 0.8)),
+        url("login-bg.jpg") center/cover fixed;
+    }
+
+    .login-container {
+      margin: auto;
+      width: 90%;
+      max-width: 800px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 20px;
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+      overflow: hidden;
+      animation: slideUp 0.8s ease;
+    }
+
+    /* 左侧视觉区 */
+    .visual-side {
+      background: linear-gradient(45deg, var(--primary), var(--secondary));
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .welcome-text {
+      color: white;
+      text-align: center;
+    }
+
+    .welcome-text h1 {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .travel-icons {
+      display: flex;
+      gap: 1.5rem;
+      margin-top: 2rem;
+    }
+
+    .travel-icons i {
+      font-size: 2rem;
+      opacity: 0.8;
+      transition: transform 0.3s;
+    }
+
+    .travel-icons i:hover {
+      transform: translateY(-5px);
+    }
+
+    /* 右侧表单区 */
+    .form-side {
+      padding: 3rem 2rem;
+      position: relative;
+    }
+
+    .form-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .form-header h2 {
+      color: var(--secondary);
+      font-size: 2rem;
+    }
+
+    .input-group {
+      margin-bottom: 1.5rem;
+      position: relative;
+    }
+
+    .input-group i {
+      position: absolute;
+      left: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--primary);
+    }
+
+    input {
+      width: 100%;
+      padding: 12px 40px 12px 40px;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: all 0.3s;
+    }
+
+    input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 8px rgba(42, 157, 143, 0.3);
+      outline: none;
+    }
+
+    .password-toggle {
+      position: absolute;
+      right: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      color: #666;
+    }
+
+    .submit-btn {
+      background: var(--primary);
+      color: white;
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: transform 0.3s;
+    }
+
+    .submit-btn:hover {
+      transform: translateY(-2px);
+    }
+
+    .social-login {
+      margin-top: 2rem;
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+    }
+
+    .social-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 1px solid #ddd;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .social-btn:hover {
+      background: var(--primary);
+      color: white;
+    }
+    /*新增部分*/
+    .redirect-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .redirect-card {
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      text-align: center;
+      max-width: 400px;
+      width: 90%;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      transform: translateY(20px);
+      transition: all 0.3s ease;
+    }
+
+    .redirect-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .redirect-overlay.active .redirect-card {
+      transform: translateY(0);
+    }
+
+    .redirect-icon {
+      font-size: 60px;
+      color: #2a9d8f;
+      margin-bottom: 20px;
+    }
+
+    .redirect-title {
+      font-size: 24px;
+      color: #264653;
+      margin-bottom: 15px;
+    }
+
+    .redirect-message {
+      color: #666;
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+
+    .redirect-timer {
+      font-size: 18px;
+      color: #2a9d8f;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+
+    .redirect-btn {
+      display: inline-block;
+      padding: 10px 20px;
+      background: #2a9d8f;
+      color: white;
+      border-radius: 5px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: background 0.3s;
+    }
+
+    .redirect-btn:hover {
+      background: #21867a;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(50px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .login-container {
+        grid-template-columns: 1fr;
+      }
+
+      .visual-side {
+        display: none;
+      }
+    }

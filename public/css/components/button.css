@@ -1,0 +1,18 @@
+/* components/button.css */
+.btn {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-primary {
+    background: var(--secondary);
+    color: #fff;
+}
+
+.btn-accent {
+    background: var(--accent);
+    color: #000;
+}

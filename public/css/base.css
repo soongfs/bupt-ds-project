@@ -1,0 +1,29 @@
+/* base.css */
+:root {
+    --primary: #2a9d8f;
+    --secondary: #264653;
+    --accent: #e9c46a;
+    --text: #444;
+    --border: #eee;
+    --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* 基础重置 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Segoe UI", "PingFang SC", sans-serif;
+}
+
+body {
+    background: #f8f9fa;
+    color: var(--text);
+    line-height: 1.6;
+}
+
+header {
+    background: var(--primary);
+    box-shadow: var(--shadow);
+    padding: 1rem;
+}

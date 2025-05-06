@@ -1,0 +1,52 @@
+<!-- 封面页 -->
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>TravelMate 个性化旅游系统</title>
+    <style>
+      .cover {
+        background: linear-gradient(
+          135deg,
+          rgba(42, 157, 143, 0.9),
+          rgba(38, 70, 83, 0.9)
+        );
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+      .title {
+        margin-bottom: 20px;
+        text-align: center;
+        color: white;
+        font-size: 3em;
+        text-shadow: 2px 2px #333;
+      }
+      .cta-button {
+        display: inline-flex;
+        align-items: center;
+        background-color: #4caf50; /* 按钮背景颜色 */
+        color: white; /* 按钮文字颜色 */
+        padding: 10px 20px; /* 按钮内边距 */
+        border-radius: 5px; /* 按钮圆角 */
+        text-decoration: none; /* 去掉链接下划线 */
+        font-weight: bold; /* 加粗文字 */
+        transition: background-color 0.3s; /* 添加过渡效果 */
+      }
+      .cta-button:hover {
+        background-color: #45a049; /* 悬停时的按钮背景颜色 */
+      }
+
+      .cta-button i {
+        margin-right: 8px; /* 图标和文字之间的间距 */
+      }
+    </style>
+  </head>
+  <body>
+    <div class="cover">
+      <h1 class="title">TravelMate<br />个性化旅游系统</h1>
+      <a href="views/index.ejs" class="cta-button"> 立即体验 </a>
+    </div>
+  </body>
+</html>

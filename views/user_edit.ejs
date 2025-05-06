@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TravelMate - 编辑个人资料</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
+    <style>
+        :root {
+            --primary: #2a9d8f;
+            --secondary: #264653;
+            --accent: #e9c46a;
+            --text: #444;
+            --border: #eee;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Segoe UI", "PingFang SC", sans-serif;
+        }
+
+        body {
+            background: #f8f9fa;
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        /* 导航栏 */
+        .global-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 5%;
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: var(--shadow);
+            z-index: 1000;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary);
+            transition: transform 0.3s;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            color: var(--text);
+            text-decoration: none;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            transition: all 0.3s;
+        }
+
+        .nav-links a:hover {
+            background: rgba(42, 157, 143, 0.1);
+            color: var(--primary);
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        /* 主要内容区域 */
+        .edit-profile-container {
+            max-width: 800px;
+            margin: 100px auto 2rem;
+            padding: 0 1.5rem;
+        }
+
+        .page-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .page-title {
+            font-size: 1.8rem;
+            color: var(--secondary);
+            position: relative;
+            padding-bottom: 0.5rem;
+        }
+
+        .page-title::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 60px;
+            height: 3px;
+            background: var(--accent);
+        }
+
+        .back-link {
+            margin-right: 1.5rem;
+            color: var(--primary);
+            font-size: 1.2rem;
+            transition: transform 0.3s;
+        }
+
+        .back-link:hover {
+            transform: translateX(-3px);
+        }
+
+        /* 编辑表单 */
+        .edit-form {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: var(--shadow);
+        }
+
+        .form-section {
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .form-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .section-title {
+            font-size: 1.2rem;
+            color: var(--secondary);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .section-title i {
+            color: var(--primary);
+        }
+
+        /* 头像上传区域 */
+        .avatar-upload {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .avatar-preview {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .upload-controls {
+            flex: 1;
+        }
+
+        .upload-btn {
+            display: inline-block;
+            padding: 0.8rem 1.5rem;
+            background: rgba(42, 157, 143, 0.1);
+            color: var(--primary);
+            border-radius: 30px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-right: 1rem;
+        }
+
+        .upload-btn:hover {
+            background: rgba(42, 157, 143, 0.2);
+        }
+
+        .remove-btn {
+            background: none;
+            border: none;
+            color: #e76f51;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: color 0.3s;
+        }
+
+        .remove-btn:hover {
+            color: #d62828;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        /* 表单元素样式 */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--secondary);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(42, 157, 143, 0.2);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+
+        textarea.form-control {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        /* 密码显示切换 */
+        .password-toggle {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+            cursor: pointer;
+        }
+
+        .password-input-container {
+            position: relative;
+        }
+
+        /* 表单按钮 */
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border-radius: 30px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background: #238f82;
+            box-shadow: 0 4px 12px rgba(42, 157, 143, 0.3);
+        }
+
+        .btn-outline {
+            background: none;
+            border: 2px solid var(--border);
+            color: var(--text);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .edit-profile-container {
+                margin-top: 80px;
+            }
+
+            .avatar-upload {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1.5rem;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .form-actions {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- 导航栏 -->
+    <nav class="global-nav">
+        <a href="/" class="logo">✈️ TravelMate</a>
+        <div class="nav-links">
+            <a href="/">首页</a>
+            <a href="/explore">探索</a>
+            <a href="/diaries">日记</a>
+        </div>
+        <div class="user-avatar">
+            <% if (user?.avatar) { %>
+                <img src="<%= '/uploads/' + user.avatar %>" alt="用户头像"
+                    style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
+                <% } else { %>
+                    👤
+                    <% } %>
+        </div>
+    </nav>
+
+    <!-- 主要内容 -->
+    <div class="edit-profile-container">
+        <div class="page-header">
+            <a href="/user/<%= user.id %>" class="back-link">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+            <h1 class="page-title">编辑个人资料</h1>
+        </div>
+
+        <form class="edit-form" id="profileForm">
+            <!-- 头像上传部分 -->
+            <div class="form-section">
+                <h2 class="section-title">
+                    <i class="fas fa-user-circle"></i>个人头像
+                </h2>
+                <div class="avatar-upload">
+                    <img src="<%= '/uploads/' + user.avatar || '/images/default-avatar.jpg' %>" class="avatar-preview"
+                        id="avatarPreview" alt="用户头像">
+                    <div class="upload-controls">
+                        <label for="avatarUpload" class="upload-btn">
+                            <i class="fas fa-upload"></i> 上传新头像
+                        </label>
+                        <input type="file" id="avatarUpload" class="file-input" accept="image/*">
+                        <button type="button" class="remove-btn" id="removeAvatar">
+                            <i class="fas fa-trash-alt"></i> 移除当前头像
+                        </button>
+                        <p class="form-text" style="margin-top: 0.5rem; color: #666; font-size: 0.9rem;">
+                            建议上传正方形图片，大小不超过2MB
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 基本信息部分 -->
+            <div class="form-section">
+                <h2 class="section-title">
+                    <i class="fas fa-id-card"></i>基本信息
+                </h2>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="username" class="form-label">用户名</label>
+                        <input type="text" id="username" class="form-control" value="<%= user.username %>" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="gender" class="form-label">性别</label>
+                        <select id="gender" class="form-control">
+                            <option value="male" <%=user.gender==='male' ? 'selected' : '' %>>男</option>
+                            <option value="female" <%=user.gender==='female' ? 'selected' : '' %>>女</option>
+                            <option value="other" <%=!['male','female'].includes(user.gender) ? 'selected' : '' %>>其他
+                            </option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="birthday" class="form-label">生日</label>
+                        <input type="date" id="birthday" class="form-control" value="<%= user.birthday || '' %>">
+                    </div>
+                    <div class="form-group">
+                        <label for="location" class="form-label">所在地</label>
+                        <input type="text" id="location" class="form-control" value="<%= user.location || '' %>"
+                            placeholder="例如：北京">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 个人简介部分 -->
+            <div class="form-section">
+                <h2 class="section-title">
+                    <i class="fas fa-pen"></i>个人简介
+                </h2>
+                <div class="form-group">
+                    <label for="bio" class="form-label">自我介绍</label>
+                    <textarea id="bio" class="form-control"
+                        placeholder="介绍一下你自己，让更多人认识你..."><%= user.bio || '' %></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="interests" class="form-label">兴趣爱好</label>
+                    <input type="text" id="interests" class="form-control" value="<%= user.interests || '' %>"
+                        placeholder="例如：摄影、美食、徒步">
+                    <p class="form-text" style="margin-top: 0.5rem; color: #666; font-size: 0.9rem;">
+                        用逗号分隔多个兴趣标签
+                    </p>
+                </div>
+            </div>
+
+            <!-- 密码修改部分 -->
+            <div class="form-section">
+                <h2 class="section-title">
+                    <i class="fas fa-lock"></i>修改密码
+                </h2>
+                <div class="form-group">
+                    <label for="currentPassword" class="form-label">当前密码</label>
+                    <div class="password-input-container">
+                        <input type="password" id="currentPassword" class="form-control" placeholder="请输入当前密码">
+                        <i class="fas fa-eye password-toggle" id="toggleCurrentPassword"></i>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="newPassword" class="form-label">新密码</label>
+                    <div class="password-input-container">
+                        <input type="password" id="newPassword" class="form-control" placeholder="请输入新密码">
+                        <i class="fas fa-eye password-toggle" id="toggleNewPassword"></i>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="confirmPassword" class="form-label">确认新密码</label>
+                    <div class="password-input-container">
+                        <input type="password" id="confirmPassword" class="form-control" placeholder="请再次输入新密码">
+                        <i class="fas fa-eye password-toggle" id="toggleConfirmPassword"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 表单操作按钮 -->
+            <div class="form-actions">
+                <button type="button" class="btn btn-outline" id="cancelBtn">
+                    取消
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> 保存更改
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        // 头像上传预览功能
+        const avatarUpload = document.getElementById('avatarUpload');
+        const avatarPreview = document.getElementById('avatarPreview');
+        const removeAvatar = document.getElementById('removeAvatar');
+
+        avatarUpload.addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (event) {
+                    avatarPreview.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        removeAvatar.addEventListener('click', function () {
+            avatarPreview.src = '/images/default-avatar.jpg';
+            avatarUpload.value = '';
+        });
+
+        // 密码显示/隐藏切换
+        function setupPasswordToggle(inputId, toggleId) {
+            const passwordInput = document.getElementById(inputId);
+            const toggleButton = document.getElementById(toggleId);
+
+            toggleButton.addEventListener('click', function () {
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    toggleButton.classList.replace('fa-eye', 'fa-eye-slash');
+                } else {
+                    passwordInput.type = 'password';
+                    toggleButton.classList.replace('fa-eye-slash', 'fa-eye');
+                }
+            });
+        }
+
+        setupPasswordToggle('currentPassword', 'toggleCurrentPassword');
+        setupPasswordToggle('newPassword', 'toggleNewPassword');
+        setupPasswordToggle('confirmPassword', 'toggleConfirmPassword');
+
+        // 表单提交处理
+        document.getElementById('profileForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const formData = new FormData();
+            if (avatarUpload.files[0]) {
+                formData.append('avatar', avatarUpload.files[0]);
+            }
+
+            formData.append('username', document.getElementById('username').value);
+            formData.append('gender', document.getElementById('gender').value);
+            formData.append('birthday', document.getElementById('birthday').value);
+            formData.append('location', document.getElementById('location').value);
+            formData.append('bio', document.getElementById('bio').value);
+            formData.append('interests', document.getElementById('interests').value);
+
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (currentPassword || newPassword || confirmPassword) {
+                if (newPassword !== confirmPassword) {
+                    alert('新密码和确认密码不匹配！');
+                    return;
+                }
+                formData.append('currentPassword', currentPassword);
+                formData.append('newPassword', newPassword);
+            }
+
+            try {
+                const response = await fetch('/api/user/profile', {
+                    method: 'PUT',
+                    body: formData,
+                    credentials: 'include'
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert('资料更新成功！');
+                    window.location.href = `/user/<%= user.id %>`;
+                } else {
+                    alert(result.message || '更新失败，请重试');
+                }
+            } catch (error) {
+                console.error('更新失败:', error);
+                alert('网络错误，请稍后重试');
+            }
+        });
+
+        // 取消按钮
+        document.getElementById('cancelBtn').addEventListener('click', function () {
+            if (confirm('确定要放弃所有更改吗？')) {
+                window.location.href = `/user/<%= user.id %>`;
+            }
+        });
+    </script>
+</body>
+
+</html>
