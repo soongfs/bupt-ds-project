@@ -83,15 +83,16 @@
       cursor: pointer;
       transition: transform 0.3s;
     }
+
     .card-link {
-            display: block;
-            text-decoration: none;
-            color: inherit;
-          }
+      display: block;
+      text-decoration: none;
+      color: inherit;
+    }
 
     /*卡片链接*/
     .card-link:hover {
-        opacity: 0.9;
+      opacity: 0.9;
     }
 
 
@@ -278,106 +279,117 @@
 
     /*用户头像菜单*/
     .user-menu-container {
-  position: relative;
-  display: inline-block;
-}
+      position: relative;
+      display: inline-block;
+    }
 
-.user-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: var(--primary);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.3s;
-}
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
 
-.user-avatar:hover {
-  transform: scale(1.1);
-  box-shadow: 0 0 0 3px rgba(42, 157, 143, 0.3);
-}
+    .user-avatar:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 0 3px rgba(42, 157, 143, 0.3);
+    }
 
-.dropdown-menu {
-  position: absolute;
-  right: 0;
-  top: 50px;
-  width: 200px;
-  background: white;
-  border-radius: 10px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(-10px);
-  transition: all 0.3s ease;
-  z-index: 1001;
-}
+    .dropdown-menu {
+      position: absolute;
+      right: 0;
+      top: 50px;
+      width: 200px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-10px);
+      transition: all 0.3s ease;
+      z-index: 1001;
+    }
 
-.dropdown-menu.show {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(0);
-}
+    .dropdown-menu.show {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
 
-.dropdown-item {
-  display: flex;
-  align-items: center;
-  padding: 12px 16px;
-  color: var(--text);
-  text-decoration: none;
-  transition: all 0.2s;
-}
+    .dropdown-item {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      color: var(--text);
+      text-decoration: none;
+      transition: all 0.2s;
+    }
 
-.dropdown-item i {
-  width: 20px;
-  margin-right: 12px;
-  color: var(--primary);
-}
+    .dropdown-item i {
+      width: 20px;
+      margin-right: 12px;
+      color: var(--primary);
+    }
 
-.dropdown-item:hover {
-  background: rgba(42, 157, 143, 0.1);
-  color: var(--primary);
-}
+    .dropdown-item:hover {
+      background: rgba(42, 157, 143, 0.1);
+      color: var(--primary);
+    }
 
-.dropdown-divider {
-  height: 1px;
-  background: var(--border);
-  margin: 5px 0;
-}
-/* 头像样式 */
-.user-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  overflow: hidden;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #f5f5f5;
-  border: 2px solid #ddd;
-}
+    .dropdown-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 5px 0;
+    }
 
-.avatar-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
+    /* 头像样式 */
+    .user-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      overflow: hidden;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #f5f5f5;
+      border: 2px solid #ddd;
+    }
 
-.avatar-fallback {
-  font-weight: bold;
-  color: #555;
-  font-size: 18px;
-}
+    .avatar-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
 
-/* 登录/未登录元素控制 */
-.auth-only { display: none; }
-.guest-only { display: block; }
+    .avatar-fallback {
+      font-weight: bold;
+      color: #555;
+      font-size: 18px;
+    }
 
-.logged-in .auth-only { display: block; }
-.logged-in .guest-only { display: none; }
+    /* 登录/未登录元素控制 */
+    .auth-only {
+      display: none;
+    }
+
+    .guest-only {
+      display: block;
+    }
+
+    .logged-in .auth-only {
+      display: block;
+    }
+
+    .logged-in .guest-only {
+      display: none;
+    }
 
     /* 响应式设计 */
     @media (max-width: 768px) {
@@ -441,43 +453,45 @@
     </div>
 
     <div class="user-menu-container">
-  <% if (user) { %>
-    <!-- 已登录状态 -->
-    <div class="user-avatar" id="userAvatar">
-      <% if (user.avatar) { %>
-        <img src="<%= '/uploads/' + user.avatar %>" alt="<%= user.username %>" class="avatar-image">
-      <% } else { %>
-        <!-- 使用用户名的首字母作为默认头像 -->
-        <div class="avatar-fallback"><%= user.username.charAt(0).toUpperCase() %></div>
-      <% } %>
+      <% if (user) { %>
+        <!-- 已登录状态 -->
+        <div class="user-avatar" id="userAvatar">
+          <% if (user.avatar) { %>
+            <img src="<%= '/uploads/' + user.avatar %>" alt="<%= user.username %>" class="avatar-image">
+            <% } else { %>
+              <!-- 使用用户名的首字母作为默认头像 -->
+              <div class="avatar-fallback">
+                <%= user.username.charAt(0).toUpperCase() %>
+              </div>
+              <% } %>
+        </div>
+        <div class="dropdown-menu" id="dropdownMenu">
+          <a href="/user/<%= user.id %>" class="dropdown-item">
+            <i class="fas fa-user"></i> 我的主页
+          </a>
+          <a href="/settings" class="dropdown-item">
+            <i class="fas fa-cog"></i> 设置
+          </a>
+          <div class="dropdown-divider"></div>
+          <a href="#" class="dropdown-item" id="logoutBtn">
+            <i class="fas fa-sign-out-alt"></i> 退出登录
+          </a>
+        </div>
+        <% } else { %>
+          <!-- 未登录状态 -->
+          <div class="user-avatar" id="userAvatar">
+            <i class="fas fa-user-circle"></i>
+          </div>
+          <div class="dropdown-menu" id="dropdownMenu">
+            <a href="/login" class="dropdown-item">
+              <i class="fas fa-sign-in-alt"></i> 登录
+            </a>
+            <a href="/register" class="dropdown-item">
+              <i class="fas fa-user-plus"></i> 注册
+            </a>
+          </div>
+          <% } %>
     </div>
-    <div class="dropdown-menu" id="dropdownMenu">
-      <a href="/user/<%= user.id %>" class="dropdown-item">
-        <i class="fas fa-user"></i> 我的主页
-      </a>
-      <a href="/settings" class="dropdown-item">
-        <i class="fas fa-cog"></i> 设置
-      </a>
-      <div class="dropdown-divider"></div>
-      <a href="#" class="dropdown-item" id="logoutBtn">
-        <i class="fas fa-sign-out-alt"></i> 退出登录
-      </a>
-    </div>
-  <% } else { %>
-    <!-- 未登录状态 -->
-    <div class="user-avatar" id="userAvatar">
-      <i class="fas fa-user-circle"></i>
-    </div>
-    <div class="dropdown-menu" id="dropdownMenu">
-      <a href="/login" class="dropdown-item">
-        <i class="fas fa-sign-in-alt"></i> 登录
-      </a>
-      <a href="/register" class="dropdown-item">
-        <i class="fas fa-user-plus"></i> 注册
-      </a>
-    </div>
-  <% } %>
-</div>
 
   </nav>
 
@@ -519,19 +533,25 @@
 
   <!-- 内容瀑布流 -->
   <main class="content-grid">
-     <% diaries.forEach(diary => { %>
-    <article class="diary-card">
-<!--      <a href="/diary-detail/<%= diary.id %>" class="card-link">-->
+    <% diaries.forEach(diary=> { %>
+      <article class="diary-card">
+        <!--      <a href="/diary-detail/<%= diary.id %>" class="card-link">-->
         <div class="card-image" style="background-image: url('<%= diary.cover_image %>')">
-          <span class="card-badge"><%= diary.badge %></span>
+          <span class="card-badge">
+            <%= diary.badge %>
+          </span>
         </div>
         <div class="card-content">
           <a href="/diary-detail/<%= diary.id %>" class="card-link">
-          <h3><%= diary.title %></h3>
+            <h3>
+              <%= diary.title %>
+            </h3>
           </a>
           <div class="user-info">
-            <img src="<%= diary.avatar %>" class="user-avatar" alt="用户头像" />
-            <span class="user-name"><%= diary.username %></span>
+            <img src="<%= '/uploads/' + diary.avatar %>" class="user-avatar" alt="用户头像" />
+            <span class="user-name">
+              <%= diary.username %>
+            </span>
           </div>
           <div class="stats">
             <span>❤️ <%= diary.like_count %></span>
@@ -539,79 +559,79 @@
           </div>
           <div class="tags">
             <% if (diary.tags) { %>
-              <% diary.tags.split(',').forEach(tag => { %>
+              <% diary.tags.split(',').forEach(tag=> { %>
                 <span>#<%= tag %></span>
-              <% }) %>
-            <% } else { %>
-              <span>#旅行</span>
-              <span>#记录</span>
-            <% } %>
+                <% }) %>
+                  <% } else { %>
+                    <span>#旅行</span>
+                    <span>#记录</span>
+                    <% } %>
           </div>
         </div>
-<!--        <a>-->
-    </article>
-    <% }) %>
+        <!--        <a>-->
+      </article>
+      <% }) %>
 
   </main>
 
   <script>
-  // 下拉菜单功能
-  const userAvatar = document.getElementById('userAvatar');
-  const dropdownMenu = document.getElementById('dropdownMenu');
+    // 下拉菜单功能
+    const userAvatar = document.getElementById('userAvatar');
+    const dropdownMenu = document.getElementById('dropdownMenu');
 
-  // 鼠标悬停显示菜单
-  userAvatar.addEventListener('mouseenter', () => {
-    dropdownMenu.classList.add('show');
-  });
+    // 鼠标悬停显示菜单
+    userAvatar.addEventListener('mouseenter', () => {
+      dropdownMenu.classList.add('show');
+    });
 
-  // 鼠标离开隐藏菜单
-  userAvatar.addEventListener('mouseleave', () => {
-    setTimeout(() => {
-      if (!dropdownMenu.matches(':hover')) {
-        dropdownMenu.classList.remove('show');
-      }
-    }, 100);
-  });
+    // 鼠标离开隐藏菜单
+    userAvatar.addEventListener('mouseleave', () => {
+      setTimeout(() => {
+        if (!dropdownMenu.matches(':hover')) {
+          dropdownMenu.classList.remove('show');
+        }
+      }, 100);
+    });
 
-  // 菜单本身的事件
-  dropdownMenu.addEventListener('mouseenter', () => {
-    dropdownMenu.classList.add('show');
-  });
+    // 菜单本身的事件
+    dropdownMenu.addEventListener('mouseenter', () => {
+      dropdownMenu.classList.add('show');
+    });
 
-  dropdownMenu.addEventListener('mouseleave', () => {
-    dropdownMenu.classList.remove('show');
-  });
-
-  // 点击菜单项关闭菜单
-  document.querySelectorAll('.dropdown-item').forEach(item => {
-    item.addEventListener('click', () => {
+    dropdownMenu.addEventListener('mouseleave', () => {
       dropdownMenu.classList.remove('show');
     });
-  });
 
-  // 显式定义全局函数
-window.logout = async function() {
-  console.log("退出登录函数被调用");
-  try {
-    const response = await fetch('/api/logout', {
-      method: 'POST',
-      credentials: 'same-origin'
+    // 点击菜单项关闭菜单
+    document.querySelectorAll('.dropdown-item').forEach(item => {
+      item.addEventListener('click', () => {
+        dropdownMenu.classList.remove('show');
+      });
     });
-    const data = await response.json();
-    if (data.success) {
-      window.location.href = "/";
-    }
-  } catch (error) {
-    console.error("退出登录失败:", error);
-  }
-};
 
-// 动态绑定事件
-document.getElementById('logoutBtn')?.addEventListener('click', (e) => {
-  e.preventDefault();
-  logout();
-});
-</script>
+    // 显式定义全局函数
+    window.logout = async function () {
+      console.log("退出登录函数被调用");
+      try {
+        const response = await fetch('/api/logout', {
+          method: 'POST',
+          credentials: 'same-origin'
+        });
+        const data = await response.json();
+        if (data.success) {
+          window.location.href = "/";
+        }
+      } catch (error) {
+        console.error("退出登录失败:", error);
+      }
+    };
+
+    // 动态绑定事件
+    document.getElementById('logoutBtn')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      logout();
+    });
+  </script>
 </body>
 
 </html>
