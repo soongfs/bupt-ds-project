@@ -475,6 +475,198 @@
         .insert-btn:hover {
             background-color: #45a049;
         }
+
+        /* --- ★★★ 聊天框相关CSS调整 ★★★ --- */
+        .chat-container {
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+            max-width: 400px;
+            /* 您可以根据需要调整聊天框最大宽度 */
+            width: 90%;
+            /* 在小屏幕上占宽度百分比 */
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            /* ★★★ 新增：给聊天框一个最大高度，并允许内部滚动 ★★★ */
+            max-height: 70vh;
+            /* 例如，最大高度为视窗高度的70% */
+        }
+
+        .chat-header {
+            background: var(--primary);
+            /* 使用CSS变量 */
+            color: white;
+            padding: 10px 15px;
+            font-size: 1rem;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+            flex-shrink: 0;
+            /* 防止头部被压缩 */
+        }
+
+        .chat-body {
+            flex-grow: 1;
+            /* 占据剩余空间 */
+            padding: 10px;
+            overflow-y: auto;
+            /* ★★★ 聊天内容区域滚动 ★★★ */
+            min-height: 150px;
+            /* 给聊天内容一个最小高度 */
+        }
+
+        /* ★★★ 图片预览区域CSS调整 ★★★ */
+        #chatImagePreviewContainer {
+            padding: 5px 10px;
+            /* 上下左右都留一些边距 */
+            background-color: #f9f9f9;
+            /* 给预览区一个浅色背景以区分 */
+            border-top: 1px solid #eee;
+            /* 与聊天输入区有分隔 */
+            border-bottom: 1px solid #eee;
+            /* 与聊天输入区有分隔 */
+            max-height: 85px;
+            /* ★★★ 限制预览区域本身的高度 ★★★ */
+            overflow-x: auto;
+            /* ★★★ 如果图片横向排列超出，则允许横向滚动 ★★★ */
+            overflow-y: hidden;
+            /* 禁止垂直滚动，依赖整体聊天框滚动 */
+            display: flex;
+            /* 使用flex布局让图片横向排列 */
+            align-items: center;
+            /* 垂直居中图片（如果图片高度不一） */
+            flex-shrink: 0;
+            /* 防止预览区被压缩 */
+            white-space: nowrap;
+            /* 防止图片被强制换行，配合overflow-x: auto */
+        }
+
+        #chatImagePreviewContainer .preview-item {
+            display: inline-flex;
+            align-items: flex-start;
+            margin-right: 8px;
+            /* 图片之间的间距 */
+            position: relative;
+            border: 1px solid #ddd;
+            padding: 2px;
+            background-color: white;
+            border-radius: 4px;
+        }
+
+        #chatImagePreviewContainer img.chat-preview-image {
+            /* ★★★ 严格控制预览图的尺寸 ★★★ */
+            width: 60px;
+            /* 固定宽度 */
+            height: 60px;
+            /* 固定高度 */
+            object-fit: cover;
+            /* 保持图片比例，多余部分裁剪 */
+            border-radius: 3px;
+            /* 轻微圆角 */
+            display: block;
+            /* 避免图片下方有额外空隙 */
+        }
+
+        #chatImagePreviewContainer .remove-preview-btn {
+            font-size: 12px;
+            /* 调小关闭按钮 */
+            line-height: 1;
+            color: white;
+            background-color: rgba(0, 0, 0, 0.6);
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            cursor: pointer;
+            position: absolute;
+            top: -6px;
+            /* 调整位置使其在图片边框外一点 */
+            right: -6px;
+            /* 调整位置 */
+            border: 1px solid white;
+            box-shadow: 0 0 3px rgba(0, 0, 0, 0.3);
+        }
+
+        #chatImagePreviewContainer .remove-preview-btn:hover {
+            background-color: rgba(255, 0, 0, 0.8);
+        }
+
+
+        .chat-footer {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-top: 1px solid #ddd;
+            /* 如果预览区有下边框，这里可以考虑去掉或调整 */
+            flex-shrink: 0;
+            /* 防止脚部被压缩 */
+        }
+
+        .chat-upload-btn {
+            padding: 0;
+            /* 移除内边距，让图标撑开 */
+            margin-right: 8px;
+            cursor: pointer;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background-color: #f0f0f0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            /* 固定宽度 */
+            height: 36px;
+            /* 固定高度，与输入框和发送按钮协调 */
+            box-sizing: border-box;
+        }
+
+        .chat-upload-btn:hover {
+            background-color: #e0e0e0;
+        }
+
+        .chat-upload-btn i {
+            color: #555;
+            font-size: 1.1em;
+            /* 稍微调大图标 */
+        }
+
+        .chat-input {
+            flex-grow: 1;
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            height: 36px;
+            box-sizing: border-box;
+            font-size: 0.9rem;
+        }
+
+        .chat-send-btn {
+            margin-left: 8px;
+            /* 与输入框的间距 */
+            padding: 0 15px;
+            /* 调整内边距 */
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            height: 36px;
+            box-sizing: border-box;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chat-send-btn:hover {
+            background: #268074;
+        }
     </style>
 </head>
 
@@ -571,12 +763,22 @@
         </form>
     </div>
 
+    <!-- ★★★ 聊天窗口HTML，包含新的上传按钮和预览区域 ★★★ -->
     <div class="chat-container">
         <div class="chat-header">TravelMate 旅游日记助手</div>
         <div class="chat-body" id="chatBox"></div>
+        <!-- 图片预览区域现在移到 chat-footer 下面，紧邻输入区域 -->
+        <div id="chatImagePreviewContainer">
+            <!-- {/* 预览会显示在这里 */} -->
+        </div>
         <div class="chat-footer">
-            <input type="text" id="userInput" class="chat-input" placeholder="快来试试一键插入到文本框" />
-            <button class="chat-send-btn" onclick="sendMessage()">发送</button>
+            <label for="chatImageUpload" class="chat-upload-btn" title="上传图片">
+                <i class="fas fa-paperclip"></i>
+            </label>
+            <input type="file" id="chatImageUpload" accept="image/*" style="display: none;">
+
+            <input type="text" id="userInput" class="chat-input" placeholder="输入消息..." />
+            <button class="chat-send-btn" onclick="sendMessageWithOptionalImage()">发送</button>
         </div>
     </div>
 
@@ -588,39 +790,6 @@
             const saveDraftBtn = document.getElementById('saveDraftBtn');
             const coverImageInput = document.getElementById('coverImage');
             const imagePreview = document.getElementById('imagePreview');
-            const chatBox = document.getElementById('chatBox');
-            const polishTextBtn = document.getElementById('polishTextBtn');
-            const chatInput = document.getElementById('userInput');
-
-            if (polishTextBtn && chatInput) { // 确保按钮和聊天输入框都存在
-                polishTextBtn.addEventListener('click', function () {
-                    if (window.editor) { // 检查 wangEditor 实例是否存在
-                        const editorText = window.editor.getText().trim(); // 获取编辑器中的纯文本内容并去除首尾空格
-
-                        if (editorText) { // 确保编辑器中有内容（不包括纯空格）
-                            // 将编辑器内容和 " 一键润色" 拼接到聊天输入框
-                            chatInput.value = editorText + " 一键润色";
-
-                            // 可选：自动聚焦到聊天输入框，方便用户直接发送
-                            chatInput.focus();
-
-                            // 可选：将页面滚动到聊天框附近，确保用户能看到
-                            chatInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-                        } else {
-                            // 如果编辑器为空，给用户提示
-                            alert('请先在编辑器中输入需要润色的日记内容。');
-                        }
-                    } else {
-                        // 如果编辑器实例还没准备好
-                        alert('编辑器尚未初始化，请稍候再试。');
-                    }
-                });
-            } else {
-                // 如果找不到按钮或输入框，在控制台给出提示，方便调试
-                if (!polishTextBtn) console.error("错误：找不到 ID 为 'polishTextBtn' 的按钮。");
-                if (!chatInput) console.error("错误：找不到 ID 为 'userInput' 的聊天输入框。");
-            }
 
             // 初始化 wangEditor
             const { createEditor, createToolbar } = window.wangEditor;
@@ -632,12 +801,11 @@
                 },
                 MENU_CONF: {
                     uploadImage: {
-                        server: '/api/upload-image', // 你的图片上传接口
-                        fieldName: 'image', // 上传文件的字段名
+                        server: '/api/upload-image',
+                        fieldName: 'image',
                         maxFileSize: 10 * 1024 * 1024, // 10M
                         allowedFileTypes: ['image/*'],
                         customInsert(res, insertFn) {
-                            // 处理上传结果
                             if (res.success) {
                                 insertFn(res.data.url, '', '');
                             } else {
@@ -649,12 +817,11 @@
                         }
                     },
                     uploadVideo: {
-                        server: '/api/upload-video', // 你的视频上传接口
-                        fieldName: 'video', // 上传文件的字段名
+                        server: '/api/upload-video',
+                        fieldName: 'video',
                         maxFileSize: 50 * 1024 * 1024, // 50M
                         allowedFileTypes: ['video/*'],
                         customInsert(res, insertFn) {
-                            // 处理上传结果
                             if (res.success) {
                                 insertFn(res.data.url, '');
                             } else {
@@ -669,7 +836,6 @@
                 selector: '#editor-content',
                 config: editorConfig,
                 mode: 'default',
-
             });
 
             window.editor = editor;
@@ -680,7 +846,6 @@
                 const defaultContent = '<p>从这里开始书写你的旅行故事...</p>';
 
                 if (currentHtml === defaultContent) {
-                    // 清除默认内容
                     editor.setHtml('<p></p>');
                 }
             });
@@ -690,8 +855,8 @@
                 selector: '#toolbar-container',
                 config: {
                     excludeKeys: [
-                        'group-video', // 排除视频功能，如果需要可以保留
-                        'fullScreen'  // 排除全屏功能
+                        'group-video',
+                        'fullScreen'
                     ]
                 },
                 mode: 'default'
@@ -705,9 +870,9 @@
 
                     reader.onload = function (event) {
                         imagePreview.innerHTML = `
-                            <img src="${event.target.result}" style="max-width: 200px; max-height: 200px;" />
-                            <p>${file.name}</p>
-                        `;
+                        <img src="${event.target.result}" style="max-width: 200px; max-height: 200px;" />
+                        <p>${file.name}</p>
+                    `;
                     };
 
                     reader.readAsDataURL(file);
@@ -724,8 +889,6 @@
                 submitDiary(1); // 1表示草稿
             });
 
-            // 在DOMContentLoaded事件监听器中添加以下代码
-
             // 行程分段管理
             const sectionsList = document.getElementById('sections-list');
             const addSectionBtn = document.getElementById('add-section-btn');
@@ -736,17 +899,17 @@
                 const sectionId = `section-${Date.now()}`;
 
                 const sectionHTML = `
-                    <div class="section-item" id="${sectionId}" data-day="${dayNum}">
-                        <div class="section-header">
-                            <h4><span class="day-number-badge">${dayNum}</span> 第 ${dayNum} 天</h4>
-                            <button type="button" class="remove-btn" onclick="removeSection('${sectionId}')">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        </div>
-                        <input type="text" class="section-title" placeholder="这一天的主要行程或地点" value="${title}" />
-                        <textarea class="section-content" placeholder="详细描述这一天的经历...">${content}</textarea>
+                <div class="section-item" id="${sectionId}" data-day="${dayNum}">
+                    <div class="section-header">
+                        <h4><span class="day-number-badge">${dayNum}</span> 第 ${dayNum} 天</h4>
+                        <button type="button" class="remove-btn" onclick="removeSection('${sectionId}')">
+                            <i class="fas fa-times"></i>
+                        </button>
                     </div>
-                `;
+                    <input type="text" class="section-title" placeholder="这一天的主要行程或地点" value="${title}" />
+                    <textarea class="section-content" placeholder="详细描述这一天的经历...">${content}</textarea>
+                </div>
+            `;
 
                 sectionsList.insertAdjacentHTML('beforeend', sectionHTML);
                 if (!dayNumber) sectionCounter++;
@@ -765,23 +928,23 @@
                 const mediaUrl = url || URL.createObjectURL(file);
 
                 const mediaHTML = `
-                    <div class="media-item" id="${mediaId}" data-type="${mediaType}">
-                        <div class="media-header">
-                            <span>媒体 #${mediaCounter++}</span>
-                            <button type="button" class="remove-btn" onclick="removeMedia('${mediaId}')">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        </div>
-                        <input type="text" class="media-caption" placeholder="媒体描述" value="${caption}" />
-                        <div class="media-preview-container">
-                            ${mediaType === 'image' ?
+                <div class="media-item" id="${mediaId}" data-type="${mediaType}">
+                    <div class="media-header">
+                        <span>媒体 #${mediaCounter++}</span>
+                        <button type="button" class="remove-btn" onclick="removeMedia('${mediaId}')">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <input type="text" class="media-caption" placeholder="媒体描述" value="${caption}" />
+                    <div class="media-preview-container">
+                        ${mediaType === 'image' ?
                         `<img src="${mediaUrl}" class="media-preview" />` :
                         `<video controls src="${mediaUrl}" class="media-preview"></video>`}
-                        </div>
-                        <input type="hidden" name="media_url" value="${mediaUrl}" />
-                        <input type="hidden" name="media_type" value="${mediaType}" />
                     </div>
-                `;
+                    <input type="hidden" name="media_url" value="${mediaUrl}" />
+                    <input type="hidden" name="media_type" value="${mediaType}" />
+                </div>
+            `;
 
                 mediaList.insertAdjacentHTML('beforeend', mediaHTML);
             }
@@ -790,7 +953,7 @@
                 Array.from(e.target.files).forEach(file => {
                     addMediaItem(file);
                 });
-                e.target.value = ''; // 重置input以便重复上传
+                e.target.value = '';
             });
 
             // 全局函数供按钮使用
@@ -802,7 +965,7 @@
                 document.getElementById(id)?.remove();
             };
 
-            // 修改submitDiary函数
+            // 提交日记函数
             function submitDiary(status) {
                 const title = document.getElementById('title').value;
                 const content = editor.getHtml();
@@ -853,7 +1016,6 @@
                     formData.append('coverImage', coverImageInput.files[0]);
                 }
 
-                // 添加媒体文件
                 Array.from(mediaUpload.files).forEach((file, index) => {
                     formData.append(`mediaFiles_${index}`, file);
                 });
@@ -877,331 +1039,624 @@
                         alert('发生错误: ' + error.message);
                     });
             }
-
-            // function submitDiary(status) {
-            //     const title = document.getElementById('title').value;
-            //     const content = editor.getHtml(); // 获取富文本内容
-            //     const tags = document.getElementById('tags').value;
-            //     const allowComments = document.querySelector('input[name="allowComments"]').checked;
-            //     const syncToProfile = document.querySelector('input[name="syncToProfile"]').checked;
-            //     const fansOnly = document.querySelector('input[name="fansOnly"]').checked;
-            //
-            //     // 简单的表单验证
-            //     if (!title.trim()) {
-            //         alert('请输入日记标题');
-            //         return;
-            //     }
-            //
-            //     if (!content.trim() || content === '<p>从这里开始书写你的旅行故事...</p>') {
-            //         alert('请输入日记内容');
-            //         return;
-            //     }
-            //
-            //     // 创建FormData对象，便于上传文件
-            //     const formData = new FormData();
-            //     formData.append('title', title);
-            //     formData.append('content', content);
-            //     formData.append('tags', tags);
-            //     formData.append('allowComments', allowComments);
-            //     formData.append('syncToProfile', syncToProfile);
-            //     formData.append('fansOnly', fansOnly);
-            //     formData.append('status', status);
-            //
-            //     // 如果有上传封面图片
-            //     if (coverImageInput.files.length > 0) {
-            //         formData.append('coverImage', coverImageInput.files[0]);
-            //     }
-            //
-            //     // 发送AJAX请求
-            //     fetch('/api/diaries', {
-            //         method: 'POST',
-            //         body: formData,
-            //         credentials: 'include' // 确保发送会话cookie
-            //     })
-            //     .then(response => {
-            //         if (!response.ok) {
-            //             return response.json().then(err => { throw err; });
-            //         }
-            //         return response.json();
-            //     })
-            //     .then(data => {
-            //         if (data.success) {
-            //             alert(status === 2 ? '日记发布成功！' : '草稿保存成功！');
-            //             // 重定向到用户日记列表页
-            //             window.location.href = '/user/diaries';
-            //         } else {
-            //             throw new Error(data.message || '操作失败');
-            //         }
-            //     })
-            //     .catch(error => {
-            //         console.error('Error:', error);
-            //         alert('发生错误: ' + error.message);
-            //     });
-            // }
-            console.log("正在为 chatBox 绑定 click 事件监听器...");
-            chatBox.addEventListener('click', (e) => {
-                if (e.target.classList.contains('insert-btn')) {
-                    const messageEl = e.target.closest('.message.bot');
-                    let messageText = messageEl?.querySelector('.bot-message')?.textContent.trim();
-
-                    if (!messageText && messageEl) {
-                        messageText = messageEl.textContent.replace('插入到文本框', '').trim(); // 注意按钮文字可能需要调整
-                    }
-                    console.log("[移除分隔线] 准备插入的内容 (原始从气泡获取):", JSON.stringify(messageText));
-
-                    if (!messageText) {
-                        alert('无法获取 AI 回复内容，请重试。');
-                        console.error('无法获取 AI 回复内容');
-                        return;
-                    }
-
-                    if (window.editor) {
-                        const editor = window.editor;
-                        let aiResponseText = messageText; // 存储纯文本
-
-                        // 1. 尝试解析 JSON
-                        try {
-                            const parsed = JSON.parse(messageText);
-                            if (parsed && parsed.content) {
-                                aiResponseText = parsed.content;
-                                console.log("[移除分隔线] 准备插入的内容 (从JSON解析后):", JSON.stringify(aiResponseText));
-                            }
-                        } catch (parseError) { /* Ignore */ }
-
-                        // 2. 处理 AI 文本 (Markdown 或基本换行)
-                        let processedAiHtml = '';
-                        if (typeof marked === 'function') {
-                            // 使用 marked 处理 Markdown
-                            processedAiHtml = marked.parse(aiResponseText || '');
-                            console.log("[移除分隔线] 使用 marked 处理后的 HTML:", processedAiHtml);
-                        } else {
-                            console.warn('marked.js 未加载，将直接插入原始文本并处理换行');
-                            processedAiHtml = (aiResponseText || '')
-                                .replace(/&/g, '&') // 基本 HTML 转义
-                                .replace(/</g, '<')
-                                .replace(/>/g, '>')
-                                .replace(/\n/g, '<br>'); // 处理换行符
-                            // 不再强制包裹 <p>，让编辑器决定如何处理带 <br> 的文本
-                        }
-
-                        console.log("[移除分隔线] 即将插入...");
-                        editor.focus(); // 聚焦
-
-                        // --- ★★★ 修改插入逻辑 ★★★ ---
-                        try {
-                            // 步骤 a: 插入一个空行 (用于分隔)
-                            editor.dangerouslyInsertHtml('<p><br></p>');
-                            console.log("[移除分隔线] 步骤 a: 空行插入完毕");
-
-                            // 步骤 b: 直接插入处理后的 AI 回复 HTML
-                            editor.dangerouslyInsertHtml(processedAiHtml);
-                            console.log("[移除分隔线] 步骤 b: AI 回复 HTML 插入完毕");
-
-                        } catch (insertError) {
-                            console.error("[移除分隔线] 插入 HTML 时出错:", insertError);
-                            alert("插入内容时发生错误，请重试。");
-                        }
-                        // --- ★★★ 修改结束 ★★★ ---
-
-                        console.log("[移除分隔线] 插入操作完成。");
-
-                    } else {
-                        alert('编辑器尚未初始化，请刷新页面');
-                    }
-                }
-            });
-
-            // 添加开场白
-            const openingMessage = "你好啊，不会写日记？可以给我几个关键词，我来帮你生成一篇旅游日记，我也可以根据你的草稿为你润色哦。";
-            const openingMsgElement = addMessage('', 'bot');
-            // 逐字显示开场白
-            simulateTypingEffect(openingMsgElement, openingMessage, false);
-            function simulateTypingEffect(element, text, showButton = true) {
-                let index = 0;
-                const speed = 50;
-
-                // 先尝试解析 JSON，提取 content 字段
-                let displayText = text;
-                try {
-                    const parsed = JSON.parse(text);
-                    if (parsed && parsed.content) {
-                        displayText = parsed.content;
-                    }
-                } catch (e) {
-                    // 如果不是 JSON，保持原样
-                }
-
-                const timer = setInterval(() => {
-                    if (index < displayText.length) {
-                        element.textContent += displayText.charAt(index);
-                        index++;
-                        chatBox.scrollTop = chatBox.scrollHeight;
-                    } else {
-                        clearInterval(timer);
-
-                        // 控制是否显示插入按钮
-                        if (showButton && !element.querySelector('.insert-btn')) {
-                            const insertBtn = document.createElement('button');
-                            insertBtn.className = 'insert-btn';
-                            insertBtn.textContent = '插入到编辑器';
-                            element.appendChild(insertBtn);
-                        }
-                    }
-                }, speed);
-            }
         });
-
     </script>
-    <script src="https://unpkg.com/@wangeditor/editor@latest/dist/index.js"></script>
     <script>
-        // ===== 智能助手功能脚本 =====
-        async function sendMessage() {
-            const input = document.getElementById('userInput');
-            const chatBox = document.getElementById('chatBox');
-            const question = input.value.trim();
-            if (!question) return;
+        // 全局常量和变量
+        const COZE_API_BASE_URL = 'https://api.coze.cn';
+        const COZE_ACCESS_TOKEN = 'pat_QRPpeZbkbheuqvhgIwvTXmNhzuR5Z3qZCOd1ZOU3wzF9MO3EMLzL29qdiQH5Juqw';
+        const COZE_BOT_ID = '7500528781573537802';
+        const COZE_USER_ID = 'travelmate_user_123';
 
-            addMessage(question, 'user');
-            input.value = '';
+        const API_URL_CREATE_CONVERSATION = `${COZE_API_BASE_URL}/v1/conversation/create`;
+        const API_URL_CHAT_BASE = `${COZE_API_BASE_URL}/v3/chat`;
+        const API_URL_FILE_UPLOAD = `${COZE_API_BASE_URL}/v1/files/upload`;
+        const API_URL_RETRIEVE_CHAT_DETAILS = `${COZE_API_BASE_URL}/v3/chat/retrieve`;
+        const API_URL_LIST_CONVERSATION_MESSAGES = `${COZE_API_BASE_URL}/v1/conversation/message/list`;
 
-            const loadingMsg = addMessage("正在思考中...", 'bot');
+        let currentCozeConversationId = null;
+        let selectedChatImageFile = null;
 
-            try {
-                const response = await fetch('https://open.hunyuan.tencent.com/openapi/v1/agent/chat/completions', {
-                    method: 'POST',
-                    headers: {
-                        'X-Source': 'openapi',
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer GEk7tQ302MNVPmDjEysokIYnQuiO0Zno' // 替换为你的 Token
-                    },
-                    body: JSON.stringify({
-                        "assistant_id": "GxpVugLtlyot", // 替换为你的助手 ID
-                        "user_id": "username",
-                        "stream": true,
-                        "messages": [{
-                            "role": "user",
-                            "content": [{ "type": "text", "text": question }]
-                        }]
-                    })
-                });
-
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                if (!response.body) throw new Error("ReadableStream not supported.");
-
-                const reader = response.body.getReader();
-                const decoder = new TextDecoder('utf-8');
-                let buffer = '';
-                let accumulatedContent = ''; // 初始化为空，用于存储我们想要的内容
-                let isInitialJsonProcessed = false; // 标记是否已跳过初始 JSON
-
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-
-                    buffer += decoder.decode(value, { stream: true });
-                    const chunks = buffer.split(/\n(?=data: )/);
-                    buffer = chunks.pop() || '';
-
-                    for (const chunk of chunks) {
-                        const cleanChunk = chunk.replace(/^data: /, '').trim();
-                        if (!cleanChunk || cleanChunk === '[DONE]') continue;
-
-                        try {
-                            const data = JSON.parse(cleanChunk);
-                            let currentDeltaContent = data.choices?.[0]?.delta?.content;
-                            let requiresUpdate = false; // 本次循环是否需要更新
-
-                            if (typeof currentDeltaContent === 'string' && currentDeltaContent.length > 0) {
-                                let textToProcess = currentDeltaContent;
-
-                                // --- 核心逻辑修改 ---
-                                if (!isInitialJsonProcessed) {
-                                    // 检查这是否是我们要忽略的初始 JSON 块
-                                    let isTheInitialJson = false;
-                                    try {
-                                        const parsedAttempt = JSON.parse(textToProcess);
-                                        // 判断条件：解析成功且包含 'content' 字段
-                                        if (parsedAttempt && typeof parsedAttempt.content === 'string') {
-                                            isTheInitialJson = true;
-                                        }
-                                    } catch (e) {
-                                        // 解析失败，肯定不是我们要找的 JSON 块
-                                    }
-
-                                    if (isTheInitialJson) {
-                                        // 是初始 JSON 块，标记已处理（跳过），然后什么都不做
-                                        console.log("检测到并忽略初始 JSON 块:", JSON.stringify(textToProcess));
-                                        isInitialJsonProcessed = true;
-                                        // ★★★ 不累加内容，不设置 requiresUpdate ★★★
-                                    } else {
-                                        // 不是初始 JSON 块，但标记仍为 false (理论上不应发生，除非API行为改变)
-                                        // 作为保险，我们还是累加吧，但可能导致混合
-                                        console.warn("在标记处理前收到非初始 JSON 块:", JSON.stringify(textToProcess));
-                                        accumulatedContent += textToProcess;
-                                        requiresUpdate = true;
-                                    }
-                                } else {
-                                    // 初始 JSON 已被跳过，现在开始累加我们想要的纯文本流
-                                    accumulatedContent += textToProcess;
-                                    requiresUpdate = true;
-                                }
-                                // --- 核心逻辑修改结束 ---
-
-                                // 如果需要更新界面
-                                if (requiresUpdate) {
-                                    console.log("准备更新显示内容:", JSON.stringify(accumulatedContent));
-                                    updateMessage(loadingMsg, accumulatedContent);
-                                }
-                            }
-                            // ... (处理 null/empty content 的部分保持不变) ...
-                        } catch (e) {
-                            console.error('处理数据流块时出错:', cleanChunk, e);
-                        }
-                    }
-                }
-                // 确保流结束后最终状态被显示
-                console.log("数据流结束，最终更新显示");
-                updateMessage(loadingMsg, accumulatedContent);
-
-            } catch (error) {
-                console.error('API 调用或处理失败:', error);
-                updateMessage(loadingMsg, `请求出错: ${error.message}`);
-            }
-        }
-
+        // DOM 操作函数
         function addMessage(text, type) {
+            const chatBox = document.getElementById('chatBox');
+            if (!chatBox) { console.error("addMessage: chatBox not found"); return null; }
             const msg = document.createElement('div');
-            msg.className = `message ${type}`;
-            msg.innerHTML = `<span class="bot-message">${text}</span>`;
+            msg.className = `message ${type === 'bot-opening' ? 'bot' : type}`;
+            const span = document.createElement('span');
+            span.className = (type === 'user') ? 'user-message' : 'bot-message';
+            if (type === 'user') {
+                span.textContent = text;
+            } else {
+                span.innerHTML = text;
+            }
+            msg.appendChild(span);
             chatBox.appendChild(msg);
             chatBox.scrollTop = chatBox.scrollHeight;
             return msg;
         }
 
-        // 请同时确保你的 updateMessage 函数是使用 marked.parse 的版本
-        function updateMessage(element, text) {
+        function updateMessage(element, newText, isFinal = false) {
+            if (!element) { console.error("updateMessage: element is null"); return; }
             let contentSpan = element.querySelector('.bot-message');
             if (!contentSpan) {
-                element.innerHTML = '<span class="bot-message"></span>';
-                contentSpan = element.querySelector('.bot-message');
+                console.warn("updateMessage: .bot-message span not found. Creating one or updating element directly.");
+                if (element.classList.contains('message')) {
+                    element.innerHTML = '';
+                    const newSpan = document.createElement('span');
+                    newSpan.className = 'bot-message';
+                    element.appendChild(newSpan);
+                    contentSpan = newSpan;
+                } else {
+                    contentSpan = element;
+                }
             }
-            // 使用 marked 解析可能包含 Markdown 的文本
-            const displayText = marked.parse(text || '');
-            if (contentSpan) {
-                contentSpan.innerHTML = displayText; // 使用 innerHTML
+
+            let displayText = newText;
+            if (typeof displayText === 'string') {
+                if (element.classList.contains('bot-opening')) {
+                    displayText = displayText.replace(/\n/g, '<br>');
+                } else if (typeof marked === 'function') {
+                    displayText = marked.parse(displayText);
+                } else {
+                    displayText = displayText.replace(/\n/g, '<br>');
+                }
+            } else if (displayText === null || typeof displayText === 'undefined') {
+                displayText = '';
             }
-            // 添加插入按钮（如果不存在）
-            if (!element.querySelector('.insert-btn')) {
-                const btn = document.createElement('button');
-                btn.className = 'insert-btn';
-                btn.textContent = '插入到文本框';
-                element.appendChild(btn);
+            contentSpan.innerHTML = displayText;
+
+            const existingInsertBtn = element.querySelector('.insert-btn');
+            if (isFinal) {
+                if (!existingInsertBtn && newText &&
+                    !String(newText).toLowerCase().includes("正在") &&
+                    !String(newText).toLowerCase().includes("获取") &&
+                    !String(newText).toLowerCase().includes("出错") &&
+                    !String(newText).toLowerCase().includes("失败") &&
+                    !String(newText).toLowerCase().includes("超时") &&
+                    !String(newText).toLowerCase().includes("未找到")
+                ) {
+                    const insertBtn = document.createElement('button');
+                    insertBtn.className = 'insert-btn';
+                    insertBtn.textContent = '插入到编辑器';
+                    element.appendChild(insertBtn);
+                }
+            } else {
+                if (existingInsertBtn) existingInsertBtn.remove();
             }
-            chatBox.scrollTop = chatBox.scrollHeight;
+            const chatBox = document.getElementById('chatBox');
+            if (chatBox) chatBox.scrollTop = chatBox.scrollHeight;
         }
-        // 回车发送功能
+
+        function simulateTypingEffect(messageElement, fullText, showButtonAtEnd = false) {
+            if (!messageElement) {
+                console.error("simulateTypingEffect: messageElement is null");
+                return;
+            }
+            let contentSpan = messageElement.querySelector('.bot-message');
+            if (!contentSpan) {
+                console.error("simulateTypingEffect: .bot-message span not found. Creating one.");
+                if (messageElement.classList.contains('message')) {
+                    messageElement.innerHTML = '<span class="bot-message"></span>';
+                    contentSpan = messageElement.querySelector('.bot-message');
+                } else {
+                    console.error("Cannot create .bot-message span in non-message element for typing effect.");
+                    return;
+                }
+            }
+
+            let index = 0;
+            const speed = 50;
+            let currentTextForTyping = "";
+            contentSpan.innerHTML = "";
+
+            function type() {
+                if (index < fullText.length) {
+                    const char = fullText.charAt(index);
+                    if (char === '\n') {
+                        currentTextForTyping += '<br>';
+                    } else {
+                        currentTextForTyping += char;
+                    }
+                    contentSpan.innerHTML = currentTextForTyping;
+                    index++;
+                    const chatBox = document.getElementById('chatBox');
+                    if (chatBox) chatBox.scrollTop = chatBox.scrollHeight;
+                    setTimeout(type, speed);
+                } else {
+                    updateMessage(messageElement, fullText, showButtonAtEnd);
+                }
+            }
+            type();
+        }
+
+        // Coze API 交互函数
+        async function ensureCozeConversation() {
+            if (currentCozeConversationId) return currentCozeConversationId;
+            console.log("正在创建新的Coze会话...");
+            const reqBody = { bot_id: COZE_BOT_ID };
+            try {
+                const resp = await fetch(API_URL_CREATE_CONVERSATION, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${COZE_ACCESS_TOKEN}`,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(reqBody)
+                });
+                if (!resp.ok) {
+                    const err = await resp.json().catch(() => ({ msg: `HTTP ${resp.status}` }));
+                    throw new Error(`创建会话失败: ${err.msg || resp.statusText}`);
+                }
+                const data = await resp.json();
+                if (data.code === 0 && data.data && data.data.id) {
+                    currentCozeConversationId = data.data.id;
+                    console.log(`新会话创建成功: ${currentCozeConversationId}`);
+                    return currentCozeConversationId;
+                } else {
+                    throw new Error(data.msg || "创建会话API返回无效数据");
+                }
+            } catch (e) {
+                console.error("创建会话出错:", e);
+                throw e;
+            }
+        }
+
+        async function sendMessageWithOptionalImage() {
+            const input = document.getElementById('userInput');
+            const question = input.value.trim();
+            if (!question && !selectedChatImageFile) {
+                alert("请输入消息或选择图片。");
+                return;
+            }
+
+            let userMsgDisplay = question;
+            if (selectedChatImageFile) userMsgDisplay = `[图片: ${selectedChatImageFile.name}] ${question}`;
+            addMessage(userMsgDisplay, 'user');
+
+            const loadingMsgEl = addMessage("正在处理...", 'bot');
+            input.value = '';
+            const imageFileToSend = selectedChatImageFile;
+            window.removeChatImagePreview();
+
+            try {
+                const convId = await ensureCozeConversation();
+                if (!convId) {
+                    updateMessage(loadingMsgEl, "无法获取会话。", true);
+                    return;
+                }
+                let chatUrl = API_URL_CHAT_BASE + `?conversation_id=${convId}`;
+                let additionalMessages = [];
+                let textForContent = question && question.trim() !== "" ? question.trim() : "请处理这张图片并描述其内容。";
+
+                if (imageFileToSend) {
+                    const maxSizeInBytes = 512 * 1024 * 1024;
+                    if (imageFileToSend.size > maxSizeInBytes) {
+                        updateMessage(loadingMsgEl, "图片大小超过 512 MB 限制，请选择更小的图片。", true);
+                        return;
+                    }
+
+                    updateMessage(loadingMsgEl, "上传图片中...", false);
+                    let fileId;
+                    const formData = new FormData();
+                    formData.append('file', imageFileToSend);
+                    const uploadResp = await fetch(API_URL_FILE_UPLOAD, {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${COZE_ACCESS_TOKEN}` },
+                        body: formData
+                    });
+
+                    if (!uploadResp.ok) {
+                        const err = await uploadResp.json().catch(() => ({ msg: `HTTP ${uploadResp.status}` }));
+                        throw new Error(`图片上传失败: ${err.msg || uploadResp.statusText}`);
+                    }
+                    const uploadData = await uploadResp.json();
+                    if (uploadData.code === 0 && uploadData.data && uploadData.data.id) {
+                        fileId = uploadData.data.id;
+                    } else {
+                        throw new Error(uploadData.msg || "未获取到 File ID");
+                    }
+                    updateMessage(loadingMsgEl, "图片上传成功，沟通中...", false);
+
+                    const contentArray = [
+                        { type: "text", text: textForContent },
+                        { type: "image", file_id: fileId }
+                    ];
+                    const contentString = JSON.stringify(contentArray);
+                    additionalMessages = [
+                        { role: "user", content: contentString, content_type: "object_string" }
+                    ];
+                } else {
+                    additionalMessages = [
+                        { role: "user", content: question, content_type: "text" }
+                    ];
+                }
+
+                const chatReqBody = {
+                    bot_id: COZE_BOT_ID,
+                    user_id: COZE_USER_ID,
+                    stream: false,
+                    auto_save_history: true,
+                    additional_messages: additionalMessages
+                };
+
+                console.log("Request Body:", chatReqBody);
+                const chatResp = await fetch(chatUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${COZE_ACCESS_TOKEN}`,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(chatReqBody)
+                });
+                if (!chatResp.ok) {
+                    const err = await chatResp.json().catch(() => ({ msg: `HTTP ${chatResp.status}` }));
+                    throw new Error(`对话失败: ${err.msg}`);
+                }
+                const chatData = await chatResp.json();
+                if (chatData.code === 0 && chatData.data && chatData.data.id) {
+                    await pollForChatCompletion(convId, chatData.data.id, loadingMsgEl);
+                } else {
+                    throw new Error(chatData.msg || "对话 API 返回无效数据");
+                }
+            } catch (e) {
+                console.error("发送消息出错:", e);
+                updateMessage(loadingMsgEl, `请求出错: ${e.message}`, true);
+            }
+        }
+
+        async function pollForChatCompletion(conversationId, chatId, messageElementToUpdate) {
+            const finalRetrieveChatUrl = `${API_URL_RETRIEVE_CHAT_DETAILS}?conversation_id=${conversationId}&chat_id=${chatId}`;
+            const finalRetrieveMessagesUrl = `${API_URL_LIST_CONVERSATION_MESSAGES}?conversation_id=${conversationId}`;
+            let attempts = 0;
+            const maxAttempts = 30;
+            const interval = 3000;
+            updateMessage(messageElementToUpdate, "正在火速为您处理，请稍等...", false);
+            const poll = async () => {
+                if (attempts >= maxAttempts) {
+                    updateMessage(messageElementToUpdate, "获取回复超时。", true);
+                    return;
+                }
+                attempts++;
+                console.log(`轮询 #${attempts} Chat: ${chatId}`);
+                try {
+                    const detailResp = await fetch(finalRetrieveChatUrl, { headers: { 'Authorization': `Bearer ${COZE_ACCESS_TOKEN}` } });
+                    if (!detailResp.ok) {
+                        const err = await detailResp.json().catch(() => ({ msg: `HTTP ${detailResp.status}` }));
+                        throw new Error(`查详情失败: ${err.msg}`);
+                    }
+                    const detailData = await detailResp.json();
+                    if (detailData.code === 0 && detailData.data) {
+                        const status = detailData.data.status;
+                        if (status === 'completed') {
+                            const msgsResp = await fetch(finalRetrieveMessagesUrl, { headers: { 'Authorization': `Bearer ${COZE_ACCESS_TOKEN}` } });
+                            if (!msgsResp.ok) {
+                                const err = await msgsResp.json().catch(() => ({ msg: `HTTP ${msgsResp.status}` }));
+                                throw new Error(`查消息失败: ${err.msg}`);
+                            }
+                            const msgsData = await msgsResp.json();
+                            if (msgsData.code === 0 && msgsData.data && msgsData.data.length > 0) {
+                                let found = false;
+                                for (let i = msgsData.data.length - 1; i >= 0; i--) {
+                                    const msg = msgsData.data[i];
+                                    if (msg.chat_id === chatId && msg.role === 'assistant' && msg.type === 'answer') {
+                                        updateMessage(messageElementToUpdate, msg.content, true);
+                                        found = true;
+                                        break;
+                                    }
+                                }
+                                if (!found) updateMessage(messageElementToUpdate, "对话完成，未找到回复。", true);
+                            } else {
+                                updateMessage(messageElementToUpdate, `对话完成，消息列表空: ${msgsData.msg || ''}`, true);
+                            }
+                            return;
+                        } else if (['failed', 'canceled'].includes(status)) {
+                            updateMessage(messageElementToUpdate, `对话出错: ${detailData.data.last_error?.msg || status}`, true);
+                            return;
+                        } else if (['created', 'in_progress', 'requires_action'].includes(status)) {
+                            setTimeout(poll, interval);
+                        } else {
+                            updateMessage(messageElementToUpdate, `未知状态: ${status}`, true);
+                            return;
+                        }
+                    } else {
+                        throw new Error(`查详情API错: ${detailData.msg}`);
+                    }
+                } catch (e) {
+                    console.error("轮询出错:", e);
+                    updateMessage(messageElementToUpdate, `获取回复出错: ${e.message}`, true);
+                }
+            };
+            poll();
+        }
+        // 回车键发送和发送按钮点击处理
+        const setupMessageSending = () => {
+            const userInput = document.getElementById('userInput');
+            const sendButton = document.getElementById('sendButton'); // 如果有发送按钮
+
+            if (userInput) {
+                userInput.addEventListener('keydown', function (e) {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        sendMessageWithOptionalImage();
+                    }
+                });
+            }
+
+            if (sendButton) {
+                sendButton.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    sendMessageWithOptionalImage();
+                });
+            }
+        };
 
 
+        // DOMContentLoaded 事件监听器
+        document.addEventListener('DOMContentLoaded', function () {
+            setupMessageSending();
+            const chatBox = document.getElementById('chatBox');
+            const chatImageUploadInputEl = document.getElementById('chatImageUpload');
+            const chatImagePreviewContainerEl = document.getElementById('chatImagePreviewContainer');
+            const polishTextBtn = document.getElementById('polishTextBtn');
+            const chatInput = document.getElementById('userInput');
+
+            // 添加开场白
+            if (chatBox && !chatBox.querySelector('.message.bot-opening')) {
+                const openingMessage = "你好啊，不会写日记？可以给我几个关键词，我来帮你生成一篇旅游日记，我也可以根据你的草稿为你润色哦。你也可以试试上传你所拍摄的图片，我来根据图片为你生成旅游日记，但请告诉我日记相关的关键词哦，比如地点、人物、事件、心情等。";
+                const openingMsgElement = addMessage('', 'bot-opening');
+                if (openingMsgElement) {
+                    simulateTypingEffect(openingMsgElement, openingMessage, false);
+                }
+            }
+
+            // 聊天框图片上传和预览逻辑
+            if (chatImageUploadInputEl && chatImagePreviewContainerEl) {
+                chatImageUploadInputEl.addEventListener('change', function (event) {
+                    if (event.target.files && event.target.files[0]) {
+                        selectedChatImageFile = event.target.files[0];
+                        chatImagePreviewContainerEl.innerHTML = `
+                        <div class="preview-item">
+                            <img src="${URL.createObjectURL(selectedChatImageFile)}" alt="图片预览" class="chat-preview-image">
+                            <span class="remove-preview-btn" onclick="window.removeChatImagePreview()" title="移除图片">×</span>
+                        </div>
+                    `;
+                    }
+                    event.target.value = '';
+                });
+            }
+
+            window.removeChatImagePreview = function () {
+                selectedChatImageFile = null;
+                if (chatImagePreviewContainerEl) chatImagePreviewContainerEl.innerHTML = '';
+                if (chatImageUploadInputEl) chatImageUploadInputEl.value = null;
+            };
+
+            // 一键润色按钮逻辑
+            if (polishTextBtn && chatInput) {
+                polishTextBtn.addEventListener('click', function () {
+                    if (window.editor) {
+                        const editorText = window.editor.getText().trim();
+                        if (editorText) {
+                            chatInput.value = editorText + " 一键润色";
+                            chatInput.focus();
+                            chatInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        } else {
+                            alert('请先在编辑器中输入需要润色的日记内容。');
+                        }
+                    } else {
+                        alert('编辑器尚未初始化，请稍候再试。');
+                    }
+                });
+            }
+
+            // 插入到编辑器逻辑
+            if (chatBox) {
+                chatBox.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('insert-btn')) {
+                        const messageEl = e.target.closest('.message.bot');
+                        let messageText = messageEl?.querySelector('.bot-message')?.innerHTML ||
+                            messageEl?.textContent.replace('插入到编辑器', '').trim();
+
+                        if (!messageText) {
+                            alert('无法获取 AI 回复内容，请重试。');
+                            console.error('无法获取 AI 回复内容');
+                            return;
+                        }
+
+                        if (window.editor) {
+                            const editor = window.editor;
+                            let aiResponseText = messageText;
+
+                            try {
+                                const parsed = JSON.parse(messageText);
+                                if (parsed && parsed.content) {
+                                    aiResponseText = parsed.content;
+                                }
+                            } catch (parseError) { /* 忽略解析错误 */ }
+
+                            // 确保正确处理换行
+                            let processedAiHtml = aiResponseText
+                                .replace(/\n/g, '<br>')  // 替换换行符为 <br>
+                                .replace(/<br><br>/g, '</p><p>')  // 双换行转换为段落分隔
+                                .replace(/^/, '<p>')  // 开头添加段落
+                                .replace(/$/, '</p>'); // 结尾添加段落
+
+                            // 如果使用了 marked.js，优先使用它处理
+                            if (typeof marked === 'function') {
+                                try {
+                                    processedAiHtml = marked.parse(aiResponseText);
+                                } catch (markdownError) {
+                                    console.warn("Markdown 解析失败，使用原始文本:", markdownError);
+                                }
+                            }
+
+                            try {
+                                editor.focus();
+                                // 先插入一个空段落确保格式正确
+                                editor.dangerouslyInsertHtml('<p><br></p>');
+                                // 插入处理后的内容
+                                editor.dangerouslyInsertHtml(processedAiHtml);
+                            } catch (insertError) {
+                                console.error("插入 HTML 时出错:", insertError);
+                                alert("插入内容时发生错误，请重试。");
+                            }
+                        } else {
+                            alert('编辑器尚未初始化，请刷新页面');
+                        }
+                    }
+                });
+            }
+
+            // “媒体管理”中“用此图提问AI”按钮的事件监听器
+            const mediaListElement = document.getElementById('media-list');
+            if (mediaListElement) {
+                mediaListElement.addEventListener('click', async function (event) {
+                    const button = event.target.closest('.ask-ai-with-media-btn');
+                    if (button) {
+                        const mediaId = button.dataset.mediaId;
+                        const mediaItemElement = document.getElementById(mediaId);
+                        if (!mediaItemElement) {
+                            alert("找不到对应的媒体项。");
+                            return;
+                        }
+
+                        let imageFile = window.mediaFileObjects && window.mediaFileObjects[mediaId] ? window.mediaFileObjects[mediaId] : null;
+                        if (!imageFile) {
+                            const imgPreview = mediaItemElement.querySelector('img.media-preview');
+                            if (imgPreview && imgPreview.src.startsWith('blob:')) {
+                                try {
+                                    const response = await fetch(imgPreview.src);
+                                    const blob = await response.blob();
+                                    const fileName = `media_image_blob_${Date.now()}.${blob.type.split('/')[1] || 'jpg'}`;
+                                    imageFile = new File([blob], fileName, { type: blob.type });
+                                    if (window.mediaFileObjects) window.mediaFileObjects[mediaId] = imageFile;
+                                } catch (e) {
+                                    alert("无法从媒体预览中获取图片数据。请尝试重新在媒体管理中添加该图片。");
+                                    console.error("媒体管理Blob恢复失败:", e);
+                                    return;
+                                }
+                            } else {
+                                alert("在媒体管理中找不到原始图片文件数据。请尝试重新添加。");
+                                console.error("媒体管理：无File对象且预览非Blob for mediaId:", mediaId);
+                                return;
+                            }
+                        }
+
+                        if (!imageFile) {
+                            alert("最终无法获取媒体管理中的图片文件。");
+                            return;
+                        }
+
+                        const imageCaptionInput = mediaItemElement.querySelector('.media-caption');
+                        const imageCaption = imageCaptionInput ? imageCaptionInput.value.trim() : "";
+                        const userInputChat = document.getElementById('userInput').value.trim();
+                        let textPrompt = userInputChat || imageCaption || "请描述这张图片并基于它写一篇相关的旅游日记片段。";
+
+                        if (!userInputChat && imageCaption) {
+                            textPrompt = `关于这张图片（描述：${imageCaption}），请写一篇旅游日记。`;
+                        } else if (!userInputChat && !imageCaption) {
+                            const userProvidedPrompt = prompt("请输入关于这张图片的提问或日记主题：", "请描述这张图片，并写一篇相关的日记。");
+                            if (userProvidedPrompt === null || userProvidedPrompt.trim() === "") {
+                                alert("操作已取消，需要输入提示信息。");
+                                return;
+                            }
+                            textPrompt = userProvidedPrompt.trim();
+                        }
+
+                        if (userInputChat) {
+                            document.getElementById('userInput').value = '';
+                        }
+
+                        addMessage(`[使用媒体图片: ${imageFile.name}] ${textPrompt}`, 'user');
+                        const loadingMsgElement = addMessage("正在处理图片并与智能体沟通...", 'bot');
+
+                        button.disabled = true;
+                        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 处理中';
+
+                        try {
+                            await sendImageAndTextToCoze(textPrompt, imageFile, loadingMsgElement);
+                        } catch (error) {
+                            console.error("顶层捕获 sendImageAndTextToCoze (来自媒体管理) 错误:", error);
+                        } finally {
+                            button.disabled = false;
+                            button.innerHTML = '<i class="fas fa-robot"></i> 用此图提问AI';
+                        }
+                    }
+                });
+            }
+        });
+
+        async function sendImageAndTextToCoze(textPrompt, imageFile, loadingMsgElement) {
+            try {
+                const convId = await ensureCozeConversation();
+                if (!convId) {
+                    updateMessage(loadingMsgElement, "无法获取会话。", true);
+                    return;
+                }
+
+                let fileId;
+                const formData = new FormData();
+                formData.append('file', imageFile);
+                const uploadResp = await fetch(API_URL_FILE_UPLOAD, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${COZE_ACCESS_TOKEN}` },
+                    body: formData
+                });
+
+                if (!uploadResp.ok) {
+                    const err = await uploadResp.json().catch(() => ({ msg: `HTTP ${uploadResp.status}` }));
+                    throw new Error(`图片上传失败: ${err.msg || uploadResp.statusText}`);
+                }
+                const uploadData = await uploadResp.json();
+                if (uploadData.code === 0 && uploadData.data && uploadData.data.id) {
+                    fileId = uploadData.data.id;
+                } else {
+                    throw new Error(uploadData.msg || "未获取到 File ID");
+                }
+
+                const contentArray = [
+                    { type: "text", text: textPrompt },
+                    { type: "image", file_id: fileId }
+                ];
+                const contentString = JSON.stringify(contentArray);
+                const chatReqBody = {
+                    bot_id: COZE_BOT_ID,
+                    user_id: COZE_USER_ID,
+                    stream: false,
+                    auto_save_history: true,
+                    additional_messages: [
+                        { role: "user", content: contentString, content_type: "object_string" }
+                    ]
+                };
+
+                const chatResp = await fetch(`${API_URL_CHAT_BASE}?conversation_id=${convId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${COZE_ACCESS_TOKEN}`,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(chatReqBody)
+                });
+
+                if (!chatResp.ok) {
+                    const err = await chatResp.json().catch(() => ({ msg: `HTTP ${chatResp.status}` }));
+                    throw new Error(`对话失败: ${err.msg}`);
+                }
+                const chatData = await chatResp.json();
+                if (chatData.code === 0 && chatData.data && chatData.data.id) {
+                    await pollForChatCompletion(convId, chatData.data.id, loadingMsgElement);
+                } else {
+                    throw new Error(chatData.msg || "对话 API 返回无效数据");
+                }
+            } catch (e) {
+                console.error("发送图片和文本到 Coze 出错:", e);
+                updateMessage(loadingMsgElement, `请求出错: ${e.message}`, true);
+            }
+        }
     </script>
 </body>
 
