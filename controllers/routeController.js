@@ -1,7 +1,9 @@
 // controllers/routeController.js
 const { getAllNodes } = require("../models/nodeModel");
 const { getAllEdges } = require("../models/edgeModel");
-const { computeShortestPath } = require("../services/dijkstraService");
+// const { computeShortestPath } = require("../services/dijkstraService");
+// 改用astar
+const { computeShortestPath } = require("../services/astarService");
 
 async function getRoute(req, res) {
   const fromName = req.query.from;
