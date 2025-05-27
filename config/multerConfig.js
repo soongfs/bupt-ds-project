@@ -1,3 +1,4 @@
+const path = require('path');
 const multer = require('multer'); // 新增：用于文件上传
 const fs = require('fs'); // 新增：文件系统操作
 
@@ -5,7 +6,7 @@ const fs = require('fs'); // 新增：文件系统操作
 // 配置multer用于文件上传
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        const uploadDir = path.join(__dirname, 'uploads');
+        const uploadDir = path.join(__dirname, '..', 'uploads');
 
 
 

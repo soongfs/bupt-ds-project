@@ -36,7 +36,7 @@ const diaryController = {
         orderBy = 'ORDER BY d.created_at DESC';
         break;
       case 'featured':
-        orderBy = 'ORDER BY d.is_featured DESC, d.created_at DESC';
+        orderBy = 'ORDER BY d.view_count DESC, d.created_at DESC';
         break;
       default:
         orderBy = 'ORDER BY d.like_count DESC, d.view_count DESC, d.created_at DESC';
