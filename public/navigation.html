@@ -1,366 +1,86 @@
 <!-- <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>北京邮电大学导航 - TravelMate</title>
-    <script src="https://map.qq.com/api/gljs?v=1.exp&key=3HGBZ-SKRCT-UKNXT-V7KT6-T5LI2-XGF5F"></script>
-    <link rel="stylesheet" href="./css/pages/navigation.css" />
-  </head>
-  <body>
-    <div class="poi-container">
-      <div id="map-container"></div>
-      <div class="nav-panel">
-        <div class="nav-header">
-          <h1 class="nav-title">北京邮电大学导航</h1>
-          <p>请设置您的起点和终点</p>
-        </div>
-        <div class="input-group">
-          <label for="from">起点位置</label>
-          <input
-            type="text"
-            id="from"
-            class="input-field"
-            placeholder="请输入起点名称"
-            value="北京邮电大学东门"
-          />
-        </div>
-        <div class="input-group">
-          <label for="to">终点位置</label>
-          <input
-            type="text"
-            id="to"
-            class="input-field"
-            placeholder="请输入终点名称"
-            value="北京邮电大学北门"
-          />
-        </div>
-        <button id="searchBtn" class="nav-button">开始导航</button>
-        <div class="route-info" id="routeInfo">
-          <h3>推荐路线信息</h3>
-          <p id="info-distance">🗺️ 总距离：--</p>
-          <p id="info-time">⏱️ 预计时间：--</p>
-          <p id="info-via">🚩 途径：--</p>
-        </div>
-      </div>
-    </div>
-    <script src="./js/navigation.js"></script>
-  </body>
-</html> -->
-<!DOCTYPE html>
-<html lang="zh-CN">
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>多途径点路径规划</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>北京邮电大学导航 - TravelMate</title>
   <script src="https://map.qq.com/api/gljs?v=1.exp&key=3HGBZ-SKRCT-UKNXT-V7KT6-T5LI2-XGF5F"></script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-    }
-
-    #map-container {
-      flex: 1;
-      width: 100%;
-    }
-
-    .control-panel {
-      padding: 15px;
-      background: #f5f5f5;
-      box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
-    }
-
-    .input-group {
-      margin-bottom: 10px;
-      display: flex;
-      gap: 10px;
-    }
-
-    input {
-      padding: 8px;
-      flex: 1;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-    }
-
-    button {
-      padding: 8px 15px;
-      background: #4CAF50;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background: #45a049;
-    }
-
-    .info-panel {
-      margin-top: 10px;
-      padding: 10px;
-      background: white;
-      border-radius: 4px;
-      font-size: 14px;
-    }
-
-    .waypoint-list {
-      margin-top: 10px;
-    }
-
-    .waypoint-item {
-      display: flex;
-      align-items: center;
-      margin-bottom: 5px;
-    }
-
-    .waypoint-item input {
-      flex: 1;
-    }
-
-    .remove-waypoint {
-      margin-left: 10px;
-      background: #f44336;
-      padding: 5px 10px;
-    }
-
-    .add-waypoint {
-      margin-top: 5px;
-      background: #2196F3;
-    }
-  </style>
+  <link rel="stylesheet" href="./css/pages/navigation.css" />
 </head>
 
 <body>
-  <div id="map-container"></div>
-  <div class="control-panel">
-    <div class="input-group">
-      <input type="text" id="from" placeholder="起点名称">
-    </div>
-
-    <div id="waypoints" class="waypoint-list">
-      <!-- 途径点将在这里动态添加 -->
-    </div>
-
-    <button id="addWaypoint" class="add-waypoint">添加途径点</button>
-
-    <div class="input-group">
-      <input type="text" id="to" placeholder="终点名称">
-    </div>
-
-    <button id="searchBtn">计算路径</button>
-
-    <div class="info-panel">
-      <div id="info-distance">🗺️ 总距离：--</div>
-      <div id="info-time">⏱️ 预计时间：--</div>
-      <div id="info-via">🚩 途径：--</div>
+  <div class="poi-container">
+    <div id="map-container"></div>
+    <div class="nav-panel">
+      <div class="nav-header">
+        <h1 class="nav-title">北京邮电大学导航</h1>
+        <p>请设置您的起点和终点</p>
+      </div>
+      <div class="input-group">
+        <label for="from">起点位置</label>
+        <input type="text" id="from" class="input-field" placeholder="请输入起点名称" value="教四南门" />
+      </div>
+      <div class="input-group">
+        <label for="to">终点位置</label>
+        <input type="text" id="to" class="input-field" placeholder="请输入终点名称" value="教三北门" />
+      </div>
+      <button id="searchBtn" class="nav-button">开始导航</button>
+      <div class="route-info" id="routeInfo">
+        <h3>推荐路线信息</h3>
+        <p id="info-distance">🗺️ 总距离：--</p>
+        <p id="info-time">⏱️ 预计时间：--</p>
+        <p id="info-via">🚩 途径：--</p>
+      </div>
     </div>
   </div>
+  <script src="./js/navigation.js"></script>
+</body>
 
-  <script>
-    // 初始化地图
-    const map = new TMap.Map(document.getElementById("map-container"), {
-      center: new TMap.LatLng(39.96, 116.36),
-      zoom: 16,
-      pitch: 30,
-      rotation: 0,
-    });
+</html> -->
+<!DOCTYPE html>
+<html>
 
-    let currentPolyline = null;
-    let markers = [];
-    let waypointCounter = 0;
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>北京邮电大学导航 - TravelMate</title>
+  <script src="https://map.qq.com/api/gljs?v=1.exp&key=3HGBZ-SKRCT-UKNXT-V7KT6-T5LI2-XGF5F"></script>
+  <link rel="stylesheet" href="./css/pages/navigation.css" />
+</head>
 
-    // 添加途径点输入框
-    document.getElementById("addWaypoint").onclick = () => {
-      const waypointsContainer = document.getElementById("waypoints");
-      const waypointId = `waypoint-${waypointCounter++}`;
-
-      const waypointItem = document.createElement("div");
-      waypointItem.className = "waypoint-item";
-      waypointItem.innerHTML = `
-        <input type="text" id="${waypointId}" placeholder="途径点名称">
-        <button class="remove-waypoint" data-id="${waypointId}">删除</button>
-      `;
-
-      waypointsContainer.appendChild(waypointItem);
-
-      // 添加删除事件
-      waypointItem.querySelector(".remove-waypoint").onclick = function () {
-        waypointsContainer.removeChild(waypointItem);
-      };
-    };
-
-    // 计算路径
-    document.getElementById("searchBtn").onclick = async () => {
-      const fromName = document.getElementById("from").value.trim();
-      const toName = document.getElementById("to").value.trim();
-
-      if (!fromName || !toName) {
-        alert("请至少填写起点和终点名称");
-        return;
-      }
-
-      // 收集所有途径点
-      const waypoints = [];
-      const waypointInputs = document.querySelectorAll("#waypoints input");
-      waypointInputs.forEach(input => {
-        if (input.value.trim()) {
-          waypoints.push(input.value.trim());
-        }
-      });
-
-      // 构造请求参数
-      const params = new URLSearchParams();
-      params.append("from", fromName);
-      params.append("to", toName);
-      waypoints.forEach(wp => params.append("waypoints", wp));
-
-      // 请求后端
-      const res = await fetch(`/api/route?${params.toString()}`);
-      const data = await res.json();
-
-      if (!data.path || data.path.length === 0) {
-        alert(data.error || "未找到路径");
-        return;
-      }
-
-      // 构造坐标
-      const coords = data.path.map((p) => new TMap.LatLng(p.lat, p.lon));
-
-      // 清除旧的线路与标记
-      if (currentPolyline) currentPolyline.setMap(null);
-      markers.forEach(marker => marker.setMap(null));
-      markers = [];
-
-      // 绘制路径
-      currentPolyline = new TMap.MultiPolyline({
-        map,
-        styles: {
-          routeStyle: new TMap.PolylineStyle({
-            color: "#4CAF50",
-            width: 6,
-            borderWidth: 2,
-            borderColor: "#FFFFFF",
-          }),
-        },
-        geometries: [
-          {
-            id: "route",
-            styleId: "routeStyle",
-            paths: coords,
-          },
-        ],
-      });
-
-      // 添加标记（起点、途径点、终点）
-      const markerStyles = {
-        start: new TMap.MarkerStyle({
-          width: 34,
-          height: 34,
-          anchor: { x: 17, y: 34 },
-          src: "https://mapapi.qq.com/web/lbs/javascriptGL/demo/img/markerDefault.png",
-        }),
-        waypoint: new TMap.MarkerStyle({
-          width: 30,
-          height: 30,
-          anchor: { x: 15, y: 30 },
-          src: "https://mapapi.qq.com/web/lbs/javascriptGL/demo/img/markerPurple.png",
-        }),
-        end: new TMap.MarkerStyle({
-          width: 34,
-          height: 34,
-          anchor: { x: 17, y: 34 },
-          src: "https://mapapi.qq.com/web/lbs/javascriptGL/demo/img/markerRed.png",
-        }),
-      };
-
-      // 起点标记
-      markers.push(new TMap.MultiMarker({
-        map,
-        styles: { start: markerStyles.start },
-        geometries: [{
-          id: "start",
-          position: coords[0],
-          styleId: "start",
-          properties: {
-            title: "起点",
-          }
-        }],
-      }));
-
-      // 途径点标记
-      if (data.waypoints && data.waypoints.length > 0) {
-        data.waypoints.forEach((wp, index) => {
-          markers.push(new TMap.MultiMarker({
-            map,
-            styles: { waypoint: markerStyles.waypoint },
-            geometries: [{
-              id: `waypoint-${index}`,
-              position: new TMap.LatLng(wp.lat, wp.lon),
-              styleId: "waypoint",
-              properties: {
-                title: `途径点 ${index + 1}`,
-              }
-            }],
-          }));
-        });
-      }
-
-      // 终点标记
-      markers.push(new TMap.MultiMarker({
-        map,
-        styles: { end: markerStyles.end },
-        geometries: [{
-          id: "end",
-          position: coords[coords.length - 1],
-          styleId: "end",
-          properties: {
-            title: "终点",
-          }
-        }],
-      }));
-
-      // 调整视野到整个路径
-      const bounds = coords.reduce(
-        (b, pt) => b.extend(pt),
-        new TMap.LatLngBounds()
-      );
-      map.fitBounds(bounds, { padding: 20 });
-
-      // 更新路线信息
-      const totalDist = data.path.slice(1).reduce((sum, p, i) => {
-        const prev = data.path[i];
-        const dx = prev.lat - p.lat;
-        const dy = prev.lon - p.lon;
-        return sum + Math.sqrt(dx * dx + dy * dy) * 111000; // 粗略换算米
-      }, 0);
-
-      document.getElementById("info-distance").innerText = `🗺️ 总距离：${(
-        totalDist / 1000
-      ).toFixed(2)} 公里`;
-
-      document.getElementById(
-        "info-time"
-      ).innerText = `⏱️ 预计时间：步行 ${Math.ceil((totalDist / 1000) * 12)} 分钟`; // 假设 5km/h = 12min/km
-
-      // 显示途径点信息
-      let viaText = "🚩 途径：";
-      if (data.waypoints && data.waypoints.length > 0) {
-        viaText += data.waypoints.map((wp, index) =>
-          `途径点 ${index + 1} (${wp.node_id})`
-        ).join(" → ");
-      } else {
-        viaText += "无途径点";
-      }
-      document.getElementById("info-via").innerText = viaText;
-    };
-  </script>
+<body>
+  <div class="poi-container">
+    <div id="map-container"></div>
+    <div class="nav-panel">
+      <div class="nav-header">
+        <h1 class="nav-title">北京邮电大学导航</h1>
+        <p>请设置您的起点和终点</p>
+      </div>
+      <div class="input-group">
+        <label for="from">起点位置</label>
+        <div class="autocomplete">
+          <input type="text" id="from" class="input-field" placeholder="请输入起点名称" value="教四南门" autocomplete="off" />
+          <div id="from-suggestions" class="suggestions"></div>
+        </div>
+      </div>
+      <div class="input-group">
+        <label for="to">终点位置</label>
+        <div class="autocomplete">
+          <input type="text" id="to" class="input-field" placeholder="请输入终点名称" value="教三北门" autocomplete="off" />
+          <div id="to-suggestions" class="suggestions"></div>
+        </div>
+      </div>
+      <button id="searchBtn" class="nav-button">开始导航</button>
+      <div class="route-info" id="routeInfo">
+        <h3>推荐路线信息</h3>
+        <p id="info-distance">🗺️ 总距离：--</p>
+        <p id="info-time">⏱️ 预计时间：--</p>
+        <p id="info-via">🚩 途径：--</p>
+      </div>
+    </div>
+  </div>
+  <script src="./js/navigation.js"></script>
 </body>
 
 </html>

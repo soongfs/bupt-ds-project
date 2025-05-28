@@ -468,6 +468,24 @@ async function getAttractions(category = 'all', sort = 'hot') {
   });
 }
 
+// 假设使用Node.js Express框架
+// 修改后的后端API
+// app.get('/api/locations', (req, res) => {
+//   // 从node表获取所有地点名称
+//   console.log("get int api/locations");
+//   const query = 'SELECT DISTINCT name AS name FROM node';
+//   // 或者如果node表中有专门的名称字段，比如叫location_name:
+//   // const query = 'SELECT DISTINCT location_name AS name FROM node';
+
+//   db.query(query, (err, results) => {
+//     if (err) {
+//       console.error('获取地点列表失败:', err);
+//       return res.status(500).json({ error: '获取地点列表失败' });
+//     }
+//     res.json(results.map(row => row.name));
+//   });
+// });
+
 // 景点路由
 app.use('/', attractionRouter);
 
