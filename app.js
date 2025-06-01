@@ -50,7 +50,7 @@ app.use((err, req, res, next) => {
 
 const indexRouter = require('./routes/index');
 const diaryRouter = require('./routes/diary');
-const attractionRouter = require('./routes/attraction');
+// const attractionRouter = require('./routes/attraction');
 app.use("/api", routeRouter); // 路径规划新增
 
 db.connect(err => {
@@ -487,7 +487,30 @@ async function getAttractions(category = 'all', sort = 'hot') {
 // });
 
 // 景点路由
-app.use('/', attractionRouter);
+// app.use('/', attractionRouter);
+
+app.get('/attraction-explorer', async (req, res) => {
+  try {
+    const { category = 'all', sort = 'hot' } = req.query;
+    const attractions = await getAttractions(category, sort);
+
+    res.render('attraction-explorer', {
+      attractions,
+      currentCategory: category,
+      currentSort: sort,
+      helpers: {
+        formatNumber: (num) => {
+          if (num >= 10000) return (num / 10000).toFixed(1) + '万';
+          return num.toString();
+        }
+      }
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Server Error');
+  }
+});
+
 
 // 主页路由
 app.use('/', indexRouter);
