@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        <%= '日记发现 - TravelMate' %>
+    </title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2a9d8f;
+            --secondary: #264653;
+            --accent: #e9c46a;
+            --text: #444;
+            --border: #e0e0e0;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'PingFang SC', sans-serif;
+        }
+
+        body {
+            background: #f8f9fa;
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        /* 筛选容器 */
+        .filter-container {
+            background: rgba(255, 255, 255, 0.98);
+            padding: 1rem 1rem 1rem;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+
+        /* 搜索栏 */
+        .search-bar {
+            position: relative;
+            margin-bottom: 1rem;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 1rem 2rem 1rem 3rem;
+            border: 2px solid var(--border);
+            border-radius: 30px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .search-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 12px rgba(42, 157, 143, 0.2);
+            outline: none;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 1.2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+        }
+
+        .card-link {
+            display: block;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        /*卡片链接*/
+        .card-link:hover {
+            opacity: 0.9;
+        }
+
+        /* 筛选条件 */
+        .filter-group {
+            display: flex;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+
+        .filter-btn {
+            padding: 0.5rem 1.5rem;
+            border: 2px solid var(--border);
+            border-radius: 30px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .filter-btn.active {
+            border-color: var(--primary);
+            background: var(--primary);
+            color: white;
+        }
+
+        /* 排序选项 */
+        .sort-options {
+            display: flex;
+            gap: 0.8rem;
+            align-items: center;
+            padding: 1rem 0;
+            border-top: 1px solid var(--border);
+        }
+
+        .sort-btn {
+            padding: 0.5rem 1.5rem;
+            border-radius: 30px;
+            background: rgba(42, 157, 143, 0.1);
+            color: var(--primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s;
+        }
+
+        .sort-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* 日记列表 */
+        .diary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2rem;
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* 日记卡片 */
+        .diary-card {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .diary-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        }
+
+        .card-image {
+            height: 240px;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+
+        .hot-badge {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            background: linear-gradient(135deg, var(--primary), #1d7870);
+            color: white;
+            padding: 0.3rem 1.2rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-content {
+            padding: 1.5rem;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .diary-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .author-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid white;
+            box-shadow: var(--shadow);
+        }
+
+        .author-info {
+            flex: 1;
+        }
+
+        .diary-title {
+            color: var(--secondary);
+            margin: 0 0 0.5rem;
+            font-size: 1.3rem;
+            line-height: 1.4;
+        }
+
+        .post-time {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .diary-excerpt {
+            color: #666;
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            line-clamp: 3;
+            overflow: hidden;
+        }
+
+        .interaction-stats {
+            display: flex;
+            gap: 1.5rem;
+            color: #666;
+            margin-top: auto;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .diary-tags {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .tag {
+            background: rgba(42, 157, 143, 0.1);
+            color: var(--primary);
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        /* 导航栏 */
+        .global-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 5%;
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: var(--shadow);
+            z-index: 1000;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary);
+            transition: transform 0.3s;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            color: var(--text);
+            text-decoration: none;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            transition: all 0.3s;
+        }
+
+        .nav-links a:hover {
+            background: rgba(42, 157, 143, 0.1);
+            color: var(--primary);
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .diary-grid {
+                grid-template-columns: 1fr;
+                padding: 1rem;
+                gap: 1.5rem;
+            }
+
+            .filter-container {
+                padding: 1.5rem;
+            }
+
+            .filter-btn {
+                flex: 1 1 120px;
+                justify-content: center;
+                padding: 0.8rem;
+            }
+
+            .sort-options {
+                flex-wrap: wrap;
+            }
+        }
+
+        /* 新增发布按钮样式 */
+        .publish-fab {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(42, 157, 143, 0.3);
+            cursor: pointer;
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+
+        .publish-fab:hover {
+            transform: scale(1.1) rotate(180deg);
+            box-shadow: 0 6px 16px rgba(42, 157, 143, 0.4);
+        }
+
+        .publish-fab::before {
+            content: "✏️";
+            font-size: 1.5rem;
+        }
+
+        /* 移动端优化 */
+        @media (max-width: 768px) {
+            .publish-fab {
+                bottom: 1rem;
+                right: 1rem;
+                width: 48px;
+                height: 48px;
+            }
+
+            /* 调整筛选容器层级 */
+            .filter-container {
+                z-index: 999;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- 导航栏 -->
+    <!-- <nav class="global-nav">
+        <a href="/" class="logo">✈️ TravelMate</a>
+        <div class="nav-links">
+            <a href="/">首页</a>
+            <a href="/explore">探索</a>
+            <a href="/diaries">日记</a>
+        </div>
+        <div class="user-avatar">
+            <% if (user?.avatar) { %>
+                <img src="<%= '/uploads/' + user.avatar %>" alt="用户头像"
+                    style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
+                <% } else { %>
+                    👤
+                    <% } %>
+        </div>
+    </nav> -->
+    <div class="publish-fab" onclick="location.href='/diaries/new'"></div>
+    <div class="filter-container">
+        <div class="search-bar">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" class="search-input" placeholder="搜索日记关键词或作者..." value="<%= searchQuery || '' %>">
+        </div>
+
+        <div class="filter-group">
+            <% const categories=['全部主题', '摄影日记' , '美食之旅' , '户外探险' ]; %>
+                <% categories.forEach(category=> { %>
+                    <button class="filter-btn <%= currentCategory === category ? 'active' : '' %>"
+                        onclick="filterByCategory('<%= category %>')">
+                        <i class="fas <%= 
+                        category === '全部主题' ? 'fa-globe-asia' : 
+                        category === '摄影日记' ? 'fa-camera' : 
+                        category === '美食之旅' ? 'fa-utensils' : 'fa-hiking' 
+                    %>"></i>
+                        <%= category %>
+                    </button>
+                    <% }); %>
+        </div>
+
+        <div class="sort-options">
+            <% const sortOptions=[ { name: '热门推荐' , icon: 'fa-fire' , value: 'hot' }, { name: '最新发布' , icon: 'fa-clock'
+                , value: 'newest' }, { name: '精选合集' , icon: 'fa-star' , value: 'featured' } ]; %>
+                <% sortOptions.forEach(option=> { %>
+                    <button class="sort-btn <%= sortBy === option.value ? 'active' : '' %>"
+                        onclick="sortDiaries('<%= option.value %>')">
+                        <i class="fas <%= option.icon %>"></i>
+                        <%= option.name %>
+                    </button>
+                    <% }); %>
+        </div>
+    </div>
+
+    <div class="diary-grid">
+        <% if (diaries.length> 0) { %>
+            <% diaries.forEach(diary=> { %>
+                <div class="diary-card">
+                    <div class="card-image"
+                        style="background-image: url('<%= diary.cover_image || '/images/default-diary.jpg' %>'" )>
+                        <% if (diary.is_featured) { %>
+                            <span class="hot-badge">
+                                <% if (diary.like_count> 3000) { %>
+                                    🔥 本周热门
+                                    <% } else if (diary.categories.includes('摄影')) { %>
+                                        📸 精选摄影
+                                        <% } else { %>
+                                            ⭐ 编辑推荐
+                                            <% } %>
+                            </span>
+                            <% } %>
+                    </div>
+                    <div class="card-content">
+                        <div class="diary-header">
+                            <a href="/user/<%= diary.user_id %>">
+                                <img src="<%= '/uploads/' + diary.avatar || '/images/default-avatar.jpg' %>"
+                                    class="author-avatar" alt="作者头像">
+                            </a>
+                            <div class="author-info">
+                                <a href="/diary-detail/<%= diary.id %>" class="card-link">
+                                    <h3 class="diary-title">
+                                        <%= diary.title %>
+                                    </h3>
+                                </a>
+                                <p class="post-time">
+                                    <a href="/user/<%= diary.user_id %>" style="color: inherit; text-decoration: none;">
+                                        <%= diary.username %>
+                                    </a> · <%= formatDate(diary.created_at) %>
+                                </p>
+                            </div>
+                        </div>
+                        <p class="diary-excerpt">
+                            <%= diary.excerpt || diary.content.substring(0, 100) + '...' %>
+                        </p>
+                        <div class="interaction-stats">
+                            <div class="stat-item">
+                                <i class="fas fa-heart"></i>
+                                <span>
+                                    <%= diary.like_count.toLocaleString() %>
+                                </span>
+                            </div>
+                            <div class="stat-item">
+                                <i class="fas fa-comment"></i>
+                                <span>
+                                    <%= diary.comment_count.toLocaleString() %>
+                                </span>
+                            </div>
+
+                        </div>
+                        <div class="diary-tags">
+                            <% diary.tags.slice(0, 2).forEach(tag=> { %>
+                                <span class="tag">
+                                    <i class="fas <%= tag.icon %>"></i>
+                                    <%= tag.name %>
+                                </span>
+                                <% }); %>
+                        </div>
+                    </div>
+                </div>
+                <% }); %>
+                    <% } else { %>
+                        <div class="no-diaries" style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
+                            <i class="fas fa-book-open"
+                                style="font-size: 3rem; color: var(--primary); margin-bottom: 1rem;"></i>
+                            <h3 style="color: var(--secondary);">没有找到相关日记</h3>
+                            <p style="color: #666;">尝试调整筛选条件或搜索关键词</p>
+                        </div>
+                        <% } %>
+    </div>
+
+    <% if (totalPages> 1) { %>
+        <div class="pagination" style="text-align: center; margin: 2rem 0;">
+            <% for (let i=1; i <=totalPages; i++) { %>
+                <a href="?page=<%= i %>" style="display: inline-block; padding: 0.5rem 1rem; margin: 0 0.25rem; 
+                              background: <%= currentPage === i ? 'var(--primary)' : 'white' %>; 
+                              color: <%= currentPage === i ? 'white' : 'var(--text)' %>; 
+                              border-radius: 4px; text-decoration: none;">
+                    <%= i %>
+                </a>
+                <% } %>
+        </div>
+        <% } %>
+
+            <script>
+                function filterByCategory(category) {
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('category', category);
+                    window.location.href = url.toString();
+                }
+
+                function sortDiaries(sortBy) {
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('sort', sortBy);
+                    window.location.href = url.toString();
+                }
+
+                document.querySelector('.search-input').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        const searchQuery = e.target.value.trim();
+                        const url = new URL(window.location.href);
+                        url.searchParams.set('q', searchQuery);
+                        window.location.href = url.toString();
+                    }
+                });
+            </script>
+</body>
+
+</html>

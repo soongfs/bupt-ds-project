@@ -1,38 +1,30 @@
-// routes/diary.js
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const diaryCtrl = require("../controllers/diaryController");
+const diaryController = require('../controllers/diaryController');
+const upload = require('../config/multerConfig');
 
-// 如果 diaryController.publish 需要 multer 中间件，传入 upload 实例
-module.exports = (upload) => {
-  // 发布新日记（带图片上传）
-  router.post(
-    "/api/diaries",
-    upload.fields([
-      { name: "coverImage", maxCount: 1 },
-      { name: "mediaFiles", maxCount: 20 },
-    ]),
-    diaryCtrl.publish
-  );
+// 提交新日记
+router.post('/api/diaries', upload.fields([
+  { name: 'coverImage', maxCount: 1 },
+  { name: 'mediaFiles', maxCount: 20 }
+]), diaryController.createDiary);
 
-  // 编辑日记
-  router.put(
-    "/api/diaries/:id",
-    upload.fields([
-      { name: "coverImage", maxCount: 1 },
-      { name: "mediaFiles", maxCount: 20 },
-    ]),
-    diaryCtrl.edit
-  );
+// 编辑日记
+router.put('/api/diaries-edit/:id', diaryController.updateDiary);
 
-  // 日记详情页
-  router.get("/diary-detail/:id", diaryCtrl.detail);
+// 日记发现页
+router.get('/diary-discovery', diaryController.getDiaryDiscovery);
 
-  // 添加评论
-  router.post("/api/diaries/:id/comments", diaryCtrl.addComment);
+// 创建新日记页面
+router.get('/diaries/new', diaryController.getNewDiary);
 
-  // 给日记点赞
-  router.post("/api/diaries/:id/like", diaryCtrl.like);
+// 日记详情页
+router.get('/diary-detail/:id', diaryController.getDiaryDetail);
 
-  return router;
-};
+// 添加评论
+router.post('/api/diaries/:id/comments', diaryController.addComment);
+
+// 点赞日记
+router.post('/api/diaries/:id/like', diaryController.likeDiary);
+
+module.exports = router;
