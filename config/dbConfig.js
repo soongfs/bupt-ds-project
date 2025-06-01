@@ -17,10 +17,10 @@ const mysql = require("mysql2");
 
 const pool = mysql
   .createPool({
-    host: 'localhost',
-    user: 'webuser',
-    password: '}@)]72aMbPn5',
-    database: 'pathfinder',
+    host: "152.136.239.207",
+    user: "webuser",
+    password: "}@)]72aMbPn5",
+    database: "pathfinder",
     waitForConnections: true,
     connectionLimit: 10,
   })
