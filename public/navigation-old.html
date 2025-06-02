@@ -1,0 +1,86 @@
+<!-- <!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>北京邮电大学导航 - TravelMate</title>
+  <script src="https://map.qq.com/api/gljs?v=1.exp&key=3HGBZ-SKRCT-UKNXT-V7KT6-T5LI2-XGF5F"></script>
+  <link rel="stylesheet" href="./css/pages/navigation.css" />
+</head>
+
+<body>
+  <div class="poi-container">
+    <div id="map-container"></div>
+    <div class="nav-panel">
+      <div class="nav-header">
+        <h1 class="nav-title">北京邮电大学导航</h1>
+        <p>请设置您的起点和终点</p>
+      </div>
+      <div class="input-group">
+        <label for="from">起点位置</label>
+        <input type="text" id="from" class="input-field" placeholder="请输入起点名称" value="教四南门" />
+      </div>
+      <div class="input-group">
+        <label for="to">终点位置</label>
+        <input type="text" id="to" class="input-field" placeholder="请输入终点名称" value="教三北门" />
+      </div>
+      <button id="searchBtn" class="nav-button">开始导航</button>
+      <div class="route-info" id="routeInfo">
+        <h3>推荐路线信息</h3>
+        <p id="info-distance">🗺️ 总距离：--</p>
+        <p id="info-time">⏱️ 预计时间：--</p>
+        <p id="info-via">🚩 途径：--</p>
+      </div>
+    </div>
+  </div>
+  <script src="./js/navigation.js"></script>
+</body>
+
+</html> -->
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>北京邮电大学导航 - TravelMate</title>
+  <script src="https://map.qq.com/api/gljs?v=1.exp&key=3HGBZ-SKRCT-UKNXT-V7KT6-T5LI2-XGF5F"></script>
+  <link rel="stylesheet" href="./css/pages/navigation.css" />
+</head>
+
+<body>
+  <div class="poi-container">
+    <div id="map-container"></div>
+    <div class="nav-panel">
+      <div class="nav-header">
+        <h1 class="nav-title">北京邮电大学导航</h1>
+        <p>请设置您的起点和终点</p>
+      </div>
+      <div class="input-group">
+        <label for="from">起点位置</label>
+        <div class="autocomplete">
+          <input type="text" id="from" class="input-field" placeholder="请输入起点名称" value="教四南门" autocomplete="off" />
+          <div id="from-suggestions" class="suggestions"></div>
+        </div>
+      </div>
+      <div class="input-group">
+        <label for="to">终点位置</label>
+        <div class="autocomplete">
+          <input type="text" id="to" class="input-field" placeholder="请输入终点名称" value="教三北门" autocomplete="off" />
+          <div id="to-suggestions" class="suggestions"></div>
+        </div>
+      </div>
+      <button id="searchBtn" class="nav-button">开始导航</button>
+      <div class="route-info" id="routeInfo">
+        <h3>推荐路线信息</h3>
+        <p id="info-distance">🗺️ 总距离：--</p>
+        <p id="info-time">⏱️ 预计时间：--</p>
+        <p id="info-via">🚩 途径：--</p>
+      </div>
+    </div>
+  </div>
+  <script src="./js/navigation.js"></script>
+</body>
+
+</html>
