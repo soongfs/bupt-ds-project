@@ -1,0 +1,73 @@
+<!-- 发布按钮 -->
+<div class="publish-fab" onclick="location.href='/diaries/new'"></div>
+
+<!-- 筛选栏 -->
+<div class="filter-container">
+    <div class="filter-options">
+        <span class="filter-label">排序方式：</span>
+        <select class="filter-select" id="sortBy">
+            <option value="latest">最新发布</option>
+            <option value="popular">最受欢迎</option>
+            <option value="comments">评论最多</option>
+        </select>
+        
+        <span class="filter-label">分类：</span>
+        <select class="filter-select" id="category">
+            <option value="all">全部</option>
+            <option value="travel">旅行</option>
+            <option value="food">美食</option>
+            <option value="culture">文化</option>
+            <option value="photography">摄影</option>
+        </select>
+    </div>
+</div>
+
+<!-- 日记列表 -->
+<div class="diary-grid">
+    <% diaries.forEach(diary => { %>
+        <div class="diary-card">
+            <% if (diary.coverImage) { %>
+                <img src="/uploads/<%= diary.coverImage %>" alt="<%= diary.title %>" class="diary-image">
+            <% } %>
+            <div class="diary-content">
+                <h2 class="diary-title"><%= diary.title %></h2>
+                <p class="diary-excerpt"><%= diary.content %></p>
+                <div class="diary-meta">
+                    <div class="diary-author">
+                        <img src="/uploads/<%= diary.author.avatar || 'default-avatar.jpg' %>" 
+                             alt="<%= diary.author.username %>" 
+                             class="author-avatar">
+                        <span><%= diary.author.username %></span>
+                    </div>
+                    <div class="diary-stats">
+                        <div class="stat-item">
+                            <i class="far fa-heart"></i>
+                            <span><%= diary.likes %></span>
+                        </div>
+                        <div class="stat-item">
+                            <i class="far fa-comment"></i>
+                            <span><%= diary.comments %></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    <% }); %>
+</div>
+
+<script>
+document.getElementById('sortBy').addEventListener('change', function() {
+    updateDiaries();
+});
+
+document.getElementById('category').addEventListener('change', function() {
+    updateDiaries();
+});
+
+function updateDiaries() {
+    const sortBy = document.getElementById('sortBy').value;
+    const category = document.getElementById('category').value;
+    
+    window.location.href = `/diary/discovery?sort=${sortBy}&category=${category}`;
+}
+</script> 
