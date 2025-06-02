@@ -106,6 +106,7 @@ body {
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.3s;
+  margin-bottom: 1rem;
 }
 
 .nav-button:hover {
