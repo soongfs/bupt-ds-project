@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>发送消息 - TravelMate</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
+    <style>
+        :root {
+            --primary: #2a9d8f;
+            --secondary: #264653;
+            --accent: #e9c46a;
+            --text: #444;
+            --border: #eee;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Segoe UI", "PingFang SC", sans-serif;
+        }
+
+        body {
+            background: #f8f9fa;
+            color: var(--text);
+            line-height: 1.6;
+            padding-top: 80px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .message-form {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: var(--shadow);
+        }
+
+        .form-header {
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .form-title {
+            font-size: 1.5rem;
+            color: var(--secondary);
+        }
+
+        .recipient-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .recipient-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .recipient-name {
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--secondary);
+            font-weight: 500;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 1rem;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-size: 1rem;
+            resize: vertical;
+            min-height: 150px;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(42, 157, 143, 0.1);
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 0.8rem 2rem;
+            border: none;
+            border-radius: 30px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #248a7e;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #f8f9fa;
+            color: var(--text);
+            margin-right: 1rem;
+        }
+
+        .btn-secondary:hover {
+            background: #e9ecef;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <form class="message-form" id="messageForm">
+            <div class="form-header">
+                <h1 class="form-title">发送消息</h1>
+            </div>
+            
+            <div class="recipient-info">
+                <img src="<%= '/uploads/' + recipient.avatar %>" alt="<%= recipient.username %>" class="recipient-avatar">
+                <span class="recipient-name">发送给：<%= recipient.username %></span>
+            </div>
+
+            <div class="alert alert-success" id="successAlert">消息发送成功！</div>
+            <div class="alert alert-error" id="errorAlert"></div>
+
+            <div class="form-group">
+                <label for="messageContent" class="form-label">消息内容</label>
+                <textarea id="messageContent" name="content" class="form-control" required></textarea>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" onclick="history.back()">取消</button>
+                <button type="submit" class="btn btn-primary">发送</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('messageForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const content = document.getElementById('messageContent').value;
+            const successAlert = document.getElementById('successAlert');
+            const errorAlert = document.getElementById('errorAlert');
+            
+            try {
+                const response = await fetch('/messages/send', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        receiverId: '<%= recipient.id %>',
+                        content: content
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    successAlert.style.display = 'block';
+                    errorAlert.style.display = 'none';
+                    document.getElementById('messageContent').value = '';
+                    
+                    // 3秒后返回上一页
+                    setTimeout(() => {
+                        history.back();
+                    }, 3000);
+                } else {
+                    errorAlert.textContent = data.message || '发送失败';
+                    errorAlert.style.display = 'block';
+                    successAlert.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('发送消息失败:', error);
+                errorAlert.textContent = '发送失败，请稍后重试';
+                errorAlert.style.display = 'block';
+                successAlert.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html> 

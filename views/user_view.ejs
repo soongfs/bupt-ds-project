@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TravelMate - <%= targetUser.username %>的个人主页</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
+    <style>
+        :root {
+            --primary: #2a9d8f;
+            --secondary: #264653;
+            --accent: #e9c46a;
+            --text: #444;
+            --border: #eee;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Segoe UI", "PingFang SC", sans-serif;
+        }
+
+        body {
+            background: #f8f9fa;
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        /* 导航栏 */
+        .global-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 5%;
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: var(--shadow);
+            z-index: 1000;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-decoration: none;
+            transition: transform 0.3s;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            color: var(--text);
+            text-decoration: none;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            transition: all 0.3s;
+        }
+
+        .nav-links a:hover {
+            background: rgba(42, 157, 143, 0.1);
+            color: var(--primary);
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.3s;
+            text-decoration: none;
+        }
+
+        /* 主要内容区域 */
+        .profile-container {
+            max-width: 1000px;
+            margin: 100px auto 2rem;
+            padding: 0 1.5rem;
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 2rem;
+        }
+
+        /* 用户信息卡片 */
+        .user-card {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 100px;
+        }
+
+        .profile-avatar {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            margin: 0 auto 1.5rem;
+            display: block;
+            object-fit: cover;
+            border: 3px solid var(--border);
+        }
+
+        .profile-name {
+            text-align: center;
+            font-size: 1.5rem;
+            color: var(--secondary);
+            margin-bottom: 1rem;
+        }
+
+        .profile-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            text-align: center;
+            margin: 1.5rem 0;
+            padding: 1rem 0;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .profile-info {
+            margin-top: 1.5rem;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            margin-bottom: 1rem;
+            color: #666;
+        }
+
+        .info-item i {
+            color: var(--primary);
+            width: 20px;
+        }
+
+        /* 内容区域 */
+        .content-section {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            font-size: 1.2rem;
+            color: var(--secondary);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .section-title i {
+            color: var(--primary);
+        }
+
+        .bio-text {
+            color: #666;
+            line-height: 1.8;
+            margin-bottom: 1.5rem;
+        }
+
+        .interests-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+        }
+
+        .interest-tag {
+            background: rgba(42, 157, 143, 0.1);
+            color: var(--primary);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border-radius: 30px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background: #238f82;
+            box-shadow: 0 4px 12px rgba(42, 157, 143, 0.3);
+        }
+
+        .btn-outline {
+            background: none;
+            border: 2px solid var(--border);
+            color: var(--text);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .profile-container {
+                grid-template-columns: 1fr;
+            }
+
+            .user-card {
+                position: static;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- 导航栏 -->
+    <nav class="global-nav">
+        <a href="/" class="logo">✈️ TravelMate</a>
+        <div class="nav-links">
+            <a href="/">首页</a>
+            <a href="/explore">探索</a>
+            <a href="/diaries">日记</a>
+        </div>
+        <% if (currentUser) { %>
+            <a href="/user/<%= currentUser.id %>" class="user-avatar">
+                <% if (currentUser.avatar) { %>
+                    <img src="<%= '/uploads/' + currentUser.avatar %>" alt="用户头像"
+                        style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
+                    <% } else { %>
+                        👤
+                        <% } %>
+            </a>
+            <% } else { %>
+                <a href="/login" class="btn btn-primary" style="margin-left: auto;">登录</a>
+                <% } %>
+    </nav>
+
+    <!-- 主要内容 -->
+    <div class="profile-container">
+        <!-- 用户信息卡片 -->
+        <div class="user-card">
+            <img src="<%= '/uploads/' + targetUser.avatar || '/images/default-avatar.jpg' %>" alt="<%= targetUser.username %>的头像"
+                class="profile-avatar">
+            <h1 class="profile-name">
+                <%= targetUser.username %>
+            </h1>
+
+            <div class="profile-stats">
+                <div class="stat-item">
+                    <span class="stat-value">
+                        <%= targetUser.diaryCount || 0 %>
+                    </span>
+                    <span class="stat-label">游记</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">
+                        <%= targetUser.followersCount || 0 %>
+                    </span>
+                    <span class="stat-label">粉丝</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">
+                        <%= targetUser.followingCount || 0 %>
+                    </span>
+                    <span class="stat-label">关注</span>
+                </div>
+            </div>
+
+            <div class="profile-info">
+                <% if (targetUser.location) { %>
+                    <div class="info-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>
+                            <%= targetUser.location %>
+                        </span>
+                    </div>
+                    <% } %>
+                        <div class="info-item">
+                            <i class="fas fa-calendar-alt"></i>
+                            <span>加入于 <%= new Date(targetUser.createdAt).toLocaleDateString() %></span>
+                        </div>
+            </div>
+
+            <div class="profile-actions">
+                <% if (currentUser && currentUser.id !== targetUser.id) { %>
+                    <button class="btn btn-follow" id="followBtn" data-user-id="<%= targetUser.id %>"
+                        data-is-following="<%= isFollowing %>">
+                        <%= isFollowing ? '取消关注' : '关注' %>
+                    </button>
+                    <a href="/messages/new/<%= targetUser.id %>" class="btn btn-message">
+                        <i class="fas fa-envelope"></i> 发消息
+                    </a>
+                <% } %>
+            </div>
+        </div>
+
+        <!-- 内容区域 -->
+        <div class="content-area">
+            <!-- 个人简介 -->
+            <div class="content-section">
+                <h2 class="section-title">
+                    <i class="fas fa-user"></i>关于我
+                </h2>
+                <% if (targetUser.bio) { %>
+                    <p class="bio-text">
+                        <%= targetUser.bio %>
+                    </p>
+                    <% } else { %>
+                        <p class="bio-text">这个人很懒，什么都没写~</p>
+                        <% } %>
+
+                            <% if (targetUser.interests && targetUser.interests.length> 0) { %>
+                                <div class="interests-list">
+                                    <% targetUser.interests.split(',').forEach(interest=> { %>
+                                        <span class="interest-tag">
+                                            <%= interest.trim() %>
+                                        </span>
+                                        <% }) %>
+                                </div>
+                                <% } %>
+            </div>
+
+            <!-- 最新游记 -->
+            <div class="content-section">
+                <h2 class="section-title">
+                    <i class="fas fa-book-open"></i>最新游记
+                </h2>
+                <% if (targetUser.diaries && targetUser.diaries.length> 0) { %>
+                    <!-- 这里添加游记列表的展示逻辑 -->
+                    <% } else { %>
+                        <p class="bio-text">暂无游记</p>
+                        <% } %>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 关注/取消关注功能
+        const followBtn = document.getElementById('followBtn');
+        if (followBtn) {
+            followBtn.addEventListener('click', async function () {
+                const userId = this.dataset.userId;
+                const isFollowing = this.textContent.trim() === '取消关注';
+
+                try {
+                    const response = await fetch(`/api/user/${userId}/${isFollowing ? 'unfollow' : 'follow'}`, {
+                        method: 'POST',
+                        credentials: 'include'
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        this.innerHTML = isFollowing ?
+                            '<i class="fas fa-user-plus"></i> 关注' :
+                            '<i class="fas fa-user-plus"></i> 取消关注';
+
+                        // 更新粉丝数量
+                        const followersCount = document.querySelector('.stat-value');
+                        followersCount.textContent = parseInt(followersCount.textContent) + (isFollowing ? -1 : 1);
+                    } else {
+                        alert(result.message || '操作失败，请重试');
+                    }
+                } catch (error) {
+                    console.error('操作失败:', error);
+                    alert('网络错误，请稍后重试');
+                }
+            });
+        }
+    </script>
+</body>
+
+</html>

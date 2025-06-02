@@ -5,13 +5,18 @@ const session = require("express-session");
 const path = require("path");
 const multer = require("multer"); // 新增：用于文件上传
 const fs = require("fs"); // 新增：文件系统操作
+const http = require('http');
+const initializeSocket = require('./config/socket');
 
 const db = require("./config/test-database");
 // 文件上传功能
 const upload = require("./config/multerConfig"); // 确保你已经配置了multer
 const routeRouter = require("./routes/route"); // 路径规划新增
+const auth = require('./middleware/auth'); // 新增：身份验证中间件
 
 const app = express();
+const server = http.createServer(app);
+const io = initializeSocket(server);
 
 // 中间件配
 app.use(express.urlencoded({ extended: true })); // 解析表单数据
@@ -38,6 +43,9 @@ app.use("/user/images", express.static(path.join(__dirname, "public/images")));
 app.use("/user/images", express.static(path.join(__dirname, "public/images")));
 app.use("/uploads", express.static(path.join(__dirname, "uploads"))); // 新增：上传文件静态目录
 
+// 添加全局身份验证中间件
+app.use(auth.setCurrentUser);
+
 // 在 Express 应用中添加错误处理中间件
 app.use((err, req, res, next) => {
   console.error("Error:", err);
@@ -48,17 +56,19 @@ app.use((err, req, res, next) => {
   });
 });
 
-<<<<<<< HEAD
-
 const indexRouter = require('./routes/index');
 const diaryRouter = require('./routes/diary');
-// const attractionRouter = require('./routes/attraction');
-=======
-const indexRouter = require("./routes/index");
-const diaryRouter = require("./routes/diary");
+const userRouter = require('./routes/userRoutes'); // 新增：用户路由
 const attractionRouter = require("./routes/attraction");
->>>>>>> 568d404a6695cd67c19ca3f8d10bdc09ac134bdf
+const messageRouter = require('./routes/messageRoutes'); // 新增：消息路由
+
+// 注册路由
+app.use("/", indexRouter);
+app.use("/diary", diaryRouter);
+app.use("/user", userRouter); // 新增：注册用户路由
+app.use("/attraction", attractionRouter);
 app.use("/api", routeRouter); // 路径规划新增
+app.use("/messages", messageRouter); // 新增：注册消息路由
 
 db.connect((err) => {
   if (err) throw err;
@@ -87,106 +97,6 @@ app.get("/publish", (req, res) => {
     return res.redirect("/login");
   }
   res.sendFile(path.join(__dirname, "web/publish.html"));
-});
-
-// 用户路由
-// 它可能会拦截 /user/images/avatar1.jpg（因为 images 会被当作 :id）所以需要在文件的开头增加user的静态路由
-app.get("/user/:id", (req, res) => {
-  const userId = req.params.id;
-
-  // 查询用户信息
-  const userQuery =
-    "SELECT id, username, email, avatar FROM user_information WHERE id = ?";
-
-  db.query(userQuery, [userId], (err, userResults) => {
-    if (err) {
-      console.error("数据库查询错误:", err);
-      return res.status(500).send("服务器错误");
-    }
-
-    if (userResults.length === 0) {
-      return res.status(404).render("404", { message: "用户不存在" });
-    }
-
-    const user = userResults[0];
-    console.log("user information", user);
-
-    // 查询用户日记数据 (假设有diaries表)
-    const travel_diaries =
-      "SELECT * FROM travel_diaries WHERE user_id = ? ORDER BY id DESC LIMIT 5";
-
-    db.query(travel_diaries, [userId], (err, diaryResults) => {
-      if (err) {
-        console.error("日记查询错误:", err);
-        // 即使日记查询失败，仍然返回用户基本信息
-        return res.render("user", {
-          user: user,
-          diaries: [],
-          stats: {
-            followers: 0,
-            following: 0,
-            diariesCount: 0,
-            rating: 0,
-          },
-        });
-      }
-      console.log("diary results", diaryResults);
-
-      // 查询用户统计数据 (假设有user_stats表)
-      const statsQuery =
-        "SELECT followers, following, diaries_count, rating FROM user_stats WHERE user_id = ?";
-
-      db.query(statsQuery, [userId], (err, statsResults) => {
-        const stats =
-          statsResults.length > 0
-            ? statsResults[0]
-            : {
-              followers: 0,
-              following: 0,
-              diariesCount: 0,
-              rating: 0,
-            };
-        console.log("user stats", stats);
-
-        // 渲染页面并传递所有数据
-        res.render("user", {
-          user: user,
-          diaries: diaryResults,
-          stats: stats,
-        });
-      });
-    });
-  });
-});
-
-// 获取用户编辑页面
-app.get("/user/:id/edit", (req, res) => {
-  const userId = req.params.id;
-
-  db.query(
-    "SELECT id, username, email, avatar FROM user_information WHERE id = ?",
-    [userId],
-    (err, rows) => {
-      if (err) {
-        console.error("数据库查询错误:", err);
-        return res.status(500).send("服务器错误");
-      }
-
-      if (rows.length === 0) {
-        return res.status(404).send("用户不存在");
-      }
-
-      const user = rows[0];
-
-      // 渲染编辑页面
-      res.render("user_edit", {
-        user: {
-          ...user,
-          avatar: user.avatar ? `/${user.avatar}` : null,
-        },
-      });
-    }
-  );
 });
 
 // 更新用户信息
@@ -505,27 +415,6 @@ async function getAttractions(category = "all", sort = "hot") {
   });
 }
 
-// 假设使用Node.js Express框架
-// 修改后的后端API
-// app.get('/api/locations', (req, res) => {
-//   // 从node表获取所有地点名称
-//   console.log("get int api/locations");
-//   const query = 'SELECT DISTINCT name AS name FROM node';
-//   // 或者如果node表中有专门的名称字段，比如叫location_name:
-//   // const query = 'SELECT DISTINCT location_name AS name FROM node';
-
-//   db.query(query, (err, results) => {
-//     if (err) {
-//       console.error('获取地点列表失败:', err);
-//       return res.status(500).json({ error: '获取地点列表失败' });
-//     }
-//     res.json(results.map(row => row.name));
-//   });
-// });
-
-// 景点路由
-// app.use('/', attractionRouter);
-
 app.get('/attraction-explorer', async (req, res) => {
   try {
     const { category = 'all', sort = 'hot' } = req.query;
@@ -548,14 +437,14 @@ app.get('/attraction-explorer', async (req, res) => {
   }
 });
 
-
 // 主页路由
 app.use("/", indexRouter);
 
 // 日记相关路由
 app.use("/", diaryRouter);
 
-// 启动服务器
-app.listen(3001, () => {
-  console.log("Server running on http://localhost:3001");
+// 修改服务器启动代码
+server.listen(3000, () => {
+    console.log('Server is running on port 3000');
 });
+
