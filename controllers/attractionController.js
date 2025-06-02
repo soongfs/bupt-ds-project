@@ -5,8 +5,7 @@ const UserPreference = require("../models/userPreferenceModel");
 exports.explore = (req, res, next) => {
   const category = req.query.category || "all";
   const sort = req.query.sort || "hot";
-  // 假设用户ID从session中获取，如果没有登录则为null
-  const userId = req.session?.userId || null;
+  const userId = req.session?.user?.id || null;
 
   // 获取主列表景点
   Attraction.getAttractions(category, sort, userId, (err, attractions) => {
@@ -17,10 +16,10 @@ exports.explore = (req, res, next) => {
       Attraction.getRecommendedAttractions(userId, 5, (err, recommendedAttractions) => {
         if (err) return next(err);
 
-        renderExplorerPage(res, attractions, recommendedAttractions, category, sort);
+        renderExplorerPage(res, attractions, recommendedAttractions, category, sort, req.session.user);
       });
     } else {
-      renderExplorerPage(res, attractions, [], category, sort);
+      renderExplorerPage(res, attractions, [], category, sort, null);
     }
   });
 };
@@ -28,7 +27,7 @@ exports.explore = (req, res, next) => {
 // 获取景点详情
 exports.getDetail = (req, res, next) => {
   const attractionId = req.params.id;
-  const userId = req.session?.userId || null;
+  const userId = req.session?.user?.id || null;
 
   // 获取景点详情
   Attraction.getAttractionById(attractionId, userId, (err, attraction) => {
@@ -50,7 +49,7 @@ exports.getDetail = (req, res, next) => {
         Attraction.getSimilarAttractions(attractionId, 5, (err, similarAttractions) => {
           if (err) return next(err);
           
-          renderDetailPage(res, attraction, similarAttractions, req.session?.user);
+          renderDetailPage(res, attraction, similarAttractions, req.session.user);
         });
       });
     } else {
@@ -58,19 +57,20 @@ exports.getDetail = (req, res, next) => {
       Attraction.getSimilarAttractions(attractionId, 5, (err, similarAttractions) => {
         if (err) return next(err);
         
-        renderDetailPage(res, attraction, similarAttractions, req.session?.user);
+        renderDetailPage(res, attraction, similarAttractions, null);
       });
     }
   });
 };
 
 // 辅助函数：渲染探索页面
-function renderExplorerPage(res, attractions, recommendedAttractions, category, sort) {
+function renderExplorerPage(res, attractions, recommendedAttractions, category, sort, currentUser) {
   res.render("attraction-explorer", {
     attractions,
     recommendedAttractions,
     currentCategory: category,
     currentSort: sort,
+    currentUser,
     helpers: {
       formatNumber: (num) => {
         if (num >= 10000) return (num / 10000).toFixed(1) + "万";
@@ -98,11 +98,10 @@ function renderDetailPage(res, attraction, similarAttractions, currentUser) {
 // 用户对景点评分
 exports.rateAttraction = (req, res, next) => {
   const attractionId = req.params.id;
-  const userId = req.session?.userId;
-  const { rating } = req.body; // Assuming rating is sent in the request body
+  const userId = req.session?.user?.id;
+  const { rating } = req.body;
 
   if (!userId) {
-    // Or redirect to login, or return a specific status/message
     return res.status(401).json({ success: false, message: "用户未登录" }); 
   }
 
@@ -115,7 +114,6 @@ exports.rateAttraction = (req, res, next) => {
       console.error("Error saving attraction rating:", err);
       return res.status(500).json({ success: false, message: "保存评分失败" });
     }
-    // Optionally, you might want to redirect back or send updated attraction data
     res.json({ success: true, message: "评分已保存" }); 
   });
 };

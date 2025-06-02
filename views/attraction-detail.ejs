@@ -6,6 +6,130 @@
     <title><%= attraction.name %> - TravelMate</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
     <style>
+        /* 导航栏样式 */
+        .global-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 5%;
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: var(--shadow);
+            z-index: 1000;
+            height: 60px;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary);
+            transition: transform 0.3s;
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            color: var(--text);
+            text-decoration: none;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            transition: all 0.3s;
+        }
+
+        .nav-links a:hover {
+            background: rgba(42, 157, 143, 0.1);
+            color: var(--primary);
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            overflow: hidden;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f5f5f5;
+            border: 2px solid #ddd;
+            margin-left: auto;
+        }
+
+        .avatar-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .avatar-fallback {
+            font-weight: bold;
+            color: #555;
+            font-size: 18px;
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            right: 5%;
+            top: 60px;
+            width: 200px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            z-index: 1001;
+        }
+
+        .dropdown-menu.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            color: var(--text);
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .dropdown-item i {
+            width: 20px;
+            margin-right: 12px;
+            color: var(--primary);
+        }
+
+        .dropdown-item:hover {
+            background: rgba(42,157,143,0.1);
+            color: var(--primary);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            padding: 0.5rem 1.5rem;
+            border-radius: 20px;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .btn-primary:hover {
+            background: #248277;
+            transform: translateY(-2px);
+        }
+
         :root {
             --primary: #2a9d8f;
             --secondary: #264653;
@@ -329,6 +453,17 @@
                             },
                             body: JSON.stringify({ rating })
                         });
+
+                        if (!response.ok) {
+                            const data = await response.json();
+                            if (response.status === 401) {
+                                // 未登录，跳转到登录页面
+                                window.location.href = '/login';
+                                return;
+                            }
+                            throw new Error(data.message || '评分失败');
+                        }
+
                         const data = await response.json();
                         if (data.success) {
                             // 更新UI显示
@@ -339,12 +474,14 @@
                                     s.classList.remove('active');
                                 }
                             });
+                            // 显示成功消息
+                            alert('评分成功！');
                         } else {
-                            alert('评分失败：' + data.message);
+                            throw new Error(data.message || '评分失败');
                         }
                     } catch (error) {
                         console.error('Error:', error);
-                        alert('评分失败，请稍后重试');
+                        alert(error.message || '评分失败，请稍后重试');
                     }
                 });
             });

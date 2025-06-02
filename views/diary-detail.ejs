@@ -262,12 +262,144 @@
         background: rgba(42, 157, 143, 0.1);
         color: var(--primary);
         transition: all 0.3s;
+        cursor: pointer;
       }
 
       .action-btn:hover {
         background: var(--primary);
         color: white;
         transform: translateY(-2px);
+      }
+
+      /* 评分系统样式 */
+      .rating-container {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin: 1rem 0;
+        padding: 1rem;
+        background: rgba(42, 157, 143, 0.05);
+        border-radius: 10px;
+      }
+
+      .rating-stars {
+        display: flex;
+        gap: 0.3rem;
+      }
+
+      .star {
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: #ddd;
+        transition: color 0.2s;
+      }
+
+      .star.active {
+        color: var(--accent);
+      }
+
+      .star:hover,
+      .star:hover ~ .star {
+        color: var(--accent);
+      }
+
+      .rating-value {
+        font-size: 1.1rem;
+        color: var(--secondary);
+        font-weight: 500;
+      }
+
+      .rating-stats {
+        color: var(--text);
+        opacity: 0.8;
+        font-size: 0.9rem;
+      }
+
+      /* 收藏按钮样式 */
+      .favorite-btn {
+        background: rgba(231, 111, 81, 0.1);
+        color: #e76f51;
+      }
+
+      .favorite-btn:hover {
+        background: #e76f51;
+        color: white;
+      }
+
+      .favorite-btn.active {
+        background: #e76f51;
+        color: white;
+      }
+
+      /* 分享按钮样式 */
+      .share-btn {
+        background: rgba(233, 196, 106, 0.1);
+        color: #e9c46a;
+      }
+
+      .share-btn:hover {
+        background: #e9c46a;
+        color: white;
+      }
+
+      /* 分享弹窗样式 */
+      .share-modal {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        padding: 2rem;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        z-index: 1000;
+      }
+
+      .share-modal.active {
+        display: block;
+      }
+
+      .share-options {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem;
+        margin-top: 1.5rem;
+      }
+
+      .share-option {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+        cursor: pointer;
+        padding: 1rem;
+        border-radius: 10px;
+        transition: background 0.2s;
+      }
+
+      .share-option:hover {
+        background: rgba(42, 157, 143, 0.1);
+      }
+
+      .share-option i {
+        font-size: 1.5rem;
+        color: var(--primary);
+      }
+
+      .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+      }
+
+      .modal-overlay.active {
+        display: block;
       }
 
       /* 侧边栏 */
@@ -410,7 +542,11 @@
       }
     </style>
   </head>
-  <body>
+  <body 
+    data-user-logged-in="<%= !!user %>"
+    data-diary-id="<%= diary.id %>"
+    data-is-author="<%= user && user.id === diary.user_id %>"
+  >
     <div class="diary-container">
       <!-- 主内容区 -->
       <main class="main-content">
@@ -490,7 +626,7 @@
 
         <!-- 互动栏 -->
         <div class="action-bar">
-          <div class="action-btn like-btn">
+          <div class="action-btn like-btn <%= diary.user_liked ? 'active' : '' %>">
             <i class="fas fa-heart"></i>
             <span><%= diary.like_count %></span>
           </div>
@@ -498,11 +634,54 @@
             <i class="fas fa-comment"></i>
             <span><%= diary.comment_count %></span>
           </div>
+          <div class="action-btn favorite-btn <%= diary.user_favorited ? 'active' : '' %>">
+            <i class="fas fa-bookmark"></i>
+            <span>收藏</span>
+          </div>
           <div class="action-btn share-btn">
             <i class="fas fa-share"></i>
             <span>分享</span>
           </div>
         </div>
+
+        <!-- 评分系统 -->
+        <div class="rating-container">
+          <div class="rating-stars">
+            <% for(let i = 1; i <= 5; i++) { %>
+              <span class="star <%= i <= (diary.user_rating || 0) ? 'active' : '' %>" data-rating="<%= i %>">★</span>
+            <% } %>
+          </div>
+          <span class="rating-value">
+            <%= diary.user_rating ? `你的评分：${diary.user_rating}分` : '点击星星评分' %>
+          </span>
+          <span class="rating-stats">
+            (<%= diary.rating_count || 0 %>人评分 | 平均<%= diary.rating ? diary.rating.toFixed(1) : '0.0' %>分)
+          </span>
+        </div>
+
+        <!-- 分享弹窗 -->
+        <div class="share-modal">
+          <h3>分享到</h3>
+          <div class="share-options">
+            <div class="share-option" data-platform="wechat">
+              <i class="fab fa-weixin"></i>
+              <span>微信</span>
+            </div>
+            <div class="share-option" data-platform="weibo">
+              <i class="fab fa-weibo"></i>
+              <span>微博</span>
+            </div>
+            <div class="share-option" data-platform="qq">
+              <i class="fab fa-qq"></i>
+              <span>QQ</span>
+            </div>
+            <div class="share-option" data-platform="link">
+              <i class="fas fa-link"></i>
+              <span>复制链接</span>
+            </div>
+          </div>
+        </div>
+        <div class="modal-overlay"></div>
 
         <!-- 评论区 -->
         <section class="comment-section">
@@ -563,236 +742,6 @@
       </aside>
     </div>
 
-    <script>
-      // 点赞功能
-      document.querySelector('.like-btn').addEventListener('click', async () => {
-        try {
-          const res = await fetch(`/api/diaries/<%= diary.id %>/like`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            credentials: 'include'
-          });
-
-          if (res.ok) {
-            const countEl = document.querySelector('.like-btn span');
-            countEl.textContent = parseInt(countEl.textContent) + 1;
-          }
-        } catch (err) {
-          console.error(err);
-        }
-      });
-
-      // 提交评论
-      document.querySelector('.submit-comment').addEventListener('click', async () => {
-        const content = document.querySelector('.comment-input').value.trim();
-        if (!content) return;
-
-        try {
-          const res = await fetch(`/api/diaries/<%= diary.id %>/comments`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ content }),
-            credentials: 'include'
-          });
-
-          if (res.ok) {
-            location.reload(); // 刷新页面显示新评论
-          }
-        } catch (err) {
-          console.error(err);
-        }
-      });
-
-      // 轮播图功能
-      let currentSlide = 0;
-      const slides = document.querySelectorAll('.carousel-item');
-      const dots = document.querySelectorAll('.carousel-dot');
-
-      function showSlide(index) {
-        slides.forEach(slide => slide.style.display = 'none');
-        dots.forEach(dot => dot.classList.remove('active'));
-
-        slides[index].style.display = 'block';
-        dots[index].classList.add('active');
-        currentSlide = index;
-      }
-
-      dots.forEach((dot, index) => {
-        dot.addEventListener('click', () => showSlide(index));
-      });
-
-      // 自动轮播
-      setInterval(() => {
-        currentSlide = (currentSlide + 1) % slides.length;
-        showSlide(currentSlide);
-      }, 5000);
-
-      // 初始化显示第一张
-      showSlide(0);
-
-      <% if (user) { %>
-      // 编辑功能 - 仅对作者可见
-      const editToggleBtn = document.getElementById('editToggleBtn');
-      const saveBtn = document.getElementById('saveBtn');
-      const cancelBtn = document.getElementById('cancelBtn');
-      let originalContent = {};
-
-      // 进入编辑模式
-      function enterEditMode() {
-        // 保存原始内容
-        originalContent = {
-          title: document.getElementById('diaryTitle').textContent,
-          dayTitles: Array.from(document.querySelectorAll('.day-title-text')).map(el => el.textContent),
-          sectionTitles: Array.from(document.querySelectorAll('.section-title')).map(el => el.textContent),
-          sectionContents: Array.from(document.querySelectorAll('.section-content')).map(el => el.textContent),
-          tips: document.querySelector('.tips-content').textContent
-        };
-
-        // 使标题可编辑
-        const diaryTitle = document.getElementById('diaryTitle');
-        diaryTitle.contentEditable = true;
-        diaryTitle.classList.add('editable');
-
-        // 使每日标题可编辑
-        document.querySelectorAll('.day-title-text').forEach((el, index) => {
-          el.contentEditable = true;
-          el.classList.add('editable');
-          el.dataset.index = index;
-        });
-
-        //使游记正文可以编辑
-          document.querySelectorAll('.diary-content').forEach((el, index) => {
-          el.contentEditable = true;
-          el.classList.add('editable');
-          el.dataset.index = index;
-        });
-
-        // 使章节标题可编辑
-        document.querySelectorAll('.section-title').forEach((el, index) => {
-          el.contentEditable = true;
-          el.classList.add('editable');
-          el.dataset.index = index;
-        });
-
-        // 使章节内容可编辑
-        document.querySelectorAll('.section-content').forEach((el, index) => {
-          el.contentEditable = true;
-          el.classList.add('editable');
-          el.dataset.index = index;
-        });
-
-        // 使小贴士可编辑
-        const tipsContent = document.querySelector('.tips-content');
-        tipsContent.contentEditable = true;
-        tipsContent.classList.add('editable');
-
-        // 切换按钮显示
-        editToggleBtn.style.display = 'none';
-        saveBtn.style.display = 'inline-flex';
-        cancelBtn.style.display = 'inline-flex';
-      }
-
-      // 退出编辑模式
-      function exitEditMode() {
-        // 移除可编辑状态
-        document.getElementById('diaryTitle').contentEditable = false;
-        document.getElementById('diaryTitle').classList.remove('editable');
-
-        document.querySelectorAll('.day-title-text').forEach(el => {
-          el.contentEditable = false;
-          el.classList.remove('editable');
-        });
-
-        document.querySelectorAll('.section-title').forEach(el => {
-          el.contentEditable = false;
-          el.classList.remove('editable');
-        });
-
-        document.querySelectorAll('.section-content').forEach(el => {
-          el.contentEditable = false;
-          el.classList.remove('editable');
-        });
-
-        document.querySelectorAll('.diary-content').forEach(el => {
-          el.contentEditable = false;
-          el.classList.remove('editable');
-        });
-
-        document.querySelector('.tips-content').contentEditable = false;
-        document.querySelector('.tips-content').classList.remove('editable');
-
-        // 切换按钮显示
-        editToggleBtn.style.display = 'inline-flex';
-        saveBtn.style.display = 'none';
-        cancelBtn.style.display = 'none';
-      }
-
-      // 恢复原始内容
-      function restoreOriginalContent() {
-        document.getElementById('diaryTitle').textContent = originalContent.title;
-
-        document.querySelectorAll('.day-title-text').forEach((el, index) => {
-          el.textContent = originalContent.dayTitles[index];
-        });
-
-        document.querySelectorAll('.section-title').forEach((el, index) => {
-          el.textContent = originalContent.sectionTitles[index];
-        });
-
-        document.querySelectorAll('.section-content').forEach((el, index) => {
-          el.textContent = originalContent.sectionContents[index];
-        });
-
-        document.querySelector('.tips-content').textContent = originalContent.tips;
-      }
-
-      // 保存编辑内容
-      async function saveEditedContent() {
-        const updatedData = {
-          title: document.getElementById('diaryTitle').textContent,
-          dayTitles: Array.from(document.querySelectorAll('.day-title-text')).map(el => el.textContent),
-          sectionTitles: Array.from(document.querySelectorAll('.section-title')).map(el => el.textContent),
-          sectionContents: Array.from(document.querySelectorAll('.section-content')).map(el => el.textContent),
-          tips: document.querySelector('.tips-content').textContent,
-          content: document.querySelector('.diary-content').innerHTML
-        };
-
-        try {
-          const response = await fetch(`/api/diaries-edit/<%= diary.id %>`, {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(updatedData),
-            credentials: 'include'
-          });
-
-          if (response.ok) {
-            alert('日记更新成功！');
-            exitEditMode();
-          } else {
-            throw new Error('保存失败');
-          }
-        } catch (error) {
-          console.error('保存失败:', error);
-          alert('保存失败，请重试');
-          restoreOriginalContent();
-          exitEditMode();
-        }
-      }
-
-      // 事件监听
-      editToggleBtn.addEventListener('click', enterEditMode);
-      saveBtn.addEventListener('click', saveEditedContent);
-      cancelBtn.addEventListener('click', () => {
-        restoreOriginalContent();
-        exitEditMode();
-      });
-      <% } %>
-    </script>
+    <script src="/js/diary-detail.js"></script>
   </body>
 </html>

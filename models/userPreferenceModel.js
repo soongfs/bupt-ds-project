@@ -4,36 +4,104 @@ const UserPreference = {};
 
 // 记录用户浏览景点的历史
 UserPreference.recordAttractionView = (userId, attractionId, callback) => {
-    const sql = `
-        INSERT INTO user_attraction_history 
-            (user_id, attraction_id, view_count, last_viewed_at, first_viewed_at)
-        VALUES (?, ?, 1, NOW(), NOW())
-        ON DUPLICATE KEY UPDATE 
-            view_count = view_count + 1,
-            last_viewed_at = NOW()
-    `;
-    db.query(sql, [userId, attractionId], (err, result) => {
+    // 首先检查表结构
+    db.query(`
+        SELECT GROUP_CONCAT(COLUMN_NAME) as existing_columns
+        FROM information_schema.COLUMNS 
+        WHERE TABLE_NAME = 'user_attraction_history' 
+        AND COLUMN_NAME IN ('first_viewed_at', 'last_viewed_at')
+    `, (err, results) => {
         if (err) return callback(err);
-        callback(null, result);
+
+        const existingColumns = results[0].existing_columns ? results[0].existing_columns.split(',') : [];
+        const columnsToAdd = [];
+
+        if (!existingColumns.includes('first_viewed_at')) {
+            columnsToAdd.push('ADD COLUMN first_viewed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP');
+        }
+        if (!existingColumns.includes('last_viewed_at')) {
+            columnsToAdd.push('ADD COLUMN last_viewed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP');
+        }
+
+        // 如果需要添加字段
+        if (columnsToAdd.length > 0) {
+            const alterQuery = `ALTER TABLE user_attraction_history ${columnsToAdd.join(', ')}`;
+            db.query(alterQuery, (err) => {
+                if (err) return callback(err);
+                insertOrUpdateHistory();
+            });
+        } else {
+            insertOrUpdateHistory();
+        }
     });
+
+    // 插入或更新浏览记录
+    function insertOrUpdateHistory() {
+        const sql = `
+            INSERT INTO user_attraction_history 
+                (user_id, attraction_id, view_count, last_viewed_at, first_viewed_at)
+            VALUES (?, ?, 1, NOW(), NOW())
+            ON DUPLICATE KEY UPDATE 
+                view_count = view_count + 1,
+                last_viewed_at = NOW()
+        `;
+        db.query(sql, [userId, attractionId], (err, result) => {
+            if (err) return callback(err);
+            callback(null, result);
+        });
+    }
 };
 
 // 记录用户对景点的评分
 UserPreference.saveAttractionRating = (userId, attractionId, rating, callback) => {
-    const sql = `
-        INSERT INTO user_attraction_ratings
-            (user_id, attraction_id, rating, created_at, updated_at)
-        VALUES (?, ?, ?, NOW(), NOW())
-        ON DUPLICATE KEY UPDATE
-            rating = VALUES(rating),
-            updated_at = NOW()
-    `;
-    // Ensure rating is within a valid range, e.g., 0-5
-    const validRating = Math.max(0, Math.min(5, parseFloat(rating)));
-    db.query(sql, [userId, attractionId, validRating], (err, result) => {
+    // 首先检查表结构
+    db.query(`
+        SELECT GROUP_CONCAT(COLUMN_NAME) as existing_columns
+        FROM information_schema.COLUMNS 
+        WHERE TABLE_NAME = 'user_attraction_ratings' 
+        AND COLUMN_NAME IN ('created_at', 'updated_at')
+    `, (err, results) => {
         if (err) return callback(err);
-        callback(null, result);
+
+        const existingColumns = results[0].existing_columns ? results[0].existing_columns.split(',') : [];
+        const columnsToAdd = [];
+
+        if (!existingColumns.includes('created_at')) {
+            columnsToAdd.push('ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP');
+        }
+        if (!existingColumns.includes('updated_at')) {
+            columnsToAdd.push('ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP');
+        }
+
+        // 如果需要添加字段
+        if (columnsToAdd.length > 0) {
+            const alterQuery = `ALTER TABLE user_attraction_ratings ${columnsToAdd.join(', ')}`;
+            db.query(alterQuery, (err) => {
+                if (err) return callback(err);
+                insertOrUpdateRating();
+            });
+        } else {
+            insertOrUpdateRating();
+        }
     });
+
+    // 插入或更新评分
+    function insertOrUpdateRating() {
+        const sql = `
+            INSERT INTO user_attraction_ratings
+                (user_id, attraction_id, rating, created_at, updated_at)
+            VALUES (?, ?, ?, NOW(), NOW())
+            ON DUPLICATE KEY UPDATE
+                rating = VALUES(rating),
+                updated_at = NOW()
+        `;
+        // Ensure rating is within a valid range, e.g., 0-5
+        const validRating = Math.max(0, Math.min(5, parseFloat(rating)));
+        db.query(sql, [userId, attractionId, validRating], (err, result) => {
+            if (err) return callback(err);
+            callback(null, result);
+        });
+    }
 };
 
 // 获取用户的景点偏好

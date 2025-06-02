@@ -136,13 +136,21 @@ const diaryController = {
   // 获取日记详情
   getDiaryDetail: (req, res) => {
     const diaryId = req.params.id;
+    const userId = req.session.user ? req.session.user.id : null;
 
+    // 获取日记基本信息
     db.query(`
-      SELECT d.*, u.username, u.avatar 
+      SELECT d.*, u.username, u.avatar,
+        COALESCE(r.rating, 0) as user_rating,
+        CASE WHEN f.user_id IS NOT NULL THEN 1 ELSE 0 END as user_favorited,
+        CASE WHEN l.user_id IS NOT NULL THEN 1 ELSE 0 END as user_liked
       FROM travel_diaries d
       JOIN user_information u ON d.user_id = u.id
+      LEFT JOIN diary_ratings r ON d.id = r.diary_id AND r.user_id = ?
+      LEFT JOIN diary_favorites f ON d.id = f.diary_id AND f.user_id = ?
+      LEFT JOIN diary_likes l ON d.id = l.diary_id AND l.user_id = ?
       WHERE d.id = ?
-    `, [diaryId], (err, diaryResults) => {
+    `, [userId, userId, userId, diaryId], (err, diaryResults) => {
       if (err) {
         console.error(err);
         return res.status(500).render('error', { error: 'Database error' });
@@ -154,6 +162,7 @@ const diaryController = {
 
       const diary = diaryResults[0];
 
+      // 获取媒体文件
       db.query(`
         SELECT * FROM diary_media
         WHERE diary_id = ?
@@ -164,6 +173,7 @@ const diaryController = {
           return res.status(500).render('error', { error: 'Database error' });
         }
 
+        // 获取章节内容
         db.query(`
           SELECT * FROM diary_sections
           WHERE diary_id = ?
@@ -174,6 +184,7 @@ const diaryController = {
             return res.status(500).render('error', { error: 'Database error' });
           }
 
+          // 获取评论
           db.query(`
             SELECT c.*, u.username, u.avatar
             FROM comments c
@@ -186,6 +197,7 @@ const diaryController = {
               return res.status(500).render('error', { error: 'Database error' });
             }
 
+            // 更新浏览次数
             db.query(`
               UPDATE travel_diaries 
               SET view_count = view_count + 1 
@@ -198,7 +210,7 @@ const diaryController = {
                 media: mediaResults,
                 sections: sectionResults,
                 comments: commentResults,
-                user: req.session.user || 0
+                user: req.session.user || null
               });
             });
           });
@@ -529,7 +541,168 @@ const diaryController = {
         }
       }
     );
-  }
+  },
+
+  // 评分日记
+  rateDiary: (req, res) => {
+    const diaryId = req.params.id;
+    const userId = req.session.user.id;
+    const { rating } = req.body;
+
+    // 验证评分值
+    if (rating < 1 || rating > 5) {
+      return res.status(400).json({ error: '评分必须在1-5之间' });
+    }
+
+    // 首先检查是否已经评分过
+    db.query(
+      'SELECT * FROM diary_ratings WHERE diary_id = ? AND user_id = ?',
+      [diaryId, userId],
+      (err, results) => {
+        if (err) {
+          console.error(err);
+          return res.status(500).json({ error: '数据库错误' });
+        }
+
+        const isUpdate = results.length > 0;
+        const query = isUpdate
+          ? 'UPDATE diary_ratings SET rating = ?, updated_at = NOW() WHERE diary_id = ? AND user_id = ?'
+          : 'INSERT INTO diary_ratings (diary_id, user_id, rating, created_at, updated_at) VALUES (?, ?, ?, NOW(), NOW())';
+        
+        const params = isUpdate
+          ? [rating, diaryId, userId]
+          : [diaryId, userId, rating];
+
+        db.query(query, params, (err) => {
+          if (err) {
+            console.error(err);
+            return res.status(500).json({ error: '数据库错误' });
+          }
+
+          // 更新日记的平均评分和评分数量
+          db.query(
+            `SELECT 
+              COUNT(*) as count,
+              AVG(rating) as avg_rating 
+            FROM diary_ratings 
+            WHERE diary_id = ?`,
+            [diaryId],
+            (err, results) => {
+              if (err) {
+                console.error(err);
+                return res.status(500).json({ error: '数据库错误' });
+              }
+
+              const { count, avg_rating } = results[0];
+
+              db.query(
+                'UPDATE travel_diaries SET rating = ?, rating_count = ? WHERE id = ?',
+                [avg_rating || 0, count, diaryId],
+                (err) => {
+                  if (err) {
+                    console.error(err);
+                    return res.status(500).json({ error: '数据库错误' });
+                  }
+
+                  res.json({ 
+                    message: isUpdate ? '评分更新成功' : '评分成功',
+                    rating: rating,
+                    avgRating: avg_rating || 0,
+                    ratingCount: count
+                  });
+                }
+              );
+            }
+          );
+        });
+      }
+    );
+  },
+
+  // 收藏日记
+  favoriteDiary: (req, res) => {
+    const diaryId = req.params.id;
+    const userId = req.session.user.id;
+
+    // 检查是否已经收藏
+    db.query(
+      'SELECT * FROM diary_favorites WHERE diary_id = ? AND user_id = ?',
+      [diaryId, userId],
+      (err, results) => {
+        if (err) {
+          console.error(err);
+          return res.status(500).json({ error: '数据库错误' });
+        }
+
+        if (results.length > 0) {
+          // 如果已收藏，则取消收藏
+          db.query(
+            'DELETE FROM diary_favorites WHERE diary_id = ? AND user_id = ?',
+            [diaryId, userId],
+            (err) => {
+              if (err) {
+                console.error(err);
+                return res.status(500).json({ error: '数据库错误' });
+              }
+
+              // 更新日记的收藏数
+              db.query(
+                'UPDATE travel_diaries SET favorite_count = favorite_count - 1 WHERE id = ?',
+                [diaryId],
+                (err) => {
+                  if (err) {
+                    console.error(err);
+                    return res.status(500).json({ error: '数据库错误' });
+                  }
+
+                  res.json({ message: '取消收藏成功' });
+                }
+              );
+            }
+          );
+        } else {
+          // 如果未收藏，则添加收藏
+          db.query(
+            'INSERT INTO diary_favorites (diary_id, user_id, created_at) VALUES (?, ?, NOW())',
+            [diaryId, userId],
+            (err) => {
+              if (err) {
+                console.error(err);
+                return res.status(500).json({ error: '数据库错误' });
+              }
+
+              // 更新日记的收藏数
+              db.query(
+                'UPDATE travel_diaries SET favorite_count = favorite_count + 1 WHERE id = ?',
+                [diaryId],
+                (err) => {
+                  if (err) {
+                    console.error(err);
+                    return res.status(500).json({ error: '数据库错误' });
+                  }
+
+                  res.json({ message: '收藏成功' });
+                }
+              );
+            }
+          );
+        }
+      }
+    );
+  },
+
+  // 获取分享链接
+  getShareLink: (req, res) => {
+    const diaryId = req.params.id;
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const shareUrl = `${baseUrl}/diary-detail/${diaryId}`;
+    
+    res.json({ 
+      url: shareUrl,
+      title: '分享成功',
+      message: '链接已生成'
+    });
+  },
 
 };
 
