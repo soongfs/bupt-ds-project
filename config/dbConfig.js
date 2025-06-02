@@ -22,6 +22,6 @@ const pool = mysql.createPool({
   database: "pathfinder",
   waitForConnections: true,
   connectionLimit: 10,
-});
+}).promise();
 
 module.exports = pool;

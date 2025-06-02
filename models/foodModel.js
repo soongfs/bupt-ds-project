@@ -9,7 +9,7 @@ const db = require("../config/dbConfig");
  * @param {number} offset - Number of items to skip (for pagination)
  * @param {function} callback - Callback function(error, results)
  */
-function getFoodItems({ filters = {}, sortBy = { field: "popularity_score", order: "DESC" }, limit = 50, offset = 0 } = {}, callback) {
+async function getFoodItems({ filters = {}, sortBy = { field: "popularity_score", order: "DESC" }, limit = 50, offset = 0 } = {}) {
   let query = "SELECT * FROM restaurants_dishes";
   const queryParams = [];
   const whereClauses = [];
@@ -51,14 +51,14 @@ function getFoodItems({ filters = {}, sortBy = { field: "popularity_score", orde
   query += " LIMIT ? OFFSET ?";
   queryParams.push(parseInt(limit, 10) || 50, parseInt(offset, 10) || 0);
 
-  // console.log("Executing food query:", query, queryParams); // For debugging
-  db.query(query, queryParams, (err, rows) => {
-    if (err) {
-      console.error("Error fetching food items from DB:", err);
-      return callback(err);
-    }
-    callback(null, rows);
-  });
+  try {
+    // console.log("Executing food query:", query, queryParams); // For debugging
+    const [rows] = await db.query(query, queryParams);
+    return rows;
+  } catch (err) {
+    console.error("Error fetching food items from DB:", err);
+    throw err;
+  }
 }
 
 // Potential future function if needed
