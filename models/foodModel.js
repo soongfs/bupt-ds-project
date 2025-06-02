@@ -7,9 +7,9 @@ const db = require("../config/dbConfig");
  * @param {object} sortBy - Sorting options (e.g., { field: "popularity_score", order: "DESC" })
  * @param {number} limit - Max number of items to return
  * @param {number} offset - Number of items to skip (for pagination)
- * @returns {Promise<Array<object>>} - Array of food items
+ * @param {function} callback - Callback function(error, results)
  */
-async function getFoodItems({ filters = {}, sortBy = { field: "popularity_score", order: "DESC" }, limit = 50, offset = 0 } = {}) {
+function getFoodItems({ filters = {}, sortBy = { field: "popularity_score", order: "DESC" }, limit = 50, offset = 0 } = {}, callback) {
   let query = "SELECT * FROM restaurants_dishes";
   const queryParams = [];
   const whereClauses = [];
@@ -52,13 +52,13 @@ async function getFoodItems({ filters = {}, sortBy = { field: "popularity_score"
   queryParams.push(parseInt(limit, 10) || 50, parseInt(offset, 10) || 0);
 
   // console.log("Executing food query:", query, queryParams); // For debugging
-  try {
-    const [rows] = await db.query(query, queryParams);
-    return rows;
-  } catch (error) {
-    console.error("Error fetching food items from DB:", error);
-    throw error; // Re-throw to be caught by controller
-  }
+  db.query(query, queryParams, (err, rows) => {
+    if (err) {
+      console.error("Error fetching food items from DB:", err);
+      return callback(err);
+    }
+    callback(null, rows);
+  });
 }
 
 // Potential future function if needed

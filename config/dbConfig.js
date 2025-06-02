@@ -15,15 +15,13 @@ const mysql = require("mysql2");
 
 // module.exports = pool;
 
-const pool = mysql
-  .createPool({
-    host: "152.136.239.207",
-    user: "webuser",
-    password: "}@)]72aMbPn5",
-    database: "pathfinder",
-    waitForConnections: true,
-    connectionLimit: 10,
-  })
-  .promise();
+const pool = mysql.createPool({
+  host: "152.136.239.207",
+  user: "webuser",
+  password: "}@)]72aMbPn5",
+  database: "pathfinder",
+  waitForConnections: true,
+  connectionLimit: 10,
+});
 
 module.exports = pool;

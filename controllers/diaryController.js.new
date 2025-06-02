@@ -1,256 +1,25 @@
 const db = require('../config/test-database');
 const upload = require('../config/multerConfig');
-const searchService = require('../services/searchService');
 
 const diaryController = {
-  getDiaryDiscovery: async (req, res) => {
-    try {
-      const { page = 1, q: searchQuery = '', category = '全部主题', sort = 'hot' } = req.query;
-      const userId = req.session.user ? req.session.user.id : null;
-
-      const searchResults = await searchService.searchDiaries(searchQuery, userId, {
-        page: parseInt(page),
-        category,
-        sort
-      });
-
-      const diariesWithTags = searchResults.diaries.map(diary => {
-        const tags = [];
-        if (diary.tag_names && diary.tag_icons) {
-          const tagNames = diary.tag_names.split(',');
-          const tagIcons = diary.tag_icons.split(',');
-
-          for (let i = 0; i < tagNames.length; i++) {
-            tags.push({
-              name: tagNames[i],
-              icon: tagIcons[i]
-            });
-          }
-        }
-
-        return {
-          ...diary,
-          tags: tags,
-          cover_image: diary.cover_image || null,
-          is_featured: diary.is_featured || false
-        };
-      });
-
-      res.render('diary-discovery', {
-        diaries: diariesWithTags,
-        currentPage: parseInt(page),
-        totalPages: searchResults.totalPages,
-        searchQuery,
-        currentCategory: category,
-        sortBy: sort,
-        user: req.session.user || null,
-        formatDate: (date) => {
-          if (!date) return '';
-          const d = new Date(date);
-          return `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}-${d.getDate().toString().padStart(2, '0')}`;
-        }
-      });
-    } catch (error) {
-      console.error('搜索日记失败:', error);
-      res.status(500).render('error', { error: '搜索失败，请稍后重试' });
-    }
+  getDiaryDiscovery: (req, res) => {
+    // ... existing code ...
   },
 
   getNewDiary: (req, res) => {
-    if (!req.session.user) {
-      return res.redirect('/login');
-    }
-
-    res.render('diary-edit', {
-      user: req.session.user,
-      diary: null,
-      isEdit: false
-    });
+    // ... existing code ...
   },
 
   getDiaryDetail: (req, res) => {
-    const diaryId = req.params.id;
-    const userId = req.session.user ? req.session.user.id : null;
-
-    // 记录浏览记录的函数
-    const recordView = (diaryId, userId) => {
-      if (!userId) return; // 未登录用户不记录浏览历史
-      
-      const query = `
-        INSERT INTO diary_views (diary_id, user_id)
-        VALUES (?, ?)
-        ON DUPLICATE KEY UPDATE viewed_at = CURRENT_TIMESTAMP
-      `;
-      
-      db.query(query, [diaryId, userId], (err) => {
-        if (err) {
-          console.error('记录浏览历史失败:', err);
-        }
-      });
-    };
-
-    // 获取日记基本信息
-    db.query(`
-      SELECT 
-        d.*, 
-        u.username, 
-        u.avatar,
-        COALESCE(r.rating, 0) as user_rating,
-        CASE WHEN f.user_id IS NOT NULL THEN 1 ELSE 0 END as user_favorited,
-        CASE WHEN l.user_id IS NOT NULL THEN 1 ELSE 0 END as user_liked,
-        (SELECT AVG(rating) FROM diary_ratings WHERE diary_id = d.id) as rating,
-        (SELECT COUNT(*) FROM diary_ratings WHERE diary_id = d.id) as rating_count
-      FROM travel_diaries d
-      JOIN user_information u ON d.user_id = u.id
-      LEFT JOIN diary_ratings r ON d.id = r.diary_id AND r.user_id = ?
-      LEFT JOIN diary_favorites f ON d.id = f.diary_id AND f.user_id = ?
-      LEFT JOIN diary_likes l ON d.id = l.diary_id AND l.user_id = ?
-      WHERE d.id = ?
-    `, [userId, userId, userId, diaryId], (err, diaryResults) => {
-      if (err) {
-        console.error('查询日记失败:', err);
-        return res.status(500).render('error', { 
-          message: '数据库查询错误',
-          error: err
-        });
-      }
-
-      if (!diaryResults[0]) {
-        return res.status(404).render('error', { 
-          message: '未找到该日记',
-          error: null
-        });
-      }
-
-      const diary = diaryResults[0];
-      // 确保 rating 是数字类型
-      diary.rating = diary.rating ? parseFloat(diary.rating) : 0;
-      diary.rating_count = parseInt(diary.rating_count || 0);
-
-      // 确保封面图片路径正确
-      if (diary.cover_image && !diary.cover_image.startsWith('/')) {
-        diary.cover_image = '/uploads/' + diary.cover_image;
-      }
-
-      // 获取媒体文件
-      db.query(`
-        SELECT * FROM diary_media
-        WHERE diary_id = ?
-        ORDER BY display_order
-      `, [diaryId], (err, mediaResults) => {
-        if (err) {
-          console.error('查询媒体文件失败:', err);
-          return res.status(500).render('error', { 
-            message: '获取媒体文件失败',
-            error: err
-          });
-        }
-
-        // 处理媒体文件的URL
-        const processedMedia = mediaResults.map(item => ({
-          ...item,
-          media_url: item.media_url.startsWith('/') ? item.media_url : '/uploads/' + item.media_url
-        }));
-
-        // 获取章节内容
-        db.query(`
-          SELECT * FROM diary_sections
-          WHERE diary_id = ?
-          ORDER BY section_order
-        `, [diaryId], (err, sectionResults) => {
-          if (err) {
-            console.error('查询章节失败:', err);
-            return res.status(500).render('error', { 
-              message: '获取章节内容失败',
-              error: err
-            });
-          }
-
-          // 获取评论
-          db.query(`
-            SELECT c.*, u.username, u.avatar
-            FROM comments c
-            JOIN user_information u ON c.comment_user_id = u.id
-            WHERE c.diary_id = ?
-            ORDER BY c.created_at DESC
-          `, [diaryId], (err, commentResults) => {
-            if (err) {
-              console.error('查询评论失败:', err);
-              return res.status(500).render('error', { 
-                message: '获取评论失败',
-                error: err
-              });
-            }
-
-            // 更新浏览次数并记录浏览历史
-            db.query(`
-              UPDATE travel_diaries 
-              SET view_count = view_count + 1 
-              WHERE id = ?
-            `, [diaryId], (err) => {
-              if (err) {
-                console.error('更新浏览次数失败:', err);
-              }
-
-              // 记录用户浏览历史
-              recordView(diaryId, userId);
-
-              res.render('diary-detail', {
-                diary: diary,
-                media: processedMedia,
-                sections: sectionResults,
-                comments: commentResults,
-                user: req.session.user || null
-              });
-            });
-          });
-        });
-      });
-    });
+    // ... existing code ...
   },
 
   addComment: (req, res) => {
-    const { content } = req.body;
-    const diaryId = req.params.id;
-    const userId = req.session.user.id;
-
-    db.query(`
-      INSERT INTO comments (diary_id, comment_user_id, content)
-      VALUES (?, ?, ?)
-    `, [diaryId, userId, content], (err, result) => {
-      if (err) {
-        console.error(err);
-        return res.status(500).json({ error: 'Database error' });
-      }
-
-      db.query(`
-        UPDATE travel_diaries 
-        SET comment_count = comment_count + 1 
-        WHERE id = ?
-      `, [diaryId], (err) => {
-        if (err) {
-          console.error(err);
-        }
-        res.status(201).json({ message: 'Comment added' });
-      });
-    });
+    // ... existing code ...
   },
 
   likeDiary: (req, res) => {
-    const diaryId = req.params.id;
-
-    db.query(`
-      UPDATE travel_diaries 
-      SET like_count = like_count + 1 
-      WHERE id = ?
-    `, [diaryId], (err) => {
-      if (err) {
-        console.error(err);
-        return res.status(500).json({ error: 'Database error' });
-      }
-
-      res.json({ message: 'Liked' });
-    });
+    // ... existing code ...
   },
 
   createDiary: (req, res) => {
@@ -356,7 +125,7 @@ const diaryController = {
                       parsedSections.forEach((section) => {
                         db.query(
                           `INSERT INTO diary_sections 
-                           (diary_id, section_title, section_content, day_number, section_order) 
+                           (diary_id, section_title, section_content, day_number, display_order) 
                            VALUES (?, ?, ?, ?, ?)`,
                           [diaryId, section.title, section.content, section.dayNumber, section.order],
                           (err) => {
@@ -409,29 +178,11 @@ const diaryController = {
                     }
 
                     // 找出要删除的媒体文件
-                    const newMediaUrls = parsedMedia.map(m => m.url.split('/').pop());
-                    const mediaToDelete = existingMedia.filter(m => {
-                      // 检查文件是否在新的媒体列表中（考虑完整URL和文件名两种情况）
-                      const fileName = m.media_url.split('/').pop();
-                      return !newMediaUrls.includes(fileName) && !parsedMedia.some(p => p.url.includes(fileName));
-                    });
+                    const newMediaIds = parsedMedia.map(m => m.id);
+                    const mediaToDelete = existingMedia.filter(m => !newMediaIds.includes(m.id));
 
-                    // 删除不再使用的媒体文件（包括物理文件）
+                    // 删除不再使用的媒体文件
                     if (mediaToDelete.length > 0) {
-                      const fs = require('fs');
-                      const path = require('path');
-                      const uploadDir = path.join(__dirname, '..', 'uploads');
-
-                      // 先删除物理文件
-                      mediaToDelete.forEach(media => {
-                        const filePath = path.join(uploadDir, media.media_url);
-                        if (fs.existsSync(filePath)) {
-                          fs.unlinkSync(filePath);
-                          console.log('已删除文件:', filePath);
-                        }
-                      });
-
-                      // 然后删除数据库记录
                       db.query(
                         'DELETE FROM diary_media WHERE id IN (?)',
                         [mediaToDelete.map(m => m.id)],
@@ -455,71 +206,57 @@ const diaryController = {
                     // 处理新的媒体文件
                     function processNewMedia() {
                       let mediaProcessed = 0;
-                      const mediaPromises = [];
                       
                       if (parsedMedia.length === 0) {
                         finishTransaction();
                       } else {
                         parsedMedia.forEach((item) => {
-                          const promise = new Promise((resolve, reject) => {
-                            if (item.id.startsWith('new_')) {
-                              // 新增的媒体
-                              let mediaUrl = item.url;
-                              
-                              // 如果是新上传的文件，使用新的文件名
-                              const matchingFile = mediaFiles.find(f => f.originalname === item.url);
-                              if (matchingFile) {
-                                mediaUrl = matchingFile.filename;
-                              }
-
-                              db.query(
-                                `INSERT INTO diary_media 
-                                 (diary_id, media_url, media_type, caption, display_order) 
-                                 VALUES (?, ?, ?, ?, ?)`,
-                                [diaryId, mediaUrl, item.type, item.caption, item.order],
-                                (err) => {
-                                  if (err) {
-                                    reject(err);
-                                  } else {
-                                    resolve();
-                                  }
-                                }
-                              );
-                            } else {
-                              // 更新现有媒体
-                              db.query(
-                                `UPDATE diary_media 
-                                 SET caption = ?, 
-                                     display_order = ? 
-                                 WHERE id = ? AND diary_id = ?`,
-                                [item.caption, item.order, item.id, diaryId],
-                                (err) => {
-                                  if (err) {
-                                    reject(err);
-                                  } else {
-                                    resolve();
-                                  }
-                                }
-                              );
+                          if (item.id.startsWith('new_')) {
+                            // 新增的媒体
+                            let mediaUrl = item.url;
+                            
+                            // 如果是新上传的文件，使用新的文件名
+                            const matchingFile = mediaFiles.find(f => f.originalname === item.url);
+                            if (matchingFile) {
+                              mediaUrl = matchingFile.filename;
                             }
-                          });
-                          mediaPromises.push(promise);
-                        });
 
-                        // 等待所有媒体文件处理完成
-                        Promise.all(mediaPromises)
-                          .then(() => {
-                            finishTransaction();
-                          })
-                          .catch((err) => {
-                            return db.rollback(() => {
-                              console.error('处理媒体文件失败:', err);
-                              res.status(500).json({
-                                success: false,
-                                message: '数据库错误'
-                              });
+                            db.query(
+                              `INSERT INTO diary_media 
+                               (diary_id, media_url, media_type, caption, display_order) 
+                               VALUES (?, ?, ?, ?, ?)`,
+                              [diaryId, mediaUrl, item.type, item.caption, item.order],
+                              handleMediaQueryResult
+                            );
+                          } else {
+                            // 更新现有媒体
+                            db.query(
+                              `UPDATE diary_media 
+                               SET caption = ?, 
+                                   display_order = ? 
+                               WHERE id = ? AND diary_id = ?`,
+                              [item.caption, item.order, item.id, diaryId],
+                              handleMediaQueryResult
+                            );
+                          }
+                        });
+                      }
+
+                      function handleMediaQueryResult(err) {
+                        if (err) {
+                          return db.rollback(() => {
+                            console.error('处理媒体文件失败:', err);
+                            res.status(500).json({
+                              success: false,
+                              message: '数据库错误'
                             });
                           });
+                        }
+
+                        mediaProcessed++;
+                        if (mediaProcessed === parsedMedia.length) {
+                          finishTransaction();
+                        }
                       }
                     }
                   }

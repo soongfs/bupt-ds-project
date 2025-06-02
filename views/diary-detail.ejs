@@ -8,6 +8,10 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
       rel="stylesheet"
     />
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js"></script>
     <style>
       :root {
         --primary: #2a9d8f;
@@ -91,32 +95,55 @@
         right: 1rem;
         display: flex;
         gap: 0.5rem;
+        z-index: 100;
       }
 
       .edit-btn {
-        background: rgba(255, 255, 255, 0.2);
-        color: white;
+        padding: 0.6rem 1.2rem;
         border: none;
         border-radius: 20px;
-        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+        font-weight: 500;
         cursor: pointer;
         transition: all 0.3s;
-        display: flex;
+        display: inline-flex;
         align-items: center;
-        gap: 0.3rem;
+        gap: 0.5rem;
+      }
+
+      .edit-btn i {
+        font-size: 1rem;
       }
 
       .edit-btn:hover {
+        transform: translateY(-2px);
+      }
+
+      #editToggleBtn {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+      }
+
+      #editToggleBtn:hover {
         background: rgba(255, 255, 255, 0.3);
       }
 
-      .edit-btn.save-btn {
+      #saveBtn {
         background: var(--accent);
         color: var(--secondary);
       }
 
-      .edit-btn.cancel-btn {
+      #saveBtn:hover {
+        background: #f4d03f;
+      }
+
+      #cancelBtn {
         background: #e76f51;
+        color: white;
+      }
+
+      #cancelBtn:hover {
+        background: #e74c3c;
       }
 
       /* 编辑模式样式 */
@@ -540,6 +567,525 @@
           justify-content: center;
         }
       }
+
+      /* 编辑表单样式 */
+      .edit-form {
+        padding: 2rem;
+        background: white;
+      }
+
+      .form-group {
+        margin-bottom: 1.5rem;
+      }
+
+      .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: var(--secondary);
+        font-weight: 500;
+      }
+
+      .form-control {
+        width: 100%;
+        padding: 0.8rem;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: all 0.3s;
+      }
+
+      .form-control:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 2px rgba(42, 157, 143, 0.1);
+      }
+
+      /* 每日行程编辑样式 */
+      #sections-container {
+        margin: 1rem 0;
+      }
+
+      .day-section {
+        background: rgba(42, 157, 143, 0.05);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid rgba(42, 157, 143, 0.1);
+      }
+
+      .day-section h3 {
+        color: var(--primary);
+        font-size: 1.2rem;
+        margin-bottom: 1rem;
+        padding: 0.5rem 1rem;
+        background: white;
+        border-radius: 8px;
+        display: inline-block;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      }
+
+      .section-item {
+        background: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        border: 1px solid var(--border);
+        transition: all 0.3s;
+      }
+
+      .section-item:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+      }
+
+      .section-item .form-group {
+        margin-bottom: 1rem;
+      }
+
+      .section-item .form-control {
+        background: rgba(255, 255, 255, 0.8);
+      }
+
+      .section-item textarea.form-control {
+        resize: vertical;
+        min-height: 100px;
+      }
+
+      /* 按钮样式 */
+      .btn {
+        padding: 0.6rem 1.2rem;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s;
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .btn:hover {
+        transform: translateY(-1px);
+      }
+
+      .btn-outline-primary {
+        background: transparent;
+        border: 1px solid var(--primary);
+        color: var(--primary);
+      }
+
+      .btn-outline-primary:hover {
+        background: var(--primary);
+        color: white;
+      }
+
+      .btn-danger {
+        background: #e76f51;
+        color: white;
+      }
+
+      .btn-danger:hover {
+        background: #e74c3c;
+      }
+
+      .add-section {
+        margin-top: 1rem;
+        width: 100%;
+        padding: 0.8rem;
+        background: rgba(255, 255, 255, 0.8);
+        border: 2px dashed rgba(42, 157, 143, 0.3);
+        color: var(--primary);
+        font-weight: 500;
+        transition: all 0.3s;
+      }
+
+      .add-section:hover {
+        background: white;
+        border-color: var(--primary);
+      }
+
+      #addDayBtn {
+        width: 100%;
+        padding: 1rem;
+        font-size: 1rem;
+        margin-top: 1rem;
+        background: rgba(42, 157, 143, 0.1);
+      }
+
+      .remove-section {
+        margin-top: 1rem;
+        opacity: 0.8;
+        font-size: 0.9rem;
+      }
+
+      .remove-section:hover {
+        opacity: 1;
+      }
+
+      /* 响应式调整 */
+      @media (max-width: 768px) {
+        .day-section {
+          padding: 1rem;
+        }
+
+        .section-item {
+          padding: 1rem;
+        }
+
+        .btn {
+          width: 100%;
+          justify-content: center;
+        }
+      }
+
+      /* 编辑表单样式 */
+      .edit-form {
+        padding: 2rem;
+        background: white;
+      }
+
+      .form-group {
+        margin-bottom: 1.5rem;
+      }
+
+      .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: var(--secondary);
+        font-weight: 500;
+      }
+
+      .form-control {
+        width: 100%;
+        padding: 0.8rem;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: all 0.3s;
+      }
+
+      .form-control:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 2px rgba(42, 157, 143, 0.1);
+      }
+
+      .cover-upload {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem;
+        border: 2px dashed var(--border);
+        border-radius: 8px;
+        transition: all 0.3s;
+      }
+
+      .cover-upload:hover {
+        border-color: var(--primary);
+      }
+
+      #editCoverPreview {
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      /* Quill Editor 自定义样式 */
+      .ql-container {
+        font-size: 16px;
+        height: 400px;
+      }
+
+      .ql-editor {
+        padding: 1rem;
+      }
+
+      .ql-toolbar {
+        border-top-left-radius: 8px;
+        border-top-right-radius: 8px;
+      }
+
+      .ql-container {
+        border-bottom-left-radius: 8px;
+        border-bottom-right-radius: 8px;
+      }
+
+      .media-upload-container {
+        background: rgba(42, 157, 143, 0.05);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .media-controls {
+        margin-bottom: 1rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        align-items: flex-start;
+      }
+
+      .compression-controls {
+        flex: 1;
+        background: white;
+        padding: 1rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      }
+
+      .compression-options {
+        margin-top: 1rem;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+      }
+
+      .compression-options .form-group {
+        margin-bottom: 0;
+      }
+
+      .media-preview-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+      }
+
+      .media-preview-item {
+        position: relative;
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .media-preview-item img {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+        display: block;
+      }
+
+      .media-preview-controls {
+        padding: 0.8rem;
+      }
+
+      .media-caption {
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+      }
+
+      .remove-media {
+        width: 100%;
+        margin-top: 0.5rem;
+      }
+
+      #quality {
+        width: 100%;
+      }
+
+      #qualityValue {
+        display: inline-block;
+        margin-left: 0.5rem;
+        color: var(--secondary);
+      }
+
+      @media (max-width: 768px) {
+        .compression-options {
+          grid-template-columns: 1fr;
+        }
+
+        .media-preview-grid {
+          grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        }
+      }
+
+      .carousel-placeholder {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: rgba(255, 255, 255, 0.5);
+        background: rgba(0, 0, 0, 0.1);
+      }
+
+      .carousel-placeholder i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+      }
+
+      .carousel-placeholder p {
+        font-size: 1.2rem;
+      }
+
+      /* 媒体预览网格的拖拽样式 */
+      .media-preview-item.sortable-ghost {
+        opacity: 0.4;
+      }
+
+      .media-preview-item.sortable-drag {
+        cursor: grabbing;
+      }
+
+      .media-preview-item {
+        cursor: grab;
+      }
+
+      /* 媒体库模态框样式 */
+      .media-library-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        overflow-y: auto;
+      }
+
+      .media-library-modal .modal-content {
+        background: white;
+        width: 90%;
+        max-width: 1200px;
+        margin: 2rem auto;
+        border-radius: 12px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      }
+
+      .modal-header {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .modal-body {
+        padding: 1.5rem;
+        max-height: 70vh;
+        overflow-y: auto;
+      }
+
+      .modal-footer {
+        padding: 1rem 1.5rem;
+        border-top: 1px solid var(--border);
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+      }
+
+      .close-modal {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: var(--text);
+        opacity: 0.7;
+        transition: opacity 0.3s;
+      }
+
+      .close-modal:hover {
+        opacity: 1;
+      }
+
+      .media-library-controls {
+        margin-bottom: 1.5rem;
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      .media-filter {
+        display: flex;
+        gap: 1rem;
+        padding: 0.5rem;
+        background: rgba(42, 157, 143, 0.1);
+        border-radius: 8px;
+      }
+
+      .search-media {
+        flex: 1;
+        min-width: 200px;
+        padding: 0.5rem 1rem;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+      }
+
+      .media-library-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 1rem;
+      }
+
+      .media-library-item {
+        position: relative;
+        border-radius: 8px;
+        overflow: hidden;
+        cursor: pointer;
+        transition: transform 0.3s;
+      }
+
+      .media-library-item:hover {
+        transform: scale(1.05);
+      }
+
+      .media-library-item.selected {
+        outline: 3px solid var(--primary);
+      }
+
+      .media-library-item img,
+      .media-library-item video {
+        width: 100%;
+        height: 150px;
+        object-fit: cover;
+        display: block;
+      }
+
+      .media-library-item .media-type-badge {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        background: rgba(0, 0, 0, 0.5);
+        color: white;
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.8rem;
+      }
+
+      /* 更新媒体预览样式以支持视频 */
+      .media-preview-item video {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+        display: block;
+      }
+
+      /* 轮播图中的视频样式 */
+      .carousel-item video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .carousel-item.video::after {
+        content: '\f144';
+        font-family: 'Font Awesome 5 Free';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 3rem;
+        color: white;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        opacity: 0.8;
+      }
     </style>
   </head>
   <body 
@@ -552,15 +1098,15 @@
       <main class="main-content">
         <!-- 头部 -->
         <div class="diary-header">
-          <% if (user) { %>
+          <% if (user && user.id === diary.user_id) { %>
             <div class="edit-controls">
-              <button class="edit-btn edit-toggle-btn" id="editToggleBtn">
+              <button id="editToggleBtn" class="edit-btn">
                 <i class="fas fa-edit"></i> 编辑
               </button>
-              <button class="edit-btn save-btn" id="saveBtn" style="display: none;">
+              <button id="saveBtn" class="edit-btn save-btn" style="display: none;">
                 <i class="fas fa-save"></i> 保存
               </button>
-              <button class="edit-btn cancel-btn" id="cancelBtn" style="display: none;">
+              <button id="cancelBtn" class="edit-btn cancel-btn" style="display: none;">
                 <i class="fas fa-times"></i> 取消
               </button>
             </div>
@@ -577,27 +1123,192 @@
 
         <!-- 多媒体轮播 -->
         <div class="media-carousel">
-          <% media.forEach((item, index) => { %>
-            <div
-              class="carousel-item <%= index === 0 ? 'active' : '' %>"
-              style="background-image: url('<%= item.media_url %>')"
-            ></div>
-          <% }); %>
-          <div class="carousel-nav">
-            <% media.forEach((_, index) => { %>
-              <div class="carousel-dot <%= index === 0 ? 'active' : '' %>"></div>
+          <% if (media && media.length > 0) { %>
+            <% media.forEach((item, index) => { %>
+              <div class="carousel-item <%= index === 0 ? 'active' : '' %> <%= item.media_type === 'video' ? 'video' : '' %>"
+                   <% if (item.media_type === 'video') { %>
+                     >
+                     <video src="<%= item.media_url.startsWith('/') ? item.media_url : '/uploads/' + item.media_url %>" controls></video>
+                   <% } else { %>
+                     style="background-image: url('<%= item.media_url.startsWith('/') ? item.media_url : '/uploads/' + item.media_url %>')">
+                   <% } %>
+              </div>
             <% }); %>
-          </div>
+            <div class="carousel-nav">
+              <% media.forEach((_, index) => { %>
+                <div class="carousel-dot <%= index === 0 ? 'active' : '' %>"></div>
+              <% }); %>
+            </div>
+          <% } else { %>
+            <div class="carousel-placeholder">
+              <i class="fas fa-images"></i>
+              <p>暂无图片</p>
+            </div>
+          <% } %>
         </div>
 
         <!-- 正文内容 -->
         <article class="diary-body">
-          <!-- 添加日记内容区域 -->
+          <!-- 编辑表单 -->
+          <div class="edit-form" style="display: none;">
+            <div class="form-group">
+              <label for="editTitle">标题</label>
+              <input type="text" id="editTitle" class="form-control" value="<%= diary.title %>">
+            </div>
+
+            <div class="form-group">
+              <label>封面图片</label>
+              <div class="cover-upload">
+                <img id="editCoverPreview" src="<%= diary.cover_image ? `/uploads/${diary.cover_image}` : '/images/default-diary.jpg' %>" alt="封面预览">
+                <input type="file" id="editCoverUpload" accept="image/*" style="display: none">
+                <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('editCoverUpload').click()">
+                  更换封面图片
+                </button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>正文内容</label>
+              <div id="editor-container"></div>
+            </div>
+
+            <!-- 每日行程编辑 -->
+            <div class="form-group">
+              <label>每日行程</label>
+              <div id="sections-container">
+                <% 
+                // 按天分组章节
+                const editDays = {};
+                sections.forEach(section => {
+                  if (!editDays[section.day_number]) {
+                    editDays[section.day_number] = [];
+                  }
+                  editDays[section.day_number].push(section);
+                });
+                %>
+
+                <% Object.entries(editDays).forEach(([dayNumber, daySections]) => { %>
+                  <div class="day-section" data-day="<%= dayNumber %>">
+                    <h3>第 <%= dayNumber %> 天</h3>
+                    <% daySections.forEach((section, idx) => { %>
+                      <div class="section-item" data-section-id="<%= section.id %>">
+                        <div class="form-group">
+                          <label>标题</label>
+                          <input type="text" class="form-control section-title" value="<%= section.section_title %>">
+                        </div>
+                        <div class="form-group">
+                          <label>内容</label>
+                          <textarea class="form-control section-content" rows="4"><%= section.section_content %></textarea>
+                        </div>
+                        <button type="button" class="btn btn-danger remove-section">删除此段</button>
+                      </div>
+                    <% }); %>
+                    <button type="button" class="btn btn-outline-primary add-section" data-day="<%= dayNumber %>">
+                      <i class="fas fa-plus"></i> 添加新段落
+                    </button>
+                  </div>
+                <% }); %>
+              </div>
+              <button type="button" class="btn btn-outline-primary mt-3" id="addDayBtn">
+                <i class="fas fa-plus"></i> 添加新的一天
+              </button>
+            </div>
+
+            <div class="form-group">
+              <label>媒体文件</label>
+              <div class="media-upload-container">
+                <div class="media-controls">
+                  <input type="file" id="mediaUpload" accept="image/*,video/*" multiple style="display: none">
+                  <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('mediaUpload').click()">
+                    <i class="fas fa-upload"></i> 上传新文件
+                  </button>
+                  <button type="button" class="btn btn-outline-secondary" id="openMediaLibrary">
+                    <i class="fas fa-photo-video"></i> 从媒体库选择
+                  </button>
+                  <div class="compression-controls">
+                    <label>
+                      <input type="checkbox" id="enableCompression" checked>
+                      启用图片压缩
+                    </label>
+                    <div class="compression-options">
+                      <div class="form-group">
+                        <label for="maxWidth">最大宽度 (px)</label>
+                        <input type="number" id="maxWidth" class="form-control" value="1920" min="100" max="4096">
+                      </div>
+                      <div class="form-group">
+                        <label for="maxHeight">最大高度 (px)</label>
+                        <input type="number" id="maxHeight" class="form-control" value="1080" min="100" max="4096">
+                      </div>
+                      <div class="form-group">
+                        <label for="quality">质量 (1-100)</label>
+                        <input type="range" id="quality" class="form-control" min="1" max="100" value="75">
+                        <span id="qualityValue">75%</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div id="mediaPreview" class="media-preview-grid">
+                  <% media.forEach((item, index) => { %>
+                    <div class="media-preview-item" data-media-id="<%= item.id %>">
+                      <% if (item.media_type === 'video') { %>
+                        <video src="<%= item.media_url %>" controls></video>
+                      <% } else { %>
+                        <img src="<%= item.media_url %>" alt="媒体预览">
+                      <% } %>
+                      <div class="media-preview-controls">
+                        <input type="text" class="form-control media-caption" value="<%= item.caption || '' %>" placeholder="添加说明文字...">
+                        <button type="button" class="btn btn-danger remove-media">删除</button>
+                      </div>
+                    </div>
+                  <% }); %>
+                </div>
+              </div>
+            </div>
+
+            <!-- 媒体库模态框 -->
+            <div class="media-library-modal" id="mediaLibraryModal">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h3>媒体库</h3>
+                  <button type="button" class="close-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                  <div class="media-library-controls">
+                    <div class="media-filter">
+                      <label>
+                        <input type="radio" name="mediaType" value="all" checked> 全部
+                      </label>
+                      <label>
+                        <input type="radio" name="mediaType" value="image"> 图片
+                      </label>
+                      <label>
+                        <input type="radio" name="mediaType" value="video"> 视频
+                      </label>
+                    </div>
+                    <input type="text" class="search-media" placeholder="搜索媒体文件...">
+                  </div>
+                  <div class="media-library-grid" id="mediaLibraryGrid">
+                    <!-- 将由 JavaScript 动态填充 -->
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary close-modal">取消</button>
+                  <button type="button" class="btn btn-primary" id="confirmMediaSelection">确认选择</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="editTips">旅行小贴士</label>
+              <textarea id="editTips" class="form-control" rows="4" placeholder="分享一些实用的旅行建议..."><%= diary.tips || '' %></textarea>
+            </div>
+          </div>
+
+          <!-- 显示内容 -->
           <div class="diary-content">
-<!--            <h2>游记正文</h2>-->
-            <!-- 使用safe过滤器确保HTML内容正确渲染 -->
             <%- diary.content %>
           </div>
+
           <%
           // 按天分组章节
           const days = {};
@@ -621,7 +1332,9 @@
           <% }); %>
 
           <h2>旅行小贴士</h2>
-          <p class="tips-content"><%= diary.tips || '暂无小贴士' %></p>
+          <div class="tips-content">
+            <%= diary.tips || '暂无小贴士' %>
+          </div>
         </article>
 
         <!-- 互动栏 -->
@@ -741,6 +1454,12 @@
         </div>
       </aside>
     </div>
+
+    <script>
+      document.body.dataset.userLoggedIn = '<%= !!user %>';
+      document.body.dataset.diaryId = '<%= diary.id %>';
+      document.body.dataset.isAuthor = '<%= user && user.id === diary.user_id %>';
+    </script>
 
     <script src="/js/diary-detail.js"></script>
   </body>

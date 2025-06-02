@@ -500,7 +500,7 @@
             <% diaries.forEach(diary=> { %>
                 <div class="diary-card">
                     <div class="card-image"
-                        style="background-image: url('<%= diary.cover_image || '/images/default-diary.jpg' %>'" )>
+                        style="background-image: url('<%= '/uploads/' + diary.cover_image || '/images/default-diary.jpg' %>'" )>
                         <% if (diary.is_featured) { %>
                             <span class="hot-badge">
                                 <% if (diary.like_count> 3000) { %>

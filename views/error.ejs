@@ -7,33 +7,63 @@
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            line-height: 1.6;
-            padding: 2rem;
-            max-width: 800px;
-            margin: 0 auto;
             background-color: #f8f9fa;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: #333;
         }
+
         .error-container {
-            background-color: white;
+            background: white;
             padding: 2rem;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 600px;
+            width: 90%;
         }
+
         .error-title {
             color: #dc3545;
             margin-bottom: 1rem;
+            font-size: 2rem;
         }
+
         .error-message {
-            color: #343a40;
             margin-bottom: 2rem;
+            color: #666;
+            line-height: 1.6;
         }
-        .error-stack {
-            background-color: #f8f9fa;
+
+        .error-details {
+            text-align: left;
+            background: #f8f9fa;
             padding: 1rem;
             border-radius: 4px;
+            margin-top: 1rem;
             font-family: monospace;
             white-space: pre-wrap;
+            word-break: break-all;
+            font-size: 0.9rem;
             color: #666;
+        }
+
+        .back-button {
+            display: inline-block;
+            padding: 0.5rem 1.5rem;
+            background-color: #2a9d8f;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+
+        .back-button:hover {
+            background-color: #238b7e;
         }
     </style>
 </head>
@@ -41,16 +71,16 @@
     <div class="error-container">
         <h1 class="error-title">出错了！</h1>
         <div class="error-message">
-            <p><%= message || '发生了未知错误' %></p>
+            <p><%= locals.message || '发生了未知错误' %></p>
         </div>
 
         <% if (process.env.NODE_ENV !== 'production' && locals.error) { %>
-            <div class="error-stack">
-                <%= error.stack %>
+            <div class="error-details">
+                <pre><%= error.stack || error %></pre>
             </div>
         <% } %>
 
-        <p><a href="/">返回首页</a></p>
+        <a href="javascript:history.back()" class="back-button">返回上一页</a>
     </div>
 </body>
 </html>

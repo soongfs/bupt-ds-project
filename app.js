@@ -354,40 +354,49 @@ app.get("/register", (req, res) => {
 });
 
 // 修改注册接口
-app.post("/api/register", async (req, res) => {
+app.post("/api/register", (req, res) => {
   const { username, email, password } = req.body;
 
-  try {
-    // 先检查用户名是否已存在
-    const [users] = await db
-      .promise()
-      .query("SELECT 1 FROM user_information WHERE username = ? LIMIT 1", [
-        username,
-      ]);
+  // 先检查用户名是否已存在
+  db.query(
+    "SELECT 1 FROM user_information WHERE username = ? LIMIT 1",
+    [username],
+    (err, users) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).json({ success: false, message: "注册失败" });
+      }
 
-    if (users.length > 0) {
-      return res.status(409).json({
-        success: false,
-        message: "用户名已被使用",
+      if (users.length > 0) {
+        return res.status(409).json({
+          success: false,
+          message: "用户名已被使用",
+        });
+      }
+
+      // 哈希密码
+      bcrypt.hash(password, 10, (err, hashedPassword) => {
+        if (err) {
+          console.error(err);
+          return res.status(500).json({ success: false, message: "注册失败" });
+        }
+
+        // 插入新用户
+        db.query(
+          "INSERT INTO user_information (username, email, password) VALUES (?, ?, ?)",
+          [username, email, hashedPassword],
+          (err) => {
+            if (err) {
+              console.error(err);
+              return res.status(500).json({ success: false, message: "注册失败" });
+            }
+
+            res.json({ success: true });
+          }
+        );
       });
     }
-
-    // 哈希密码
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // 插入新用户
-    await db
-      .promise()
-      .query(
-        "INSERT INTO user_information (username, email, password) VALUES (?, ?, ?)",
-        [username, email, hashedPassword]
-      );
-
-    res.json({ success: true });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, message: "注册失败" });
-  }
+  );
 });
 
 // 添加测试路由检查服务器是否运行正常
@@ -396,46 +405,49 @@ app.get("/test", (req, res) => {
   res.send("服务器运行正常");
 });
 
-async function getAttractions(category = "all", sort = "hot") {
-  return new Promise((resolve, reject) => {
-    let query = "SELECT * FROM attractions";
-    const params = [];
+function getAttractions(category = "all", sort = "hot", callback) {
+  let query = "SELECT * FROM attractions";
+  const params = [];
 
-    if (category && category !== "all") {
-      query += " WHERE category = ?";
-      params.push(category);
-    }
+  if (category && category !== "all") {
+    query += " WHERE category = ?";
+    params.push(category);
+  }
 
-    if (sort === "rating") {
-      query += " ORDER BY rating DESC";
-    } else if (sort === "distance") {
-      query += " ORDER BY distance ASC";
-    } else {
-      query += " ORDER BY comment_count DESC";
-    }
+  if (sort === "rating") {
+    query += " ORDER BY rating DESC";
+  } else if (sort === "distance") {
+    query += " ORDER BY distance ASC";
+  } else {
+    query += " ORDER BY comment_count DESC";
+  }
 
-    db.query(query, params, (err, results) => {
-      if (err) return reject(err);
-      resolve(results);
-    });
+  db.query(query, params, (err, results) => {
+    if (err) return callback(err);
+    callback(null, results);
   });
 }
 
 app.get("/attraction-explorer", async (req, res) => {
   try {
     const { category = "all", sort = "hot" } = req.query;
-    const attractions = await getAttractions(category, sort);
-
-    res.render("attraction-explorer", {
-      attractions,
-      currentCategory: category,
-      currentSort: sort,
-      helpers: {
-        formatNumber: (num) => {
-          if (num >= 10000) return (num / 10000).toFixed(1) + "万";
-          return num.toString();
-        },
-      },
+    getAttractions(category, sort, (err, attractions) => {
+      if (err) {
+        console.error(err);
+        res.status(500).send("Server Error");
+      } else {
+        res.render("attraction-explorer", {
+          attractions,
+          currentCategory: category,
+          currentSort: sort,
+          helpers: {
+            formatNumber: (num) => {
+              if (num >= 10000) return (num / 10000).toFixed(1) + "万";
+              return num.toString();
+            },
+          },
+        });
+      }
     });
   } catch (error) {
     console.error(error);
