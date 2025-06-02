@@ -1,0 +1,86 @@
+<!-- 全局导航栏 -->
+<nav class="global-nav">
+    <a href="/" class="logo">✈️ TravelMate</a>
+    <div class="nav-links">
+        <a href="/">首页</a>
+        <a href="/attraction/explorer">探索</a>
+        <!-- Add other links as needed -->
+    </div>
+    <% if (typeof currentUser !== 'undefined' && currentUser) { %>
+        <div class="user-avatar" id="userAvatar">
+            <% if (currentUser.avatar) { %>
+                <img src="/uploads/<%= currentUser.avatar %>" alt="<%= currentUser.username %>" class="avatar-image">
+            <% } else { %>
+                <div class="avatar-fallback">
+                    <%= currentUser.username.charAt(0).toUpperCase() %>
+                </div>
+            <% } %>
+        </div>
+        <div class="dropdown-menu" id="dropdownMenu">
+            <a href="/user/<%= currentUser.id %>" class="dropdown-item">
+                <i class="fas fa-user"></i> 我的主页
+            </a>
+            <a href="/diary/new" class="dropdown-item">
+                <i class="fas fa-pen"></i> 写游记
+            </a>
+            <a href="/user/settings" class="dropdown-item">
+                <i class="fas fa-cog"></i> 设置
+            </a>
+            <a href="/logout" class="dropdown-item" id="logoutLink">
+                <i class="fas fa-sign-out-alt"></i> 退出
+            </a>
+        </div>
+    <% } else { %>
+        <a href="/login" class="btn btn-primary" style="margin-left: auto;">登录</a>
+    <% } %>
+</nav>
+
+<script>
+// Dropdown menu script
+const userAvatar = document.getElementById('userAvatar');
+const dropdownMenu = document.getElementById('dropdownMenu');
+const logoutLink = document.getElementById('logoutLink');
+
+if (userAvatar && dropdownMenu) {
+    userAvatar.addEventListener('mouseenter', () => {
+        dropdownMenu.classList.add('show');
+    });
+
+    userAvatar.addEventListener('mouseleave', () => {
+        setTimeout(() => {
+            if (!dropdownMenu.matches(':hover')) {
+                dropdownMenu.classList.remove('show');
+            }
+        }, 100);
+    });
+
+    dropdownMenu.addEventListener('mouseenter', () => {
+        dropdownMenu.classList.add('show');
+    });
+
+    dropdownMenu.addEventListener('mouseleave', () => {
+        dropdownMenu.classList.remove('show');
+    });
+
+    if (logoutLink) {
+        logoutLink.addEventListener('click', async (e) => {
+            e.preventDefault();
+            try {
+                const response = await fetch('/logout', {
+                    method: 'POST',
+                    credentials: 'same-origin'
+                });
+                const data = await response.json();
+                if (data.success) {
+                    window.location.href = "/";
+                } else {
+                    console.error("登出失败:", data.message);
+                    alert("登出失败: " + data.message);
+                }
+            } catch (error) {
+                console.error("退出登录失败:", error);
+                alert("退出登录请求失败.");
+            }
+        });
+    }
+}</script> 

@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= attraction.name %> - TravelMate</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+    <style>
+        :root {
+            --primary: #2a9d8f;
+            --secondary: #264653;
+            --accent: #e9c46a;
+            --text: #444;
+            --border: #e0e0e0;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Segoe UI", "PingFang SC", sans-serif;
+        }
+
+        body {
+            background: #f8f9fa;
+            color: var(--text);
+            line-height: 1.6;
+            padding-top: 60px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .attraction-header {
+            position: relative;
+            height: 400px;
+            background-size: cover;
+            background-position: center;
+            border-radius: 20px;
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+
+        .header-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 2rem;
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+            color: white;
+        }
+
+        .attraction-title {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .attraction-meta {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+            font-size: 1.1rem;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+        }
+
+        .main-content, .side-content {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: var(--shadow);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            color: var(--secondary);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .description {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            margin-bottom: 2rem;
+        }
+
+        .info-list {
+            list-style: none;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .info-item i {
+            color: var(--primary);
+            font-size: 1.2rem;
+            width: 24px;
+        }
+
+        .rating-section {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .rating-stars {
+            display: flex;
+            gap: 0.5rem;
+            margin: 1rem 0;
+        }
+
+        .star {
+            font-size: 2rem;
+            color: #ddd;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .star.active {
+            color: var(--accent);
+        }
+
+        .similar-attractions {
+            margin-top: 2rem;
+        }
+
+        .similar-card {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            transition: all 0.3s;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .similar-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
+        .similar-image {
+            width: 100px;
+            height: 100px;
+            border-radius: 10px;
+            object-fit: cover;
+        }
+
+        .similar-info {
+            flex: 1;
+        }
+
+        .similar-title {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            color: var(--secondary);
+        }
+
+        .similar-meta {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .attraction-header {
+                height: 300px;
+            }
+
+            .attraction-title {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <%- include('partials/navigation') %>
+
+    <div class="container">
+        <div class="attraction-header" style="background-image: url('<%= attraction.cover_image %>')">
+            <div class="header-overlay">
+                <h1 class="attraction-title"><%= attraction.name %></h1>
+                <div class="attraction-meta">
+                    <div class="meta-item">
+                        <i class="fas fa-star"></i>
+                        <span><%= attraction.rating.toFixed(1) %></span>
+                    </div>
+                    <div class="meta-item">
+                        <i class="fas fa-eye"></i>
+                        <span><%= attraction.comment_count %> 条评论</span>
+                    </div>
+                    <% if (attraction.user_rating) { %>
+                        <div class="meta-item">
+                            <i class="fas fa-heart"></i>
+                            <span>您的评分: <%= attraction.user_rating.toFixed(1) %></span>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-grid">
+            <div class="main-content">
+                <section>
+                    <h2 class="section-title">
+                        <i class="fas fa-info-circle"></i>
+                        景点介绍
+                    </h2>
+                    <p class="description"><%= attraction.description %></p>
+                </section>
+
+                <section>
+                    <h2 class="section-title">
+                        <i class="fas fa-list"></i>
+                        基本信息
+                    </h2>
+                    <ul class="info-list">
+                        <li class="info-item">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>地址：<%= attraction.address %></span>
+                        </li>
+                        <li class="info-item">
+                            <i class="fas fa-clock"></i>
+                            <span>开放时间：<%= attraction.opening_hours || '全天开放' %></span>
+                        </li>
+                        <li class="info-item">
+                            <i class="fas fa-ticket-alt"></i>
+                            <span>门票：<%= attraction.is_free ? '免费开放' : '￥' + attraction.ticket_price %></span>
+                        </li>
+                        <li class="info-item">
+                            <i class="fas fa-hourglass-half"></i>
+                            <span>建议游玩：<%= Math.floor(attraction.duration / 60) %>小时<%= attraction.duration % 60 %>分钟</span>
+                        </li>
+                    </ul>
+                </section>
+
+                <% if (currentUser) { %>
+                    <section class="rating-section">
+                        <h2 class="section-title">
+                            <i class="fas fa-star"></i>
+                            为景点评分
+                        </h2>
+                        <div class="rating-stars" id="ratingStars">
+                            <% for(let i = 1; i <= 5; i++) { %>
+                                <i class="fas fa-star star <%= attraction.user_rating && i <= attraction.user_rating ? 'active' : '' %>" data-rating="<%= i %>"></i>
+                            <% } %>
+                        </div>
+                    </section>
+                <% } %>
+            </div>
+
+            <div class="side-content">
+                <% if (similarAttractions && similarAttractions.length > 0) { %>
+                    <section class="similar-attractions">
+                        <h2 class="section-title">
+                            <i class="fas fa-compass"></i>
+                            相似景点
+                        </h2>
+                        <% similarAttractions.forEach(similar => { %>
+                            <a href="/attraction/detail/<%= similar.id %>" class="similar-card">
+                                <img src="<%= similar.cover_image %>" alt="<%= similar.name %>" class="similar-image">
+                                <div class="similar-info">
+                                    <h3 class="similar-title"><%= similar.name %></h3>
+                                    <div class="similar-meta">
+                                        <i class="fas fa-star"></i>
+                                        <%= similar.rating.toFixed(1) %> · 
+                                        <%= similar.comment_count %> 条评论
+                                    </div>
+                                </div>
+                            </a>
+                        <% }) %>
+                    </section>
+                <% } %>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 评分功能
+        const ratingStars = document.getElementById('ratingStars');
+        if (ratingStars) {
+            const stars = ratingStars.getElementsByClassName('star');
+            
+            // 鼠标悬停效果
+            Array.from(stars).forEach((star, index) => {
+                star.addEventListener('mouseover', () => {
+                    for (let i = 0; i <= index; i++) {
+                        stars[i].classList.add('active');
+                    }
+                    for (let i = index + 1; i < stars.length; i++) {
+                        stars[i].classList.remove('active');
+                    }
+                });
+
+                star.addEventListener('click', async () => {
+                    const rating = star.dataset.rating;
+                    try {
+                        const response = await fetch(`/attraction/detail/<%= attraction.id %>/rate`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ rating })
+                        });
+                        const data = await response.json();
+                        if (data.success) {
+                            // 更新UI显示
+                            Array.from(stars).forEach((s, i) => {
+                                if (i < rating) {
+                                    s.classList.add('active');
+                                } else {
+                                    s.classList.remove('active');
+                                }
+                            });
+                        } else {
+                            alert('评分失败：' + data.message);
+                        }
+                    } catch (error) {
+                        console.error('Error:', error);
+                        alert('评分失败，请稍后重试');
+                    }
+                });
+            });
+
+            // 鼠标移出时恢复当前评分
+            ratingStars.addEventListener('mouseleave', () => {
+                const currentRating = Number('<%= attraction.user_rating || 0 %>');
+                Array.from(stars).forEach((star, index) => {
+                    if (index < currentRating) {
+                        star.classList.add('active');
+                    } else {
+                        star.classList.remove('active');
+                    }
+                });
+            });
+        }
+    </script>
+</body>
+</html> 

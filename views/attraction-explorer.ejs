@@ -9,6 +9,113 @@
     rel="stylesheet"
   />
   <style>
+    /* Add styles for global-nav, logo, nav-links, user-avatar, dropdown-menu etc. here if they are not already globally available */
+    /* Assuming these styles are in a global CSS file or already present in attraction-explorer.ejs */
+    .global-nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 5%;
+      background: rgba(255, 255, 255, 0.95);
+      box-shadow: var(--shadow);
+      z-index: 1000;
+      height: 60px; /* Adjust as needed */
+    }
+
+    .logo {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--primary);
+      transition: transform 0.3s;
+      text-decoration: none;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+    }
+
+    .nav-links a {
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 500;
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      transition: all 0.3s;
+    }
+
+    .nav-links a:hover {
+      background: rgba(42, 157, 143, 0.1);
+      color: var(--primary);
+    }
+    /* Basic styles for dropdown, assuming currentUser is available */
+    .user-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        overflow: hidden;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #f5f5f5;
+        border: 2px solid #ddd;
+        margin-left: auto; /* Push to the right if no other nav links */
+    }
+    .avatar-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .avatar-fallback {
+        font-weight: bold;
+        color: #555;
+        font-size: 18px;
+    }
+    .dropdown-menu {
+        position: absolute;
+        right: 5%; /* Align with padding */
+        top: 60px; /* Below nav */
+        width: 200px;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(-10px);
+        transition: all 0.3s ease;
+        z-index: 1001;
+    }
+    .dropdown-menu.show {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+    }
+    .dropdown-item {
+        display: flex;
+        align-items: center;
+        padding: 12px 16px;
+        color: var(--text);
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+    .dropdown-item i {
+        width: 20px;
+        margin-right: 12px;
+        color: var(--primary);
+    }
+    .dropdown-item:hover {
+        background: rgba(42,157,143,0.1);
+        color: var(--primary);
+    }
+    body {
+      padding-top: 60px; /* Adjust to match nav height to prevent content overlap */
+    }
+
       :root {
         --primary: #2a9d8f;
         --secondary: #264653;
@@ -276,6 +383,50 @@
         }
       }
 
+      /* 推荐部分样式 */
+      .recommendations-section {
+        padding: 2rem;
+        background: linear-gradient(to bottom, rgba(42, 157, 143, 0.1), transparent);
+      }
+
+      .section-title {
+        color: var(--secondary);
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .recommendation-badge {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: linear-gradient(135deg, #2a9d8f, #264653);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        box-shadow: var(--shadow);
+      }
+
+      .poi-card.recommended {
+        border: 2px solid var(--primary);
+        transform: scale(1.02);
+      }
+
+      .poi-card.recommended:hover {
+        transform: translateY(-5px) scale(1.02);
+      }
+
+      .user-rating {
+        color: var(--primary);
+        font-weight: 500;
+      }
+
       a {
         text-decoration: none;
         color: inherit;
@@ -287,6 +438,43 @@
     </style>
 </head>
 <body>
+  <!-- 导航栏 -->
+  <nav class="global-nav">
+    <a href="/" class="logo">✈️ TravelMate</a>
+    <div class="nav-links">
+      <a href="/">首页</a>
+      <a href="/attraction/explorer">探索</a>
+      <!-- Add other links as needed -->
+    </div>
+    <% if (currentUser) { %>
+      <div class="user-avatar" id="userAvatar">
+        <% if (currentUser.avatar) { %>
+          <img src="<%= '/uploads/' + currentUser.avatar %>" alt="<%= currentUser.username %>" class="avatar-image">
+        <% } else { %>
+          <div class="avatar-fallback">
+            <%= currentUser.username.charAt(0).toUpperCase() %>
+          </div>
+        <% } %>
+      </div>
+      <div class="dropdown-menu" id="dropdownMenu">
+        <a href="/user/<%= currentUser.id %>" class="dropdown-item">
+          <i class="fas fa-user"></i> 我的主页
+        </a>
+        <a href="/diary/new" class="dropdown-item">
+          <i class="fas fa-pen"></i> 写游记
+        </a>
+        <a href="/user/settings" class="dropdown-item">
+          <i class="fas fa-cog"></i> 设置
+        </a>
+        <a href="/logout" class="dropdown-item" id="logoutLink"> <!-- Added ID for JS -->
+          <i class="fas fa-sign-out-alt"></i> 退出
+        </a>
+      </div>
+    <% } else { %>
+      <a href="/login" class="btn btn-primary" style="margin-left: auto;">登录</a>
+    <% } %>
+  </nav>
+
   <!-- 筛选容器 -->
   <div class="filter-container">
     <div class="search-bar">
@@ -300,50 +488,133 @@
 
     <div class="filter-group">
       <button class="filter-btn <%= currentCategory === 'all' ? 'active' : '' %>"
-              onclick="window.location.href='/attractions?category=all&sort=<%= currentSort %>'">
+              onclick="window.location.href='/attraction/explorer?category=all&sort=<%= currentSort %>'">
         <i class="fas fa-map-marker-alt"></i>
         全部景点
       </button>
       <button class="filter-btn <%= currentCategory === 'natural' ? 'active' : '' %>"
-              onclick="window.location.href='/attractions?category=natural&sort=<%= currentSort %>'">
+              onclick="window.location.href='/attraction/explorer?category=natural&sort=<%= currentSort %>'">
         <i class="fas fa-mountain"></i>
         自然风光
       </button>
       <button class="filter-btn <%= currentCategory === 'historical' ? 'active' : '' %>"
-              onclick="window.location.href='/attractions?category=historical&sort=<%= currentSort %>'">
+              onclick="window.location.href='/attraction/explorer?category=historical&sort=<%= currentSort %>'">
         <i class="fas fa-landmark"></i>
         历史人文
       </button>
       <button class="filter-btn <%= currentCategory === 'landmark' ? 'active' : '' %>"
-              onclick="window.location.href='/attractions?category=landmark&sort=<%= currentSort %>'">
+              onclick="window.location.href='/attraction/explorer?category=landmark&sort=<%= currentSort %>'">
         <i class="fas fa-city"></i>
         城市地标
       </button>
     </div>
 
     <div class="sort-options">
+      <button class="sort-btn <%= currentSort === 'personalized' ? 'active' : '' %>"
+              onclick="window.location.href='/attraction/explorer?category=<%= currentCategory %>&sort=personalized'">
+        <i class="fas fa-magic"></i>
+        个性化推荐
+      </button>
+      <button class="sort-btn <%= currentSort === 'my_ratings' ? 'active' : '' %>"
+              onclick="window.location.href='/attraction/explorer?category=<%= currentCategory %>&sort=my_ratings'">
+        <i class="fas fa-heart"></i>
+        我的评分
+      </button>
+      <button class="sort-btn <%= currentSort === 'my_views' ? 'active' : '' %>"
+              onclick="window.location.href='/attraction/explorer?category=<%= currentCategory %>&sort=my_views'">
+        <i class="fas fa-history"></i>
+        我的浏览
+      </button>
       <button class="sort-btn <%= currentSort === 'hot' ? 'active' : '' %>"
-              onclick="window.location.href='/attractions?category=<%= currentCategory %>&sort=hot'">
+              onclick="window.location.href='/attraction/explorer?category=<%= currentCategory %>&sort=hot'">
         <i class="fas fa-fire"></i>
         热度优先
       </button>
       <button class="sort-btn <%= currentSort === 'rating' ? 'active' : '' %>"
-              onclick="window.location.href='/attractions?category=<%= currentCategory %>&sort=rating'">
+              onclick="window.location.href='/attraction/explorer?category=<%= currentCategory %>&sort=rating'">
         <i class="fas fa-star"></i>
         评分最高
       </button>
       <button class="sort-btn <%= currentSort === 'distance' ? 'active' : '' %>"
-              onclick="window.location.href='/attractions?category=<%= currentCategory %>&sort=distance'">
+              onclick="window.location.href='/attraction/explorer?category=<%= currentCategory %>&sort=distance'">
         <i class="fas fa-location-dot"></i>
         距离最近
       </button>
     </div>
   </div>
 
+  <!-- 推荐景点部分 -->
+  <% if (recommendedAttractions && recommendedAttractions.length > 0) { %>
+    <div class="recommendations-section">
+      <h2 class="section-title">
+        <i class="fas fa-thumbs-up"></i>
+        为您推荐
+      </h2>
+      <div class="poi-grid">
+        <% recommendedAttractions.forEach(attraction => { %>
+          <a href="/attraction/detail/<%= attraction.id %>" class="poi-card recommended">
+            <div class="card-image" style="background-image: url('<%= attraction.cover_image %>')">
+              <span class="recommendation-badge">
+                <i class="fas fa-thumbs-up"></i>
+                推荐指数: <%= (attraction.recommendation_score * 100).toFixed(0) %>%
+              </span>
+            </div>
+            <div class="card-content">
+              <h3 class="poi-title"><%= attraction.name %></h3>
+              <div class="poi-stats">
+                <div class="stat-item">
+                  <i class="fas fa-star"></i>
+                  <span><%= attraction.rating.toFixed(1) %></span>
+                </div>
+                <div class="stat-item">
+                  <i class="fas fa-eye"></i>
+                  <span><%= attraction.comment_count %></span>
+                </div>
+                <% if (attraction.user_rating > 0) { %>
+                  <div class="stat-item user-rating">
+                    <i class="fas fa-heart"></i>
+                    <span>您的评分: <%= attraction.user_rating.toFixed(1) %></span>
+                  </div>
+                <% } %>
+              </div>
+              <p class="poi-desc"><%= attraction.description %></p>
+              <div class="poi-tags">
+                <% if (attraction.is_5a) { %>
+                  <span class="tag">
+                    <i class="fas fa-award"></i>
+                    5A景区
+                  </span>
+                <% } %>
+                <% if (attraction.is_free) { %>
+                  <span class="tag">
+                    <i class="fas fa-tag"></i>
+                    免费开放
+                  </span>
+                <% } %>
+                <span class="tag">
+                  <i class="fas fa-clock"></i>
+                  <%= attraction.tags || '全天开放' %>
+                </span>
+                <span class="tag">
+                  <i class="fas fa-wallet"></i>
+                  ￥<%= '¥'.repeat(attraction.price_level) %>
+                </span>
+                <span class="tag">
+                  <i class="fas fa-hourglass-half"></i>
+                  <%= Math.floor(attraction.duration / 60) %>小时<%= attraction.duration % 60 %>分钟
+                </span>
+              </div>
+            </div>
+          </a>
+        <% }); %>
+      </div>
+    </div>
+  <% } %>
+
   <!-- 景点列表 -->
   <div class="poi-grid">
     <% attractions.forEach((attraction, index) => { %>
-      <a href="/attraction-detail/<%= attraction.id %>" class="poi-card">
+      <a href="/attraction/detail/<%= attraction.id %>" class="poi-card">
         <div class="card-image" style="background-image: url('<%= attraction.cover_image %>')">
           <% if (index < 6) { %>
             <span class="hot-badge">TOP <%= index + 1 %></span>
@@ -402,6 +673,68 @@
         }
       });
     });
+
+    // Dropdown menu script (if currentUser is available)
+    const userAvatar = document.getElementById('userAvatar');
+    const dropdownMenu = document.getElementById('dropdownMenu');
+    const logoutLink = document.getElementById('logoutLink');
+
+    if (userAvatar && dropdownMenu) {
+        userAvatar.addEventListener('mouseenter', () => {
+            dropdownMenu.classList.add('show');
+        });
+
+        userAvatar.addEventListener('mouseleave', () => {
+            setTimeout(() => {
+                if (!dropdownMenu.matches(':hover')) {
+                    dropdownMenu.classList.remove('show');
+                }
+            }, 100);
+        });
+
+        dropdownMenu.addEventListener('mouseenter', () => {
+            dropdownMenu.classList.add('show');
+        });
+
+        dropdownMenu.addEventListener('mouseleave', () => {
+            dropdownMenu.classList.remove('show');
+        });
+
+        document.querySelectorAll('.dropdown-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                if (item.id !== 'logoutLink') { // Prevent default for non-logout links only if they are actual navigations
+                    dropdownMenu.classList.remove('show');
+                } else {
+                    // Handle logout
+                    e.preventDefault();
+                    window.logout(); 
+                }
+            });
+        });
+    }
+    
+    // Logout function (ensure it's defined or include it)
+    if (typeof window.logout === 'undefined') {
+        window.logout = async function () {
+            console.log("退出登录函数被调用 (attraction-explorer)");
+            try {
+                const response = await fetch('/logout', { // Assuming logout is a POST, adjust if GET
+                    method: 'POST', 
+                    credentials: 'same-origin'
+                });
+                const data = await response.json();
+                if (data.success) {
+                    window.location.href = "/";
+                } else {
+                    console.error("登出失败:", data.message);
+                    alert("登出失败: " + data.message);
+                }
+            } catch (error) {
+                console.error("退出登录失败:", error);
+                alert("退出登录请求失败.");
+            }
+        };
+    }
   </script>
 </body>
 </html>
