@@ -1,39 +1,56 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
-    <title>错误</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>错误 - TravelMate</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #f8f8f8;
-            color: #333;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            padding: 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #f8f9fa;
         }
-        h1 {
-            color: #e74c3c;
+        .error-container {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        pre {
-            background-color: #f2f2f2;
-            padding: 10px;
-            border-radius: 5px;
-            overflow-x: auto;
+        .error-title {
+            color: #dc3545;
+            margin-bottom: 1rem;
+        }
+        .error-message {
+            color: #343a40;
+            margin-bottom: 2rem;
+        }
+        .error-stack {
+            background-color: #f8f9fa;
+            padding: 1rem;
+            border-radius: 4px;
+            font-family: monospace;
             white-space: pre-wrap;
-            word-wrap: break-word;
+            color: #666;
         }
     </style>
 </head>
 <body>
-    <h1>发生错误</h1>
-    <p><%= message %></p>
+    <div class="error-container">
+        <h1 class="error-title">出错了！</h1>
+        <div class="error-message">
+            <p><%= message || '发生了未知错误' %></p>
+        </div>
 
-    <%
-    // 判断是否显示堆栈信息（假设通过环境变量 NODE_ENV 控制）
-    const showStack = process.env.NODE_ENV !== 'production';
-    if (showStack && error) {
-    %>
-        <h2>错误详情</h2>
-        <pre><%= error.stack %></pre>
-    <% } %>
+        <% if (process.env.NODE_ENV !== 'production' && locals.error) { %>
+            <div class="error-stack">
+                <%= error.stack %>
+            </div>
+        <% } %>
+
+        <p><a href="/">返回首页</a></p>
+    </div>
 </body>
 </html>

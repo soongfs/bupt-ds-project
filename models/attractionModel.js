@@ -1,5 +1,5 @@
 // models/attractionModel.js
-const db = require("../config/dbConfig");
+const db = require("../config/test-database");
 
 exports.getAttractions = (category, sort) => {
   let sql = "SELECT * FROM attractions";

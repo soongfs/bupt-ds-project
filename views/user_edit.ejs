@@ -324,6 +324,90 @@
                 width: 100%;
             }
         }
+
+        /* 消息模块样式 */
+        .messages-container {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .message-item {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            transition: background-color 0.3s;
+        }
+
+        .message-item:hover {
+            background-color: rgba(42, 157, 143, 0.05);
+        }
+
+        .message-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .message-content {
+            flex: 1;
+        }
+
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .message-sender {
+            font-weight: 500;
+            color: var(--secondary);
+        }
+
+        .message-time {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .message-text {
+            color: var(--text);
+            line-height: 1.5;
+        }
+
+        .unread-count {
+            background: #e76f51;
+            color: white;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            margin-left: 0.5rem;
+        }
+
+        .message-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 0.5rem;
+        }
+
+        .message-action-btn {
+            background: none;
+            border: none;
+            color: var(--primary);
+            cursor: pointer;
+            font-size: 0.9rem;
+            padding: 0;
+        }
+
+        .message-action-btn:hover {
+            text-decoration: underline;
+        }
+
+        .no-messages {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
     </style>
 </head>
 
@@ -460,6 +544,17 @@
                 </div>
             </div>
 
+            <!-- 消息模块 -->
+            <div class="content-section">
+                <h2 class="section-title">
+                    <i class="fas fa-envelope"></i> 我的消息
+                    <span class="unread-count" id="unreadCount"></span>
+                </h2>
+                <div class="messages-container" id="messagesContainer">
+                    <!-- 消息列表将通过 JavaScript 动态加载 -->
+                </div>
+            </div>
+
             <!-- 表单操作按钮 -->
             <div class="form-actions">
                 <button type="button" class="btn btn-outline" id="cancelBtn">
@@ -569,6 +664,105 @@
             if (confirm('确定要放弃所有更改吗？')) {
                 window.location.href = `/user/<%= user.id %>`;
             }
+        });
+
+        // 加载消息列表
+        async function loadMessages() {
+            try {
+                const response = await fetch('/messages/conversations');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const container = document.getElementById('messagesContainer');
+                    if (data.conversations.length === 0) {
+                        container.innerHTML = '<div class="no-messages">暂无消息</div>';
+                        return;
+                    }
+
+                    container.innerHTML = data.conversations.map(conv => `
+                        <div class="message-item ${conv.unread_count > 0 ? 'unread' : ''}">
+                            <img src="/uploads/${conv.other_user_avatar || 'default-avatar.jpg'}" 
+                                 alt="${conv.other_user_name}" 
+                                 class="message-avatar">
+                            <div class="message-content">
+                                <div class="message-header">
+                                    <span class="message-sender">${conv.other_user_name}</span>
+                                    <span class="message-time">${formatTime(conv.last_message_time)}</span>
+                                </div>
+                                <div class="message-actions">
+                                    <button class="message-action-btn" onclick="viewConversation('${conv.other_user_id}')">
+                                        查看对话
+                                    </button>
+                                    <button class="message-action-btn" onclick="replyMessage('${conv.other_user_id}')">
+                                        回复
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('加载消息失败:', error);
+            }
+        }
+
+        // 加载未读消息数量
+        async function loadUnreadCount() {
+            try {
+                const response = await fetch('/messages/unread/count');
+                const data = await response.json();
+                
+                if (data.success && data.count > 0) {
+                    document.getElementById('unreadCount').textContent = data.count;
+                }
+            } catch (error) {
+                console.error('加载未读消息数量失败:', error);
+            }
+        }
+
+        // 查看完整对话
+        function viewConversation(userId) {
+            window.location.href = `/messages/chat/${userId}`;
+        }
+
+        // 回复消息
+        function replyMessage(userId) {
+            window.location.href = `/messages/new/${userId}`;
+        }
+
+        // 格式化时间
+        function formatTime(timestamp) {
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diff = now - date;
+            
+            // 如果是今天的消息，只显示时间
+            if (date.toDateString() === now.toDateString()) {
+                return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+            }
+            
+            // 如果是昨天的消息
+            const yesterday = new Date(now);
+            yesterday.setDate(yesterday.getDate() - 1);
+            if (date.toDateString() === yesterday.toDateString()) {
+                return '昨天 ' + date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+            }
+            
+            // 其他日期显示完整日期
+            return date.toLocaleDateString('zh-CN') + ' ' + 
+                   date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        // 页面加载时获取消息
+        document.addEventListener('DOMContentLoaded', () => {
+            loadMessages();
+            loadUnreadCount();
+            
+            // 每分钟刷新一次消息
+            setInterval(() => {
+                loadMessages();
+                loadUnreadCount();
+            }, 60000);
         });
     </script>
 </body>

@@ -444,55 +444,43 @@
 <body>
   <!-- 导航栏 -->
   <nav class="global-nav">
-    <!-- <div class="logo">✈️ TravelMate</div> -->
     <a href="/" class="logo">✈️ TravelMate</a>
     <div class="nav-links">
-      <a href="#recommend">推荐</a>
-      <a href="#plan">规划</a>
-      <a href="#diary">日记</a>
+      <a href="/">首页</a>
+      <a href="/explore">探索</a>
+      <a href="/diaries">日记</a>
     </div>
-
-    <div class="user-menu-container">
-      <% if (user) { %>
-        <!-- 已登录状态 -->
-        <div class="user-avatar" id="userAvatar">
-          <% if (user.avatar) { %>
-            <img src="<%= '/uploads/' + user.avatar %>" alt="<%= user.username %>" class="avatar-image">
-            <% } else { %>
-              <!-- 使用用户名的首字母作为默认头像 -->
-              <div class="avatar-fallback">
-                <%= user.username.charAt(0).toUpperCase() %>
-              </div>
-              <% } %>
-        </div>
-        <div class="dropdown-menu" id="dropdownMenu">
-          <a href="/user/<%= user.id %>" class="dropdown-item">
-            <i class="fas fa-user"></i> 我的主页
-          </a>
-          <a href="/settings" class="dropdown-item">
-            <i class="fas fa-cog"></i> 设置
-          </a>
-          <div class="dropdown-divider"></div>
-          <a href="#" class="dropdown-item" id="logoutBtn">
-            <i class="fas fa-sign-out-alt"></i> 退出登录
-          </a>
-        </div>
+    <% if (currentUser) { %>
+      <!-- 已登录状态 -->
+      <div class="user-avatar" id="userAvatar">
+        <% if (currentUser.avatar) { %>
+          <img src="<%= '/uploads/' + currentUser.avatar %>" alt="<%= currentUser.username %>" 
+            style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
         <% } else { %>
-          <!-- 未登录状态 -->
-          <div class="user-avatar" id="userAvatar">
-            <i class="fas fa-user-circle"></i>
+          <!-- 使用用户名的首字母作为默认头像 -->
+          <div class="avatar-fallback">
+            <%= currentUser.username.charAt(0).toUpperCase() %>
           </div>
-          <div class="dropdown-menu" id="dropdownMenu">
-            <a href="/login" class="dropdown-item">
-              <i class="fas fa-sign-in-alt"></i> 登录
-            </a>
-            <a href="/register" class="dropdown-item">
-              <i class="fas fa-user-plus"></i> 注册
-            </a>
-          </div>
-          <% } %>
-    </div>
-
+        <% } %>
+      </div>
+      <div class="dropdown-menu" id="dropdownMenu">
+        <a href="/user/<%= currentUser.id %>" class="dropdown-item">
+          <i class="fas fa-user"></i> 我的主页
+        </a>
+        <a href="/diary/new" class="dropdown-item">
+          <i class="fas fa-pen"></i> 写游记
+        </a>
+        <a href="/user/settings" class="dropdown-item">
+          <i class="fas fa-cog"></i> 设置
+        </a>
+        <a href="/logout" class="dropdown-item">
+          <i class="fas fa-sign-out-alt"></i> 退出
+        </a>
+      </div>
+    <% } else { %>
+      <!-- 未登录状态 -->
+      <a href="/login" class="btn btn-primary" style="margin-left: auto;">登录</a>
+    <% } %>
   </nav>
 
   <!-- 英雄区域 -->
