@@ -61,9 +61,11 @@ const diaryRouter = require("./routes/diary");
 const userRouter = require("./routes/userRoutes"); // 新增：用户路由
 const attractionRouter = require("./routes/attraction");
 const messageRouter = require("./routes/messageRoutes"); // 新增：消息路由
+const authRouter = require('./routes/auth');  // 添加认证路由
 
 // 注册路由
 app.use("/", indexRouter);
+app.use("/", authRouter);  // 添加认证路由
 app.use("/diary", diaryRouter);
 app.use("/user", userRouter); // 新增：注册用户路由
 app.use("/attraction", attractionRouter);

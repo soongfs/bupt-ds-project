@@ -1,0 +1,120 @@
+<!-- 导航栏 -->
+<nav class="navbar">
+  <div class="navbar-brand">
+    <a href="/" class="logo">TravelMate</a>
+  </div>
+  <div class="navbar-menu">
+    <a href="/" class="nav-item">首页</a>
+    <a href="/diary-discovery" class="nav-item">游记</a>
+    <a href="/attraction/discovery" class="nav-item">景点</a>
+    <% if (user) { %>
+      <div class="user-menu">
+        <img src="<%= user.avatar || '/images/default-avatar.jpg' %>" alt="头像" class="avatar">
+        <div class="dropdown-menu">
+          <a href="/user/<%= user.id %>" class="dropdown-item">个人主页</a>
+          <a href="/user/settings" class="dropdown-item">设置</a>
+          <a href="/logout" class="dropdown-item">退出登录</a>
+        </div>
+      </div>
+    <% } else { %>
+      <a href="/login" class="nav-item">登录</a>
+      <a href="/register" class="nav-item">注册</a>
+    <% } %>
+  </div>
+</nav>
+
+<style>
+  .navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2rem;
+    background: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+
+  .navbar-brand {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--primary);
+  }
+
+  .navbar-menu {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+  }
+
+  .nav-item {
+    color: var(--text);
+    text-decoration: none;
+    transition: color 0.3s;
+  }
+
+  .nav-item:hover {
+    color: var(--primary);
+  }
+
+  .user-menu {
+    position: relative;
+    cursor: pointer;
+  }
+
+  .avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid var(--primary);
+  }
+
+  .dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    padding: 0.5rem 0;
+    min-width: 150px;
+    z-index: 1000;
+  }
+
+  .user-menu:hover .dropdown-menu {
+    display: block;
+  }
+
+  .dropdown-item {
+    display: block;
+    padding: 0.5rem 1rem;
+    color: var(--text);
+    text-decoration: none;
+    transition: background 0.3s;
+  }
+
+  .dropdown-item:hover {
+    background: rgba(42, 157, 143, 0.1);
+    color: var(--primary);
+  }
+</style>
+
+<script>
+  // 处理移动端菜单
+  document.addEventListener('DOMContentLoaded', () => {
+    const userMenu = document.querySelector('.user-menu');
+    if (userMenu) {
+      userMenu.addEventListener('click', (e) => {
+        const dropdownMenu = userMenu.querySelector('.dropdown-menu');
+        dropdownMenu.style.display = dropdownMenu.style.display === 'block' ? 'none' : 'block';
+        e.stopPropagation();
+      });
+
+      document.addEventListener('click', () => {
+        const dropdownMenu = userMenu.querySelector('.dropdown-menu');
+        if (dropdownMenu.style.display === 'block') {
+          dropdownMenu.style.display = 'none';
+        }
+      });
+    }
+  });
+</script> 

@@ -140,10 +140,15 @@ const diaryController = {
 
     // 获取日记基本信息
     db.query(`
-      SELECT d.*, u.username, u.avatar,
+      SELECT 
+        d.*, 
+        u.username, 
+        u.avatar,
         COALESCE(r.rating, 0) as user_rating,
         CASE WHEN f.user_id IS NOT NULL THEN 1 ELSE 0 END as user_favorited,
-        CASE WHEN l.user_id IS NOT NULL THEN 1 ELSE 0 END as user_liked
+        CASE WHEN l.user_id IS NOT NULL THEN 1 ELSE 0 END as user_liked,
+        (SELECT AVG(rating) FROM diary_ratings WHERE diary_id = d.id) as rating,
+        (SELECT COUNT(*) FROM diary_ratings WHERE diary_id = d.id) as rating_count
       FROM travel_diaries d
       JOIN user_information u ON d.user_id = u.id
       LEFT JOIN diary_ratings r ON d.id = r.diary_id AND r.user_id = ?
@@ -161,6 +166,9 @@ const diaryController = {
       }
 
       const diary = diaryResults[0];
+      // 确保 rating 是数字类型
+      diary.rating = diary.rating ? parseFloat(diary.rating) : 0;
+      diary.rating_count = parseInt(diary.rating_count || 0);
 
       // 获取媒体文件
       db.query(`
