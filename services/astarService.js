@@ -46,31 +46,47 @@ async function computeShortestPath(startId, endId, allNodes, allEdges, strategy 
     const u = edge.from_node.toString();
     const v = edge.to_node.toString();
     const length = edge.length;
-    const congestion = typeof edge.congestion === 'number' ? edge.congestion : 1.0;
-    const isCycleable = typeof edge.isCycleable === 'boolean' ? edge.isCycleable : (strategy === "time_bike" ? false : true); // Default for bike: not cycleable. For others: cycleable (won't matter)
+    // Ensure congestion is a number, default to 1.0 if null or undefined
+    const congestion = (edge.congestion !== null && typeof edge.congestion === 'number') ? edge.congestion : 1.0;
+    
+    // Correctly interpret isCycleable from DB (0 or 1) to boolean
+    // Default to true for non-bike strategies if undefined/null, default to false for bike strategy if undefined/null
+    let isCycleable;
+    if (edge.isCycleable === null || typeof edge.isCycleable === 'undefined') {
+        isCycleable = strategy === "time_bike" ? false : true;
+    } else {
+        isCycleable = !!edge.isCycleable; // Converts 0 to false, 1 (or any non-zero) to true
+    }
 
     let weight;
     let actualEdgeData = { from: u, to: v, length: length, congestion: congestion, isCycleable: isCycleable };
     
-    switch (strategy) {
-      case "time_walk":
-        weight = length * congestion; 
-        break;
-      case "time_bike":
-        if (!isCycleable) return; // Skip this edge by not adding to adj list
-        weight = length * congestion; 
-        break;
-      case "distance":
-      default:
-        weight = length; 
-        break;
-    }
+    if (strategy === "time_bike" && !isCycleable) {
+      // For bike strategy, if not cycleable, simply don't add this edge to the graph for this direction
+      // No 'return' here, as it would skip adding the reverse edge if it's two-way and cycleable
+    } else {
+      switch (strategy) {
+        case "time_walk":
+          weight = length * congestion; 
+          break;
+        case "time_bike":
+          // This case is now only hit if isCycleable is true
+          weight = length * congestion; 
+          break;
+        case "distance":
+        default:
+          weight = length; 
+          break;
+      }
 
-    if (!adj.has(u)) adj.set(u, new Map()); 
-    adj.get(u).set(v, { weight, originalEdge: actualEdgeData });
-    
-    if (!adj.has(v)) adj.set(v, new Map());
-    adj.get(v).set(u, { weight, originalEdge: actualEdgeData }); 
+      if (!adj.has(u)) adj.set(u, new Map()); 
+      adj.get(u).set(v, { weight, originalEdge: actualEdgeData });
+      
+      // Assuming edges are bidirectional for routing unless specified otherwise
+      // If an edge is not cycleable for bikes, it applies to both directions
+      if (!adj.has(v)) adj.set(v, new Map());
+      adj.get(v).set(u, { weight, originalEdge: actualEdgeData }); 
+    }
 
     const edgeKey1 = `${u}-${v}`;
     const edgeKey2 = `${v}-${u}`;
