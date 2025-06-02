@@ -1,0 +1,1332 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>发布新日记 - TravelMate</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+    <!-- 引入 wangEditor 样式 -->
+    <link href="https://unpkg.com/@wangeditor/editor@latest/dist/css/style.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        :root {
+            --primary: #2a9d8f;
+            --secondary: #264653;
+            --border: #e0e0e0;
+            --bg: #f8f9fa;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Segoe UI", "PingFang SC", sans-serif;
+        }
+
+        body {
+            background: var(--bg);
+        }
+
+        .editor-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+        }
+
+        /* 标题区域 */
+        .title-section {
+            margin-bottom: 2rem;
+        }
+
+        .title-input {
+            width: 100%;
+            font-size: 2rem;
+            border: none;
+            padding: 1rem;
+            font-weight: 600;
+            color: var(--secondary);
+        }
+
+        .title-input::placeholder {
+            color: #999;
+        }
+
+        /* 工具栏 - 修改为适应 wangEditor 的样式 */
+        .toolbar {
+            border: 1px solid var(--border);
+            border-bottom: none;
+            padding: 0.5rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.2rem;
+        }
+
+        .tool-btn {
+            width: 36px;
+            height: 36px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tool-btn:hover {
+            background: var(--bg);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* 编辑区域 - 修改为适应 wangEditor 的样式 */
+        .editor-wrapper {
+            border: 1px solid var(--border);
+            border-radius: 0 0 4px 4px;
+            margin-bottom: 2rem;
+        }
+
+        .editor-content {
+            min-height: 400px;
+            padding: 1rem;
+            overflow-y: auto;
+        }
+
+        /* 附加功能 */
+        .upload-section {
+            margin-bottom: 2rem;
+        }
+
+        .upload-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.8rem 1.5rem;
+            background: var(--bg);
+            border: 1px dashed var(--border);
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .upload-btn:hover {
+            border-color: var(--primary);
+        }
+
+        /* 设置区域 */
+        .settings-section {
+            border-top: 1px solid var(--border);
+            padding-top: 2rem;
+        }
+
+        .setting-item {
+            margin-bottom: 1.5rem;
+        }
+
+        .setting-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .tag-input {
+            padding: 0.5rem;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            width: 300px;
+        }
+
+        .tag-hint {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+
+        /* 发布按钮 */
+        .publish-btns {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            padding: 0.8rem 2rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn-secondary {
+            background: var(--bg);
+            color: var(--secondary);
+            /* ★ 保持垂直 padding 与 .upload-btn 一致 (0.8rem) */
+            /* ★ 水平 padding 可以不同 (这里是 2rem, upload-btn 是 1.5rem，这没关系) */
+            padding: 0.8rem 2rem;
+            border: 1px solid var(--border);
+            /* 边框样式可以不同 */
+            border-radius: 4px;
+            cursor: pointer;
+
+            /* --- ★★★ 添加以下属性以匹配 .upload-btn 的布局和对齐方式 ★★★ --- */
+            display: inline-flex;
+            /* 使用 inline-flex 布局 */
+            align-items: center;
+            /* 垂直居中按钮内部的内容 (图标和文字) */
+            justify-content: center;
+            /* 可选：水平居中内容 */
+            gap: 0.5rem;
+            /* ★ 匹配 .upload-btn 的内部间距 (图标和文字之间) */
+            vertical-align: middle;
+            /* ★ 尝试添加这个，有助于按钮自身与其他行内元素的对齐 */
+            /* 确保没有设置与 .upload-btn 冲突的 height 或 line-height */
+            /* box-sizing: border-box; 已经在 * 选择器中全局设置，无需重复 */
+        }
+
+        .sections-container,
+        .media-container {
+            margin-bottom: 2rem;
+            border-top: 1px solid var(--border);
+            padding-top: 1.5rem;
+        }
+
+        .section-item,
+        .media-item {
+            background: var(--bg);
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            border: 1px solid var(--border);
+        }
+
+        .section-header,
+        .media-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .section-title,
+        .media-caption {
+            width: 100%;
+            padding: 0.5rem;
+            margin-bottom: 0.5rem;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+        }
+
+        .remove-btn {
+            color: #ff6b6b;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+
+        .media-preview {
+            max-width: 200px;
+            max-height: 200px;
+            margin-top: 0.5rem;
+        }
+
+        .sections-container {
+            margin-bottom: 2rem;
+            border-top: 1px solid var(--border);
+            padding-top: 1.5rem;
+        }
+
+        .sections-container h3 {
+            color: var(--secondary);
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .sections-container h3::before {
+            content: "";
+            display: inline-block;
+            width: 4px;
+            height: 1.2rem;
+            background: var(--primary);
+            border-radius: 2px;
+        }
+
+        #sections-list {
+            margin-bottom: 1rem;
+        }
+
+        .section-item {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .section-item:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px dashed var(--border);
+        }
+
+        .section-header h4 {
+            color: var(--primary);
+            font-size: 1.1rem;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .section-header h4::before {
+            content: "✈";
+            font-size: 0.9rem;
+        }
+
+        .section-title {
+            width: 100%;
+            padding: 0.8rem;
+            margin-bottom: 1rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border 0.3s;
+        }
+
+        .section-title:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(42, 157, 143, 0.2);
+        }
+
+        .section-content {
+            width: 100%;
+            min-height: 120px;
+            padding: 0.8rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            resize: vertical;
+            transition: all 0.3s;
+        }
+
+        .section-content:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(42, 157, 143, 0.2);
+        }
+
+        .remove-btn {
+            color: #ff6b6b;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            padding: 0.3rem;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .remove-btn:hover {
+            background: rgba(255, 107, 107, 0.1);
+            transform: scale(1.1);
+        }
+
+        #add-section-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.8rem 1.5rem;
+            background: white;
+            border: 1px dashed var(--primary);
+            color: var(--primary);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+
+        #add-section-btn:hover {
+            background: rgba(42, 157, 143, 0.1);
+            border-style: solid;
+        }
+
+        .day-number-badge {
+            background: var(--primary);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            margin-right: 0.5rem;
+        }
+
+        /* 智能助手窗口样式 */
+        .chat-container {
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+            max-width: 400px;
+            width: 100%;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-header {
+            background: #2a9d8f;
+            color: white;
+            padding: 10px 15px;
+            font-size: 1rem;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+        }
+
+        .chat-body {
+            flex-grow: 1;
+            padding: 10px;
+            overflow-y: auto;
+            min-height: 200px;
+            max-height: 300px;
+        }
+
+        .message {
+            margin: 8px 0;
+            padding: 10px;
+            border-radius: 6px;
+            line-height: 1.4;
+            word-wrap: break-word;
+        }
+
+        .user {
+            background: #d1e7dd;
+            align-self: flex-end;
+        }
+
+        .bot {
+            background: #f8f9fa;
+            align-self: flex-start;
+            border-left: 4px solid #2a9d8f;
+        }
+
+        .chat-footer {
+            display: flex;
+            padding: 10px;
+            border-top: 1px solid #ddd;
+        }
+
+        .chat-input {
+            flex-grow: 1;
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .chat-send-btn {
+            margin-left: 10px;
+            padding: 8px 16px;
+            background: #2a9d8f;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .chat-send-btn:hover {
+            background: #0056b3;
+        }
+
+        .insert-btn {
+            margin-left: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .insert-btn:hover {
+            background-color: #45a049;
+        }
+
+        .compression-settings {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .compression-options {
+            margin-top: 10px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            padding: 10px;
+            background: white;
+            border-radius: 4px;
+        }
+
+        .compression-options .form-group {
+            margin-bottom: 0;
+        }
+
+        #qualityValue {
+            font-weight: normal;
+            color: #666;
+        }
+
+        .tag-selection {
+            margin-bottom: 2rem;
+        }
+        
+        .tag-groups {
+            display: grid;
+            gap: 1.5rem;
+        }
+        
+        .tag-group h5 {
+            margin-bottom: 1rem;
+            color: #2a9d8f;
+            font-weight: 600;
+        }
+        
+        .tag-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+        }
+        
+        .tag-option {
+            display: inline-flex;
+            align-items: center;
+            margin: 0;
+            cursor: pointer;
+        }
+        
+        .tag-option input[type="checkbox"] {
+            display: none;
+        }
+        
+        .tag-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            background: #f8f9fa;
+            border: 2px solid #eee;
+            transition: all 0.3s;
+        }
+        
+        .tag-option input[type="checkbox"]:checked + .tag-label {
+            background: #2a9d8f;
+            color: white;
+            border-color: #2a9d8f;
+        }
+        
+        .tag-label i {
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="editor-container">
+        <!-- 修改为表单形式 -->
+        <form id="diaryForm">
+            <!-- 标题 -->
+            <div class="title-section">
+                <input type="text" class="title-input" id="title" name="title" placeholder="请输入日记标题（最多50字）"
+                    maxlength="50" required />
+            </div>
+
+            <!-- wangEditor 容器 -->
+            <div id="editor-container">
+                <!-- 工具栏 -->
+                <div class="toolbar" id="toolbar-container"></div>
+                <!-- 编辑区 -->
+                <div class="editor-wrapper">
+                    <div class="editor-content" id="editor-content"></div>
+                </div>
+            </div>
+
+            <!-- 图片上传 -->
+            <div class="upload-section">
+                <label class="upload-btn">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    上传封面图片
+                    <input type="file" id="coverImage" name="coverImage" hidden accept="image/*" />
+                </label>
+                <button type="  button" id="polishTextBtn" class="btn-secondary" style="
+                                margin-left: 408px;
+                                background-color: #2a9d8f;
+                                color: white;              /* 白色字体 */
+                                font-family: 'Arial', sans-serif; /* 字体 */
+                                font-size: 15px;           /* 字号 */
+                                font-weight: bold;         /* 加粗 */
+                            ">
+                    <i class="fas fa-magic"></i>
+                    一键润色
+                </button>
+                <div id="imagePreview" style="margin-top: 10px;"></div>
+            </div>
+
+            <!-- 在编辑器后面添加以下内容 -->
+            <div class="sections-container">
+                <h3>行程分段</h3>
+                <div id="sections-list">
+                    <!-- 分段将被动态添加到这里 -->
+                </div>
+                <button type="button" id="add-section-btn" class="btn-secondary">
+                    <i class="fas fa-plus"></i> 添加新的一天
+                </button>
+            </div>
+
+            <div class="media-container">
+                <h3>媒体管理</h3>
+                <div id="media-list">
+                    <!-- 媒体项将被动态添加到这里 -->
+                </div>
+                <div class="media-upload">
+                    <label class="upload-btn">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        上传图片/视频
+                        <input type="file" id="mediaUpload" name="media" hidden multiple accept="image/*,video/*" />
+                    </label>
+                    <div class="media-hint">可以上传多张图片或视频</div>
+                </div>
+            </div>
+
+            <!-- 设置区域 -->
+            <div class="settings-section">
+                <div class="setting-item">
+                    <label class="setting-label">选择标签</label>
+                    <div class="tag-selection">
+                        <% const allTags = [
+                            { name: '摄影日记', icon: 'fa-camera', category: 'activity' },
+                            { name: '美食之旅', icon: 'fa-utensils', category: 'activity' },
+                            { name: '户外探险', icon: 'fa-hiking', category: 'activity' },
+                            { name: '登山露营', icon: 'fa-mountain', category: 'activity' },
+                            { name: '自驾旅游', icon: 'fa-car', category: 'transport' },
+                            { name: '徒步旅行', icon: 'fa-walking', category: 'activity' },
+                            { name: '城市观光', icon: 'fa-city', category: 'style' },
+                            { name: '文化探索', icon: 'fa-landmark', category: 'culture' },
+                            { name: '海滨度假', icon: 'fa-umbrella-beach', category: 'style' },
+                            { name: '乡村游记', icon: 'fa-home', category: 'style' },
+                            { name: '背包旅行', icon: 'fa-backpack', category: 'style' },
+                            { name: '亲子游记', icon: 'fa-child', category: 'theme' },
+                            { name: '情侣出行', icon: 'fa-heart', category: 'theme' },
+                            { name: '古迹探访', icon: 'fa-monument', category: 'culture' },
+                            { name: '购物游记', icon: 'fa-shopping-bag', category: 'activity' }
+                        ]; %>
+
+                        <div class="tag-groups">
+                            <% const categories = {
+                                activity: '活动类型',
+                                style: '旅行方式',
+                                theme: '主题特色',
+                                culture: '文化体验',
+                                transport: '交通方式'
+                            }; %>
+
+                            <% Object.entries(categories).forEach(([category, categoryName]) => { %>
+                                <div class="tag-group">
+                                    <h5><%= categoryName %></h5>
+                                    <div class="tag-options">
+                                        <% allTags.filter(tag => tag.category === category).forEach(tag => { %>
+                                            <label class="tag-option">
+                                                <input type="checkbox" name="tags[]" value="<%= tag.name %>" 
+                                                    <%= diary && diary.tags && diary.tags.includes(tag.name) ? 'checked' : '' %>>
+                                                <span class="tag-label">
+                                                    <i class="fas <%= tag.icon %>"></i>
+                                                    <%= tag.name %>
+                                                </span>
+                                            </label>
+                                        <% }); %>
+                                    </div>
+                                </div>
+                            <% }); %>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <label class="setting-label">发布设置</label>
+                    <div style="display: flex; gap: 2rem">
+                        <label> <input type="checkbox" name="allowComments" checked /> 允许评论 </label>
+                        <label> <input type="checkbox" name="syncToProfile" checked /> 同步到个人主页 </label>
+                        <label> <input type="checkbox" name="fansOnly" /> 仅粉丝可见 </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 操作按钮 -->
+            <div class="publish-btns">
+                <button type="button" class="btn-primary" id="publishBtn">立即发布</button>
+                <button type="button" class="btn-secondary" id="saveDraftBtn">保存草稿</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="chat-container">
+        <div class="chat-header">TravelMate 旅游日记助手</div>
+        <div class="chat-body" id="chatBox"></div>
+        <div class="chat-footer">
+            <input type="text" id="userInput" class="chat-input" placeholder="快来试试一键插入到文本框" />
+            <button class="chat-send-btn" onclick="sendMessage()">发送</button>
+        </div>
+    </div>
+
+    <!-- 引入 wangEditor -->
+    <script src="https://unpkg.com/@wangeditor/editor@latest/dist/index.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const publishBtn = document.getElementById('publishBtn');
+            const saveDraftBtn = document.getElementById('saveDraftBtn');
+            const coverImageInput = document.getElementById('coverImage');
+            const imagePreview = document.getElementById('imagePreview');
+            const chatBox = document.getElementById('chatBox');
+            const polishTextBtn = document.getElementById('polishTextBtn');
+            const chatInput = document.getElementById('userInput');
+
+            if (polishTextBtn && chatInput) { // 确保按钮和聊天输入框都存在
+                polishTextBtn.addEventListener('click', function () {
+                    if (window.editor) { // 检查 wangEditor 实例是否存在
+                        const editorText = window.editor.getText().trim(); // 获取编辑器中的纯文本内容并去除首尾空格
+
+                        if (editorText) { // 确保编辑器中有内容（不包括纯空格）
+                            // 将编辑器内容和 " 一键润色" 拼接到聊天输入框
+                            chatInput.value = editorText + " 一键润色";
+
+                            // 可选：自动聚焦到聊天输入框，方便用户直接发送
+                            chatInput.focus();
+
+                            // 可选：将页面滚动到聊天框附近，确保用户能看到
+                            chatInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                        } else {
+                            // 如果编辑器为空，给用户提示
+                            alert('请先在编辑器中输入需要润色的日记内容。');
+                        }
+                    } else {
+                        // 如果编辑器实例还没准备好
+                        alert('编辑器尚未初始化，请稍候再试。');
+                    }
+                });
+            } else {
+                // 如果找不到按钮或输入框，在控制台给出提示，方便调试
+                if (!polishTextBtn) console.error("错误：找不到 ID 为 'polishTextBtn' 的按钮。");
+                if (!chatInput) console.error("错误：找不到 ID 为 'userInput' 的聊天输入框。");
+            }
+
+            // 初始化 wangEditor
+            const { createEditor, createToolbar } = window.wangEditor;
+
+            const editorConfig = {
+                placeholder: '从这里开始书写你的旅行故事...',
+                onChange(editor) {
+                    // 可以在这里处理内容变化
+                },
+                MENU_CONF: {
+                    uploadImage: {
+                        server: '/api/upload-image', // 你的图片上传接口
+                        fieldName: 'image', // 上传文件的字段名
+                        maxFileSize: 10 * 1024 * 1024, // 10M
+                        allowedFileTypes: ['image/*'],
+                        customInsert(res, insertFn) {
+                            // 处理上传结果
+                            if (res.success) {
+                                insertFn(res.data.url, '', '');
+                            } else {
+                                alert('图片上传失败: ' + res.message);
+                            }
+                        },
+                        onError(file, err, res) {
+                            alert('图片上传出错: ' + (err.message || '未知错误'));
+                        }
+                    },
+                    uploadVideo: {
+                        server: '/api/upload-video', // 你的视频上传接口
+                        fieldName: 'video', // 上传文件的字段名
+                        maxFileSize: 50 * 1024 * 1024, // 50M
+                        allowedFileTypes: ['video/*'],
+                        customInsert(res, insertFn) {
+                            // 处理上传结果
+                            if (res.success) {
+                                insertFn(res.data.url, '');
+                            } else {
+                                alert('视频上传失败: ' + res.message);
+                            }
+                        }
+                    }
+                }
+            };
+
+            const editor = createEditor({
+                selector: '#editor-content',
+                config: editorConfig,
+                mode: 'default',
+
+            });
+
+            window.editor = editor;
+
+            // 添加 input 事件监听器
+            editor.on('input', () => {
+                const currentHtml = editor.getHtml().trim();
+                const defaultContent = '<p>从这里开始书写你的旅行故事...</p>';
+
+                if (currentHtml === defaultContent) {
+                    // 清除默认内容
+                    editor.setHtml('<p></p>');
+                }
+            });
+
+            const toolbar = createToolbar({
+                editor,
+                selector: '#toolbar-container',
+                config: {
+                    excludeKeys: [
+                        'group-video', // 排除视频功能，如果需要可以保留
+                        'fullScreen'  // 排除全屏功能
+                    ]
+                },
+                mode: 'default'
+            });
+
+            // 图片预览功能
+            coverImageInput.addEventListener('change', function (e) {
+                if (e.target.files.length > 0) {
+                    const file = e.target.files[0];
+                    const reader = new FileReader();
+
+                    reader.onload = function (event) {
+                        imagePreview.innerHTML = `
+                            <img src="${event.target.result}" style="max-width: 200px; max-height: 200px;" />
+                            <p>${file.name}</p>
+                        `;
+                    };
+
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            // 发布日记
+            publishBtn.addEventListener('click', function () {
+                submitDiary(2); // 2表示已发布
+            });
+
+            // 保存草稿
+            saveDraftBtn.addEventListener('click', function () {
+                submitDiary(1); // 1表示草稿
+            });
+
+            // 在DOMContentLoaded事件监听器中添加以下代码
+
+            // 行程分段管理
+            const sectionsList = document.getElementById('sections-list');
+            const addSectionBtn = document.getElementById('add-section-btn');
+            let sectionCounter = 1;
+
+            function addSection(dayNumber = null, title = '', content = '') {
+                const dayNum = dayNumber || sectionCounter;
+                const sectionId = `section-${Date.now()}`;
+
+                const sectionHTML = `
+                    <div class="section-item" id="${sectionId}" data-day="${dayNum}">
+                        <div class="section-header">
+                            <h4><span class="day-number-badge">${dayNum}</span> 第 ${dayNum} 天</h4>
+                            <button type="button" class="remove-btn" onclick="removeSection('${sectionId}')">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <input type="text" class="section-title" placeholder="这一天的主要行程或地点" value="${title}" />
+                        <textarea class="section-content" placeholder="详细描述这一天的经历...">${content}</textarea>
+                    </div>
+                `;
+
+                sectionsList.insertAdjacentHTML('beforeend', sectionHTML);
+                if (!dayNumber) sectionCounter++;
+            }
+
+            addSectionBtn.addEventListener('click', () => addSection());
+
+            // 媒体管理
+            const mediaList = document.getElementById('media-list');
+            const mediaUpload = document.getElementById('mediaUpload');
+            let mediaCounter = 1;
+
+            function addMediaItem(file, url = null, caption = '', type = null) {
+                const mediaId = `media-${Date.now()}`;
+                const mediaType = type || (file.type.startsWith('video') ? 'video' : 'image');
+                const mediaUrl = url || URL.createObjectURL(file);
+
+                const mediaHTML = `
+                    <div class="media-item" id="${mediaId}" data-type="${mediaType}">
+                        <div class="media-header">
+                            <span>媒体 #${mediaCounter++}</span>
+                            <button type="button" class="remove-btn" onclick="removeMedia('${mediaId}')">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <input type="text" class="media-caption" placeholder="媒体描述" value="${caption}" />
+                        <div class="media-preview-container">
+                            ${mediaType === 'image' ?
+                        `<img src="${mediaUrl}" class="media-preview" />` :
+                        `<video controls src="${mediaUrl}" class="media-preview"></video>`}
+                        </div>
+                        <input type="hidden" name="media_url" value="${mediaUrl}" />
+                        <input type="hidden" name="media_type" value="${mediaType}" />
+                    </div>
+                `;
+
+                mediaList.insertAdjacentHTML('beforeend', mediaHTML);
+            }
+
+            mediaUpload.addEventListener('change', function (e) {
+                Array.from(e.target.files).forEach(file => {
+                    addMediaItem(file);
+                });
+                e.target.value = ''; // 重置input以便重复上传
+            });
+
+            // 全局函数供按钮使用
+            window.removeSection = function (id) {
+                document.getElementById(id)?.remove();
+            };
+
+            window.removeMedia = function (id) {
+                document.getElementById(id)?.remove();
+            };
+
+            // 修改submitDiary函数
+            function submitDiary(status) {
+                const title = document.getElementById('title').value;
+                const content = editor.getHtml();
+                const tags = document.getElementById('tags').value;
+                const allowComments = document.querySelector('input[name="allowComments"]').checked;
+                const syncToProfile = document.querySelector('input[name="syncToProfile"]').checked;
+                const fansOnly = document.querySelector('input[name="fansOnly"]').checked;
+
+                // 收集分段数据
+                const sections = Array.from(document.querySelectorAll('.section-item')).map(section => ({
+                    dayNumber: parseInt(section.dataset.day),
+                    title: section.querySelector('.section-title').value,
+                    content: section.querySelector('.section-content').value,
+                    order: parseInt(section.dataset.day)
+                }));
+
+                // 收集媒体数据
+                const mediaItems = Array.from(document.querySelectorAll('.media-item')).map(media => ({
+                    url: media.querySelector('input[name="media_url"]').value,
+                    type: media.dataset.type,
+                    caption: media.querySelector('.media-caption').value,
+                    order: Array.from(document.querySelectorAll('.media-item')).indexOf(media) + 1
+                }));
+
+                // 表单验证
+                if (!title.trim()) {
+                    alert('请输入日记标题');
+                    return;
+                }
+
+                if (!content.trim() || content === '<p>从这里开始书写你的旅行故事...</p>') {
+                    alert('请输入日记内容');
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append('title', title);
+                formData.append('content', content);
+                formData.append('tags', tags);
+                formData.append('allowComments', allowComments);
+                formData.append('syncToProfile', syncToProfile);
+                formData.append('fansOnly', fansOnly);
+                formData.append('status', status);
+                formData.append('sections', JSON.stringify(sections));
+                formData.append('mediaItems', JSON.stringify(mediaItems));
+
+                if (coverImageInput.files.length > 0) {
+                    formData.append('coverImage', coverImageInput.files[0]);
+                }
+
+                // 添加媒体文件
+                Array.from(mediaUpload.files).forEach((file, index) => {
+                    formData.append(`mediaFiles_${index}`, file);
+                });
+
+                fetch('/api/diaries', {
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'include'
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert(status === 2 ? '日记发布成功！' : '草稿保存成功！');
+                            window.location.href = '/user/diaries';
+                        } else {
+                            throw new Error(data.message || '操作失败');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('发生错误: ' + error.message);
+                    });
+            }
+
+            // function submitDiary(status) {
+            //     const title = document.getElementById('title').value;
+            //     const content = editor.getHtml(); // 获取富文本内容
+            //     const tags = document.getElementById('tags').value;
+            //     const allowComments = document.querySelector('input[name="allowComments"]').checked;
+            //     const syncToProfile = document.querySelector('input[name="syncToProfile"]').checked;
+            //     const fansOnly = document.querySelector('input[name="fansOnly"]').checked;
+            //
+            //     // 简单的表单验证
+            //     if (!title.trim()) {
+            //         alert('请输入日记标题');
+            //         return;
+            //     }
+            //
+            //     if (!content.trim() || content === '<p>从这里开始书写你的旅行故事...</p>') {
+            //         alert('请输入日记内容');
+            //         return;
+            //     }
+            //
+            //     // 创建FormData对象，便于上传文件
+            //     const formData = new FormData();
+            //     formData.append('title', title);
+            //     formData.append('content', content);
+            //     formData.append('tags', tags);
+            //     formData.append('allowComments', allowComments);
+            //     formData.append('syncToProfile', syncToProfile);
+            //     formData.append('fansOnly', fansOnly);
+            //     formData.append('status', status);
+            //
+            //     // 如果有上传封面图片
+            //     if (coverImageInput.files.length > 0) {
+            //         formData.append('coverImage', coverImageInput.files[0]);
+            //     }
+            //
+            //     // 发送AJAX请求
+            //     fetch('/api/diaries', {
+            //         method: 'POST',
+            //         body: formData,
+            //         credentials: 'include' // 确保发送会话cookie
+            //     })
+            //     .then(response => {
+            //         if (!response.ok) {
+            //             return response.json().then(err => { throw err; });
+            //         }
+            //         return response.json();
+            //     })
+            //     .then(data => {
+            //         if (data.success) {
+            //             alert(status === 2 ? '日记发布成功！' : '草稿保存成功！');
+            //             // 重定向到用户日记列表页
+            //             window.location.href = '/user/diaries';
+            //         } else {
+            //             throw new Error(data.message || '操作失败');
+            //         }
+            //     })
+            //     .catch(error => {
+            //         console.error('Error:', error);
+            //         alert('发生错误: ' + error.message);
+            //     });
+            // }
+            console.log("正在为 chatBox 绑定 click 事件监听器...");
+            chatBox.addEventListener('click', (e) => {
+                if (e.target.classList.contains('insert-btn')) {
+                    const messageEl = e.target.closest('.message.bot');
+                    let messageText = messageEl?.querySelector('.bot-message')?.textContent.trim();
+
+                    if (!messageText && messageEl) {
+                        messageText = messageEl.textContent.replace('插入到文本框', '').trim(); // 注意按钮文字可能需要调整
+                    }
+                    console.log("[移除分隔线] 准备插入的内容 (原始从气泡获取):", JSON.stringify(messageText));
+
+                    if (!messageText) {
+                        alert('无法获取 AI 回复内容，请重试。');
+                        console.error('无法获取 AI 回复内容');
+                        return;
+                    }
+
+                    if (window.editor) {
+                        const editor = window.editor;
+                        let aiResponseText = messageText; // 存储纯文本
+
+                        // 1. 尝试解析 JSON
+                        try {
+                            const parsed = JSON.parse(messageText);
+                            if (parsed && parsed.content) {
+                                aiResponseText = parsed.content;
+                                console.log("[移除分隔线] 准备插入的内容 (从JSON解析后):", JSON.stringify(aiResponseText));
+                            }
+                        } catch (parseError) { /* Ignore */ }
+
+                        // 2. 处理 AI 文本 (Markdown 或基本换行)
+                        let processedAiHtml = '';
+                        if (typeof marked === 'function') {
+                            // 使用 marked 处理 Markdown
+                            processedAiHtml = marked.parse(aiResponseText || '');
+                            console.log("[移除分隔线] 使用 marked 处理后的 HTML:", processedAiHtml);
+                        } else {
+                            console.warn('marked.js 未加载，将直接插入原始文本并处理换行');
+                            processedAiHtml = (aiResponseText || '')
+                                .replace(/&/g, '&') // 基本 HTML 转义
+                                .replace(/</g, '<')
+                                .replace(/>/g, '>')
+                                .replace(/\n/g, '<br>'); // 处理换行符
+                            // 不再强制包裹 <p>，让编辑器决定如何处理带 <br> 的文本
+                        }
+
+                        console.log("[移除分隔线] 即将插入...");
+                        editor.focus(); // 聚焦
+
+                        // --- ★★★ 修改插入逻辑 ★★★ ---
+                        try {
+                            // 步骤 a: 插入一个空行 (用于分隔)
+                            editor.dangerouslyInsertHtml('<p><br></p>');
+                            console.log("[移除分隔线] 步骤 a: 空行插入完毕");
+
+                            // 步骤 b: 直接插入处理后的 AI 回复 HTML
+                            editor.dangerouslyInsertHtml(processedAiHtml);
+                            console.log("[移除分隔线] 步骤 b: AI 回复 HTML 插入完毕");
+
+                        } catch (insertError) {
+                            console.error("[移除分隔线] 插入 HTML 时出错:", insertError);
+                            alert("插入内容时发生错误，请重试。");
+                        }
+                        // --- ★★★ 修改结束 ★★★ ---
+
+                        console.log("[移除分隔线] 插入操作完成。");
+
+                    } else {
+                        alert('编辑器尚未初始化，请刷新页面');
+                    }
+                }
+            });
+
+            // 添加开场白
+            const openingMessage = "你好啊，不会写日记？可以给我几个关键词，我来帮你生成一篇旅游日记，我也可以根据你的草稿为你润色哦。";
+            const openingMsgElement = addMessage('', 'bot');
+            // 逐字显示开场白
+            simulateTypingEffect(openingMsgElement, openingMessage, false);
+            function simulateTypingEffect(element, text, showButton = true) {
+                let index = 0;
+                const speed = 50;
+
+                // 先尝试解析 JSON，提取 content 字段
+                let displayText = text;
+                try {
+                    const parsed = JSON.parse(text);
+                    if (parsed && parsed.content) {
+                        displayText = parsed.content;
+                    }
+                } catch (e) {
+                    // 如果不是 JSON，保持原样
+                }
+
+                const timer = setInterval(() => {
+                    if (index < displayText.length) {
+                        element.textContent += displayText.charAt(index);
+                        index++;
+                        chatBox.scrollTop = chatBox.scrollHeight;
+                    } else {
+                        clearInterval(timer);
+
+                        // 控制是否显示插入按钮
+                        if (showButton && !element.querySelector('.insert-btn')) {
+                            const insertBtn = document.createElement('button');
+                            insertBtn.className = 'insert-btn';
+                            insertBtn.textContent = '插入到编辑器';
+                            element.appendChild(insertBtn);
+                        }
+                    }
+                }, speed);
+            }
+        });
+
+    </script>
+    <script src="https://unpkg.com/@wangeditor/editor@latest/dist/index.js"></script>
+    <script>
+        // ===== 智能助手功能脚本 =====
+        async function sendMessage() {
+            const input = document.getElementById('userInput');
+            const chatBox = document.getElementById('chatBox');
+            const question = input.value.trim();
+            if (!question) return;
+
+            addMessage(question, 'user');
+            input.value = '';
+
+            const loadingMsg = addMessage("正在思考中...", 'bot');
+
+            try {
+                const response = await fetch('https://open.hunyuan.tencent.com/openapi/v1/agent/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'X-Source': 'openapi',
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer GEk7tQ302MNVPmDjEysokIYnQuiO0Zno' // 替换为你的 Token
+                    },
+                    body: JSON.stringify({
+                        "assistant_id": "GxpVugLtlyot", // 替换为你的助手 ID
+                        "user_id": "username",
+                        "stream": true,
+                        "messages": [{
+                            "role": "user",
+                            "content": [{ "type": "text", "text": question }]
+                        }]
+                    })
+                });
+
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                if (!response.body) throw new Error("ReadableStream not supported.");
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder('utf-8');
+                let buffer = '';
+                let accumulatedContent = ''; // 初始化为空，用于存储我们想要的内容
+                let isInitialJsonProcessed = false; // 标记是否已跳过初始 JSON
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    buffer += decoder.decode(value, { stream: true });
+                    const chunks = buffer.split(/\n(?=data: )/);
+                    buffer = chunks.pop() || '';
+
+                    for (const chunk of chunks) {
+                        const cleanChunk = chunk.replace(/^data: /, '').trim();
+                        if (!cleanChunk || cleanChunk === '[DONE]') continue;
+
+                        try {
+                            const data = JSON.parse(cleanChunk);
+                            let currentDeltaContent = data.choices?.[0]?.delta?.content;
+                            let requiresUpdate = false; // 本次循环是否需要更新
+
+                            if (typeof currentDeltaContent === 'string' && currentDeltaContent.length > 0) {
+                                let textToProcess = currentDeltaContent;
+
+                                // --- 核心逻辑修改 ---
+                                if (!isInitialJsonProcessed) {
+                                    // 检查这是否是我们要忽略的初始 JSON 块
+                                    let isTheInitialJson = false;
+                                    try {
+                                        const parsedAttempt = JSON.parse(textToProcess);
+                                        // 判断条件：解析成功且包含 'content' 字段
+                                        if (parsedAttempt && typeof parsedAttempt.content === 'string') {
+                                            isTheInitialJson = true;
+                                        }
+                                    } catch (e) {
+                                        // 解析失败，肯定不是我们要找的 JSON 块
+                                    }
+
+                                    if (isTheInitialJson) {
+                                        // 是初始 JSON 块，标记已处理（跳过），然后什么都不做
+                                        console.log("检测到并忽略初始 JSON 块:", JSON.stringify(textToProcess));
+                                        isInitialJsonProcessed = true;
+                                        // ★★★ 不累加内容，不设置 requiresUpdate ★★★
+                                    } else {
+                                        // 不是初始 JSON 块，但标记仍为 false (理论上不应发生，除非API行为改变)
+                                        // 作为保险，我们还是累加吧，但可能导致混合
+                                        console.warn("在标记处理前收到非初始 JSON 块:", JSON.stringify(textToProcess));
+                                        accumulatedContent += textToProcess;
+                                        requiresUpdate = true;
+                                    }
+                                } else {
+                                    // 初始 JSON 已被跳过，现在开始累加我们想要的纯文本流
+                                    accumulatedContent += textToProcess;
+                                    requiresUpdate = true;
+                                }
+                                // --- 核心逻辑修改结束 ---
+
+                                // 如果需要更新界面
+                                if (requiresUpdate) {
+                                    console.log("准备更新显示内容:", JSON.stringify(accumulatedContent));
+                                    updateMessage(loadingMsg, accumulatedContent);
+                                }
+                            }
+                            // ... (处理 null/empty content 的部分保持不变) ...
+                        } catch (e) {
+                            console.error('处理数据流块时出错:', cleanChunk, e);
+                        }
+                    }
+                }
+                // 确保流结束后最终状态被显示
+                console.log("数据流结束，最终更新显示");
+                updateMessage(loadingMsg, accumulatedContent);
+
+            } catch (error) {
+                console.error('API 调用或处理失败:', error);
+                updateMessage(loadingMsg, `请求出错: ${error.message}`);
+            }
+        }
+
+        function addMessage(text, type) {
+            const msg = document.createElement('div');
+            msg.className = `message ${type}`;
+            msg.innerHTML = `<span class="bot-message">${text}</span>`;
+            chatBox.appendChild(msg);
+            chatBox.scrollTop = chatBox.scrollHeight;
+            return msg;
+        }
+
+        // 请同时确保你的 updateMessage 函数是使用 marked.parse 的版本
+        function updateMessage(element, text) {
+            let contentSpan = element.querySelector('.bot-message');
+            if (!contentSpan) {
+                element.innerHTML = '<span class="bot-message"></span>';
+                contentSpan = element.querySelector('.bot-message');
+            }
+            // 使用 marked 解析可能包含 Markdown 的文本
+            const displayText = marked.parse(text || '');
+            if (contentSpan) {
+                contentSpan.innerHTML = displayText; // 使用 innerHTML
+            }
+            // 添加插入按钮（如果不存在）
+            if (!element.querySelector('.insert-btn')) {
+                const btn = document.createElement('button');
+                btn.className = 'insert-btn';
+                btn.textContent = '插入到文本框';
+                element.appendChild(btn);
+            }
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+        // 回车发送功能
+
+
+    </script>
+</body>
+
+</html>

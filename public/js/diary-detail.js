@@ -584,7 +584,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // 处理封面图片
         const coverImage = document.getElementById('editCoverPreview').src.split('/').pop();
-        formData.append('cover_image', coverImage);
+        formData.append('coverImage', coverImage);
         
         // 添加章节数据
         formData.append('sections', JSON.stringify(sections));
@@ -601,21 +601,23 @@ document.addEventListener('DOMContentLoaded', function() {
             order: index + 1
           };
         });
-        formData.append('media', JSON.stringify(mediaData));
+        formData.append('mediaData', JSON.stringify(mediaData));
 
         // 添加新上传的媒体文件
         const mediaFiles = document.getElementById('mediaUpload').files;
-        Array.from(mediaFiles).forEach((file, index) => {
-          formData.append(`mediaFiles`, file);
-        });
+        if (mediaFiles.length > 0) {
+          for (let i = 0; i < mediaFiles.length; i++) {
+            formData.append('media', mediaFiles[i]);
+          }
+        }
 
         console.log('准备发送的数据:', {
           title: formData.get('title'),
           content: formData.get('content'),
           tips: formData.get('tips'),
-          cover_image: formData.get('cover_image'),
+          cover_image: formData.get('coverImage'),
           sections: JSON.parse(formData.get('sections')),
-          media: JSON.parse(formData.get('media'))
+          media: JSON.parse(formData.get('mediaData'))
         });
 
         const response = await fetch(`/diary/api/diaries/${diaryId}`, {
