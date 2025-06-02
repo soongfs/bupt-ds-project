@@ -7,6 +7,7 @@ const multer = require("multer"); // 新增：用于文件上传
 const fs = require("fs"); // 新增：文件系统操作
 const http = require("http");
 const initializeSocket = require("./config/socket");
+const maintenanceService = require('./services/maintenanceService');
 
 const db = require("./config/test-database");
 // 文件上传功能
@@ -460,6 +461,49 @@ app.use("/", indexRouter);
 
 // 日记相关路由
 app.use("/", diaryRouter);
+
+// 设置定时维护任务
+function scheduleMaintenance() {
+  // 每天凌晨3点运行维护任务
+  const maintenanceTime = new Date();
+  maintenanceTime.setHours(3, 0, 0, 0);
+  
+  // 如果当前时间已经过了今天的维护时间，设置为明天
+  if (maintenanceTime < new Date()) {
+    maintenanceTime.setDate(maintenanceTime.getDate() + 1);
+  }
+  
+  const timeUntilMaintenance = maintenanceTime - new Date();
+  
+  // 设置定时器
+  setTimeout(() => {
+    // 运行维护任务
+    maintenanceService.runMaintenance((err, results) => {
+      if (err) {
+        console.error('维护任务运行失败:', err);
+      } else {
+        console.log('维护任务完成:', results);
+      }
+      
+      // 重新调度下一次维护
+      scheduleMaintenance();
+    });
+  }, timeUntilMaintenance);
+  
+  console.log(`下次维护任务将在 ${maintenanceTime.toLocaleString()} 运行`);
+}
+
+// 启动维护任务调度
+scheduleMaintenance();
+
+// 立即运行一次维护任务
+maintenanceService.runMaintenance((err, results) => {
+  if (err) {
+    console.error('初始维护任务运行失败:', err);
+  } else {
+    console.log('初始维护任务完成:', results);
+  }
+});
 
 // 修改服务器启动代码
 server.listen(3000, () => {

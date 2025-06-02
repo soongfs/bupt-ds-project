@@ -475,6 +475,85 @@
         .insert-btn:hover {
             background-color: #45a049;
         }
+
+        .compression-settings {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .compression-options {
+            margin-top: 10px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            padding: 10px;
+            background: white;
+            border-radius: 4px;
+        }
+
+        .compression-options .form-group {
+            margin-bottom: 0;
+        }
+
+        #qualityValue {
+            font-weight: normal;
+            color: #666;
+        }
+
+        .tag-selection {
+            margin-bottom: 2rem;
+        }
+        
+        .tag-groups {
+            display: grid;
+            gap: 1.5rem;
+        }
+        
+        .tag-group h5 {
+            margin-bottom: 1rem;
+            color: #2a9d8f;
+            font-weight: 600;
+        }
+        
+        .tag-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+        }
+        
+        .tag-option {
+            display: inline-flex;
+            align-items: center;
+            margin: 0;
+            cursor: pointer;
+        }
+        
+        .tag-option input[type="checkbox"] {
+            display: none;
+        }
+        
+        .tag-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            background: #f8f9fa;
+            border: 2px solid #eee;
+            transition: all 0.3s;
+        }
+        
+        .tag-option input[type="checkbox"]:checked + .tag-label {
+            background: #2a9d8f;
+            color: white;
+            border-color: #2a9d8f;
+        }
+        
+        .tag-label i {
+            font-size: 0.9em;
+        }
     </style>
 </head>
 
@@ -548,9 +627,54 @@
             <!-- 设置区域 -->
             <div class="settings-section">
                 <div class="setting-item">
-                    <label class="setting-label">添加标签（最多5个）</label>
-                    <input type="text" class="tag-input" id="tags" name="tags" placeholder="输入标签，用逗号分隔" />
-                    <div class="tag-hint">例如：西藏旅行, 自驾游, 摄影攻略</div>
+                    <label class="setting-label">选择标签</label>
+                    <div class="tag-selection">
+                        <% const allTags = [
+                            { name: '摄影日记', icon: 'fa-camera', category: 'activity' },
+                            { name: '美食之旅', icon: 'fa-utensils', category: 'activity' },
+                            { name: '户外探险', icon: 'fa-hiking', category: 'activity' },
+                            { name: '登山露营', icon: 'fa-mountain', category: 'activity' },
+                            { name: '自驾旅游', icon: 'fa-car', category: 'transport' },
+                            { name: '徒步旅行', icon: 'fa-walking', category: 'activity' },
+                            { name: '城市观光', icon: 'fa-city', category: 'style' },
+                            { name: '文化探索', icon: 'fa-landmark', category: 'culture' },
+                            { name: '海滨度假', icon: 'fa-umbrella-beach', category: 'style' },
+                            { name: '乡村游记', icon: 'fa-home', category: 'style' },
+                            { name: '背包旅行', icon: 'fa-backpack', category: 'style' },
+                            { name: '亲子游记', icon: 'fa-child', category: 'theme' },
+                            { name: '情侣出行', icon: 'fa-heart', category: 'theme' },
+                            { name: '古迹探访', icon: 'fa-monument', category: 'culture' },
+                            { name: '购物游记', icon: 'fa-shopping-bag', category: 'activity' }
+                        ]; %>
+
+                        <div class="tag-groups">
+                            <% const categories = {
+                                activity: '活动类型',
+                                style: '旅行方式',
+                                theme: '主题特色',
+                                culture: '文化体验',
+                                transport: '交通方式'
+                            }; %>
+
+                            <% Object.entries(categories).forEach(([category, categoryName]) => { %>
+                                <div class="tag-group">
+                                    <h5><%= categoryName %></h5>
+                                    <div class="tag-options">
+                                        <% allTags.filter(tag => tag.category === category).forEach(tag => { %>
+                                            <label class="tag-option">
+                                                <input type="checkbox" name="tags[]" value="<%= tag.name %>" 
+                                                    <%= diary && diary.tags && diary.tags.includes(tag.name) ? 'checked' : '' %>>
+                                                <span class="tag-label">
+                                                    <i class="fas <%= tag.icon %>"></i>
+                                                    <%= tag.name %>
+                                                </span>
+                                            </label>
+                                        <% }); %>
+                                    </div>
+                                </div>
+                            <% }); %>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="setting-item">

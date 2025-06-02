@@ -14,6 +14,43 @@ document.addEventListener('DOMContentLoaded', function() {
     isAuthor
   });
 
+  // 处理内容状态提示
+  const contentStatus = document.body.dataset.contentStatus;
+  const contentLength = parseInt(document.body.dataset.contentLength) || 0;
+  
+  if (isAuthor) {
+    const contentAlert = document.createElement('div');
+    contentAlert.className = 'content-status-alert';
+    
+    if (contentStatus === 'empty' || contentLength < 50) {
+      contentAlert.innerHTML = `
+        <div class="alert alert-warning" role="alert">
+          <i class="fas fa-exclamation-triangle"></i>
+          您的游记内容太少，建议添加更多详细内容以提高展示效果和搜索排名。
+          <button class="btn btn-sm btn-warning ml-3" onclick="document.getElementById('editToggleBtn').click()">
+            立即编辑
+          </button>
+        </div>
+      `;
+    } else if (contentStatus === 'brief' || contentLength < 200) {
+      contentAlert.innerHTML = `
+        <div class="alert alert-info" role="alert">
+          <i class="fas fa-info-circle"></i>
+          您的游记内容还可以更丰富，添加更多细节可以提高搜索排名。
+          <button class="btn btn-sm btn-info ml-3" onclick="document.getElementById('editToggleBtn').click()">
+            继续编辑
+          </button>
+        </div>
+      `;
+    }
+    
+    // 将提示插入到内容区域前面
+    const contentContainer = document.querySelector('.diary-content');
+    if (contentContainer && (contentStatus === 'empty' || contentStatus === 'brief')) {
+      contentContainer.parentNode.insertBefore(contentAlert, contentContainer);
+    }
+  }
+
   // 点赞功能
   document.querySelector('.like-btn').addEventListener('click', async () => {
     if (!isUserLoggedIn) {

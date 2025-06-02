@@ -1,4 +1,5 @@
 const db = require('../config/test-database');
+const compressionService = require('./compressionService');
 
 // TF-IDF计算工具
 class TFIDFCalculator {
@@ -171,11 +172,16 @@ class RecommendationScorer {
 // 搜索服务
 class SearchService {
   constructor() {
+    this.db = db;
     this.tfidf = new TFIDFCalculator();
   }
 
-  // 全文搜索
-  async searchDiaries(searchQuery, userId = null, options = {}) {
+  searchDiaries(searchQuery, userId = null, options = {}, callback) {
+    if (typeof callback !== 'function') {
+      console.error('Callback is not provided or not a function');
+      return;
+    }
+
     const {
       page = 1,
       limit = 12,
@@ -183,13 +189,9 @@ class SearchService {
       sort = 'relevance'
     } = options;
 
-    console.log('Search parameters:', { searchQuery, userId, page, limit, category, sort });
-
     const offset = (page - 1) * limit;
-    const scorer = new RecommendationScorer(userId);
-    await scorer.initUserPreferences();
-
-    // 构建基础查询
+    
+    // 基础查询，增加内容长度检查和相关性评分
     let query = `
       SELECT 
         d.*,
@@ -197,77 +199,146 @@ class SearchService {
         u.avatar,
         COUNT(DISTINCT dl.id) as like_count,
         COUNT(DISTINCT c.id) as comment_count,
-        AVG(dr.rating) as rating
+        COUNT(DISTINCT df.id) as favorite_count,
+        COALESCE(AVG(dr.rating), 0) as avg_rating,
+        GROUP_CONCAT(DISTINCT t.name) as tag_names,
+        GROUP_CONCAT(DISTINCT t.icon) as tag_icons,
+        GROUP_CONCAT(DISTINCT t.category) as tag_categories,
+        CASE 
+          WHEN ? != ''
+          THEN MATCH(d.title, d.search_content) AGAINST(? IN NATURAL LANGUAGE MODE WITH QUERY EXPANSION)
+          ELSE 1
+        END as relevance_score,
+        d.created_at
       FROM travel_diaries d
       JOIN user_information u ON d.user_id = u.id
       LEFT JOIN diary_likes dl ON d.id = dl.diary_id
       LEFT JOIN comments c ON d.id = c.diary_id
+      LEFT JOIN diary_favorites df ON d.id = df.diary_id
       LEFT JOIN diary_ratings dr ON d.id = dr.diary_id
+      LEFT JOIN diary_tag_relations tr ON d.id = tr.diary_id
+      LEFT JOIN diary_tags t ON tr.tag_id = t.id
     `;
 
-    const params = [];
-    let whereClause = ' WHERE 1=1';
-
-    // 添加全文搜索条件
-    if (searchQuery) {
-      whereClause += ' AND (MATCH(d.title, d.content) AGAINST(? IN NATURAL LANGUAGE MODE) OR d.title LIKE ? OR d.content LIKE ?)';
-      params.push(searchQuery, `%${searchQuery}%`, `%${searchQuery}%`);
-    }
-
-    // 添加分类筛选
-    if (category && category !== '全部主题') {
-      whereClause += ' AND d.categories LIKE ?';
-      params.push(`%${category}%`);
-    }
-
-    query += whereClause + ' GROUP BY d.id';
+    const queryParams = [searchQuery, searchQuery];
     
-    console.log('Final SQL query:', query);
-    console.log('Query parameters:', params);
+    // 添加WHERE子句
+    let whereConditions = [];
+    if (searchQuery) {
+      whereConditions.push(`MATCH(d.title, d.search_content) AGAINST(? IN NATURAL LANGUAGE MODE WITH QUERY EXPANSION)`);
+      queryParams.push(searchQuery);
+    }
+    
+    if (category && category !== '全部主题') {
+      whereConditions.push(`EXISTS (
+        SELECT 1 FROM diary_tag_relations tr2 
+        JOIN diary_tags t2 ON tr2.tag_id = t2.id 
+        WHERE tr2.diary_id = d.id AND t2.name = ?
+      )`);
+      queryParams.push(category);
+    }
+    
+    if (whereConditions.length > 0) {
+      query += ' WHERE ' + whereConditions.join(' AND ');
+    }
+    
+    // 分组
+    query += ' GROUP BY d.id';
+    
+    // 排序
+    switch (sort) {
+      case 'hot':
+        query += ` ORDER BY (
+          COUNT(DISTINCT dl.id) * 0.4 + 
+          COUNT(DISTINCT c.id) * 0.3 + 
+          COUNT(DISTINCT df.id) * 0.2 + 
+          COALESCE(AVG(dr.rating), 0) * 0.1
+        ) DESC`;
+        break;
+      case 'newest':
+        query += ' ORDER BY d.created_at DESC';
+        break;
+      case 'featured':
+        query += ' ORDER BY d.is_featured DESC, d.created_at DESC';
+        break;
+      default:
+        query += ' ORDER BY relevance_score DESC, d.created_at DESC';
+    }
+    
+    // 分页
+    query += ' LIMIT ? OFFSET ?';
+    queryParams.push(limit, offset);
 
-    return new Promise((resolve, reject) => {
-      db.query(query, params, async (err, results) => {
+    // 获取总数的查询
+    let countQuery = `
+      SELECT COUNT(DISTINCT d.id) as total
+      FROM travel_diaries d
+    `;
+    
+    if (whereConditions.length > 0) {
+      countQuery += ' WHERE ' + whereConditions.join(' AND ');
+    }
+
+    // 执行查询
+    this.db.query(query, queryParams, (err, diaries) => {
+      if (err) {
+        console.error('搜索日记失败:', err);
+        return callback(err);
+      }
+
+      // 获取总数
+      this.db.query(countQuery, queryParams.slice(0, -2), (err, countResult) => {
         if (err) {
-          console.error('Database query error:', err);
-          reject(err);
-          return;
+          console.error('获取总数失败:', err);
+          return callback(err);
         }
 
-        console.log('Raw search results:', results);
+        const total = countResult[0].total;
+        const totalPages = Math.ceil(total / limit);
 
-        // 计算每篇日记的推荐分数
-        const scoredResults = await Promise.all(results.map(async diary => {
-          const score = await scorer.calculateFinalScore(diary, searchQuery);
-          return { ...diary, score };
-        }));
+        // 处理搜索结果
+        let processedCount = 0;
+        const processedDiaries = [];
 
-        // 根据排序方式排序
-        let sortedResults;
-        switch (sort) {
-          case 'relevance':
-            sortedResults = scoredResults.sort((a, b) => b.score - a.score);
-            break;
-          case 'hot':
-            sortedResults = scoredResults.sort((a, b) => b.like_count - a.like_count);
-            break;
-          case 'newest':
-            sortedResults = scoredResults.sort((a, b) => 
-              new Date(b.created_at) - new Date(a.created_at)
-            );
-            break;
-          default:
-            sortedResults = scoredResults.sort((a, b) => b.score - a.score);
+        const processDiary = (diary, index) => {
+          // 如果日记内容是压缩的，解压缩
+          if (diary.is_compressed) {
+            compressionService.decompressDiary(diary, (err, decompressedDiary) => {
+              if (!err && decompressedDiary) {
+                diary.content = decompressedDiary.content;
+              }
+              processedDiaries[index] = diary;
+              processedCount++;
+              checkComplete();
+            });
+          } else {
+            processedDiaries[index] = diary;
+            processedCount++;
+            checkComplete();
+          }
+        };
+
+        const checkComplete = () => {
+          if (processedCount === diaries.length) {
+            callback(null, {
+              diaries: processedDiaries,
+              total,
+              totalPages,
+              currentPage: page
+            });
+          }
+        };
+
+        if (diaries.length === 0) {
+          callback(null, {
+            diaries: [],
+            total: 0,
+            totalPages: 0,
+            currentPage: page
+          });
+        } else {
+          diaries.forEach(processDiary);
         }
-
-        // 分页
-        const paginatedResults = sortedResults.slice(offset, offset + limit);
-        
-        resolve({
-          diaries: paginatedResults,
-          total: results.length,
-          page,
-          totalPages: Math.ceil(results.length / limit)
-        });
       });
     });
   }

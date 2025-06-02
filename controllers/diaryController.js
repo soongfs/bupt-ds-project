@@ -1,58 +1,64 @@
 const db = require('../config/test-database');
 const upload = require('../config/multerConfig');
 const searchService = require('../services/searchService');
+const compressionService = require('../services/compressionService');
 
 const diaryController = {
-  getDiaryDiscovery: async (req, res) => {
+  getDiaryDiscovery: (req, res) => {
     try {
       const { page = 1, q: searchQuery = '', category = '全部主题', sort = 'hot' } = req.query;
       const userId = req.session.user ? req.session.user.id : null;
 
-      const searchResults = await searchService.searchDiaries(searchQuery, userId, {
+      searchService.searchDiaries(searchQuery, userId, {
         page: parseInt(page),
         category,
         sort
-      });
+      }, (err, searchResults) => {
+        if (err) {
+          console.error('搜索日记失败:', err);
+          return res.status(500).render('error', { error: '搜索失败，请稍后重试' });
+        }
 
-      const diariesWithTags = searchResults.diaries.map(diary => {
-        const tags = [];
-        if (diary.tag_names && diary.tag_icons) {
-          const tagNames = diary.tag_names.split(',');
-          const tagIcons = diary.tag_icons.split(',');
+        const diariesWithTags = searchResults.diaries.map(diary => {
+          const tags = [];
+          if (diary.tag_names && diary.tag_icons) {
+            const tagNames = diary.tag_names.split(',');
+            const tagIcons = diary.tag_icons.split(',');
 
-          for (let i = 0; i < tagNames.length; i++) {
-            tags.push({
-              name: tagNames[i],
-              icon: tagIcons[i]
-            });
+            for (let i = 0; i < tagNames.length; i++) {
+              tags.push({
+                name: tagNames[i],
+                icon: tagIcons[i]
+              });
+            }
           }
-        }
 
-        return {
-          ...diary,
-          tags: tags,
-          cover_image: diary.cover_image || null,
-          is_featured: diary.is_featured || false
-        };
-      });
+          return {
+            ...diary,
+            tags: tags,
+            cover_image: diary.cover_image || null,
+            is_featured: diary.is_featured || false
+          };
+        });
 
-      res.render('diary-discovery', {
-        diaries: diariesWithTags,
-        currentPage: parseInt(page),
-        totalPages: searchResults.totalPages,
-        searchQuery,
-        currentCategory: category,
-        sortBy: sort,
-        user: req.session.user || null,
-        formatDate: (date) => {
-          if (!date) return '';
-          const d = new Date(date);
-          return `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}-${d.getDate().toString().padStart(2, '0')}`;
-        }
+        res.render('diary-discovery', {
+          diaries: diariesWithTags,
+          currentPage: parseInt(page),
+          totalPages: searchResults.totalPages,
+          searchQuery,
+          currentCategory: category,
+          sortBy: sort,
+          user: req.session.user || null,
+          formatDate: (date) => {
+            if (!date) return '';
+            const d = new Date(date);
+            return `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}-${d.getDate().toString().padStart(2, '0')}`;
+          }
+        });
       });
     } catch (error) {
-      console.error('搜索日记失败:', error);
-      res.status(500).render('error', { error: '搜索失败，请稍后重试' });
+      console.error('处理请求失败:', error);
+      res.status(500).render('error', { error: '服务器错误，请稍后重试' });
     }
   },
 
@@ -72,23 +78,6 @@ const diaryController = {
     const diaryId = req.params.id;
     const userId = req.session.user ? req.session.user.id : null;
 
-    // 记录浏览记录的函数
-    const recordView = (diaryId, userId) => {
-      if (!userId) return; // 未登录用户不记录浏览历史
-      
-      const query = `
-        INSERT INTO diary_views (diary_id, user_id)
-        VALUES (?, ?)
-        ON DUPLICATE KEY UPDATE viewed_at = CURRENT_TIMESTAMP
-      `;
-      
-      db.query(query, [diaryId, userId], (err) => {
-        if (err) {
-          console.error('记录浏览历史失败:', err);
-        }
-      });
-    };
-
     // 获取日记基本信息
     db.query(`
       SELECT 
@@ -97,9 +86,7 @@ const diaryController = {
         u.avatar,
         COALESCE(r.rating, 0) as user_rating,
         CASE WHEN f.user_id IS NOT NULL THEN 1 ELSE 0 END as user_favorited,
-        CASE WHEN l.user_id IS NOT NULL THEN 1 ELSE 0 END as user_liked,
-        (SELECT AVG(rating) FROM diary_ratings WHERE diary_id = d.id) as rating,
-        (SELECT COUNT(*) FROM diary_ratings WHERE diary_id = d.id) as rating_count
+        CASE WHEN l.user_id IS NOT NULL THEN 1 ELSE 0 END as user_liked
       FROM travel_diaries d
       JOIN user_information u ON d.user_id = u.id
       LEFT JOIN diary_ratings r ON d.id = r.diary_id AND r.user_id = ?
@@ -108,104 +95,136 @@ const diaryController = {
       WHERE d.id = ?
     `, [userId, userId, userId, diaryId], (err, diaryResults) => {
       if (err) {
-        console.error('查询日记失败:', err);
-        return res.status(500).render('error', { 
-          message: '数据库查询错误',
-          error: err
-        });
+        console.error('获取日记基本信息失败:', err);
+        return res.status(500).render('error', { message: '服务器错误' });
       }
 
       if (!diaryResults[0]) {
-        return res.status(404).render('error', { 
-          message: '未找到该日记',
-          error: null
-        });
+        return res.status(404).render('error', { message: '未找到该日记' });
       }
 
       const diary = diaryResults[0];
-      // 确保 rating 是数字类型
-      diary.rating = diary.rating ? parseFloat(diary.rating) : 0;
-      diary.rating_count = parseInt(diary.rating_count || 0);
 
-      // 确保封面图片路径正确
-      if (diary.cover_image && !diary.cover_image.startsWith('/')) {
-        diary.cover_image = '/uploads/' + diary.cover_image;
+      // 解压日记内容
+      if (diary.is_compressed) {
+        compressionService.decompressDiary(diary, (err, decompressedDiary) => {
+          if (err) {
+            console.error('解压日记内容失败:', err);
+            return res.status(500).render('error', { message: '服务器错误' });
+          }
+          diary.content = decompressedDiary.content;
+          continueWithSections();
+        });
+      } else {
+        continueWithSections();
       }
 
-      // 获取媒体文件
-      db.query(`
-        SELECT * FROM diary_media
-        WHERE diary_id = ?
-        ORDER BY display_order
-      `, [diaryId], (err, mediaResults) => {
-        if (err) {
-          console.error('查询媒体文件失败:', err);
-          return res.status(500).render('error', { 
-            message: '获取媒体文件失败',
-            error: err
-          });
-        }
-
-        // 处理媒体文件的URL
-        const processedMedia = mediaResults.map(item => ({
-          ...item,
-          media_url: item.media_url.startsWith('/') ? item.media_url : '/uploads/' + item.media_url
-        }));
-
-        // 获取章节内容
-        db.query(`
-          SELECT * FROM diary_sections
-          WHERE diary_id = ?
-          ORDER BY section_order
-        `, [diaryId], (err, sectionResults) => {
-          if (err) {
-            console.error('查询章节失败:', err);
-            return res.status(500).render('error', { 
-              message: '获取章节内容失败',
-              error: err
-            });
-          }
-
-          // 获取评论
-          db.query(`
-            SELECT c.*, u.username, u.avatar
-            FROM comments c
-            JOIN user_information u ON c.comment_user_id = u.id
-            WHERE c.diary_id = ?
-            ORDER BY c.created_at DESC
-          `, [diaryId], (err, commentResults) => {
+      // 获取章节内容
+      function continueWithSections() {
+        db.query(
+          'SELECT * FROM diary_sections WHERE diary_id = ? ORDER BY section_order',
+          [diaryId],
+          (err, sections) => {
             if (err) {
-              console.error('查询评论失败:', err);
-              return res.status(500).render('error', { 
-                message: '获取评论失败',
-                error: err
+              console.error('获取章节内容失败:', err);
+              return res.status(500).render('error', { message: '服务器错误' });
+            }
+
+            // 解压章节内容
+            let sectionsProcessed = 0;
+            if (sections.length === 0) {
+              continueWithMedia();
+            } else {
+              sections.forEach((section, index) => {
+                if (section.is_compressed) {
+                  compressionService.decompressText(section.section_content, (err, decompressedContent) => {
+                    if (err) {
+                      console.error('解压章节内容失败:', err);
+                      return res.status(500).render('error', { message: '服务器错误' });
+                    }
+                    sections[index].section_content = decompressedContent;
+                    sectionsProcessed++;
+                    if (sectionsProcessed === sections.length) {
+                      continueWithMedia();
+                    }
+                  });
+                } else {
+                  sectionsProcessed++;
+                  if (sectionsProcessed === sections.length) {
+                    continueWithMedia();
+                  }
+                }
               });
             }
 
-            // 更新浏览次数并记录浏览历史
-            db.query(`
-              UPDATE travel_diaries 
-              SET view_count = view_count + 1 
-              WHERE id = ?
-            `, [diaryId], (err) => {
-              if (err) {
-                console.error('更新浏览次数失败:', err);
-              }
+            // 获取媒体文件
+            function continueWithMedia() {
+              db.query(`
+                SELECT * FROM diary_media
+                WHERE diary_id = ?
+                ORDER BY display_order
+              `, [diaryId], (err, mediaResults) => {
+                if (err) {
+                  console.error('查询媒体文件失败:', err);
+                  return res.status(500).render('error', { message: '获取媒体文件失败' });
+                }
 
-              // 记录用户浏览历史
-              recordView(diaryId, userId);
+                // 处理媒体文件的URL
+                const processedMedia = mediaResults.map(item => ({
+                  ...item,
+                  media_url: item.media_url.startsWith('/') ? item.media_url : '/uploads/' + item.media_url
+                }));
 
-              res.render('diary-detail', {
-                diary: diary,
-                media: processedMedia,
-                sections: sectionResults,
-                comments: commentResults,
-                user: req.session.user || null
+                // 获取评论
+                db.query(`
+                  SELECT c.*, u.username, u.avatar
+                  FROM comments c
+                  JOIN user_information u ON c.comment_user_id = u.id
+                  WHERE c.diary_id = ?
+                  ORDER BY c.created_at DESC
+                `, [diaryId], (err, commentResults) => {
+                  if (err) {
+                    console.error('查询评论失败:', err);
+                    return res.status(500).render('error', { message: '获取评论失败' });
+                  }
+
+                  // 更新浏览次数并记录浏览历史
+                  db.query(`
+                    UPDATE travel_diaries 
+                    SET view_count = view_count + 1 
+                    WHERE id = ?
+                  `, [diaryId], (err) => {
+                    if (err) {
+                      console.error('更新浏览次数失败:', err);
+                    }
+
+                    // 记录用户浏览历史
+                    if (userId) {
+                      db.query(`
+                        INSERT INTO diary_views (diary_id, user_id)
+                        VALUES (?, ?)
+                        ON DUPLICATE KEY UPDATE viewed_at = CURRENT_TIMESTAMP
+                      `, [diaryId, userId], (err) => {
+                        if (err) {
+                          console.error('记录浏览历史失败:', err);
+                        }
+                      });
+                    }
+
+                    res.render('diary-detail', {
+                      diary,
+                      sections,
+                      media: processedMedia,
+                      comments: commentResults,
+                      user: req.session.user || null
+                    });
+                  });
+                });
               });
-            });
-          });
-        });
-      });
+            }
+          }
+        );
+      }
     });
   },
 
@@ -254,7 +273,91 @@ const diaryController = {
   },
 
   createDiary: (req, res) => {
-    // ... existing code ...
+    const { title, content, sections } = req.body;
+    const userId = req.session.user.id;
+
+    // 压缩日记内容
+    compressionService.compressDiary({
+      content,
+      sections: JSON.parse(sections || '[]')
+    }, (err, compressedDiary) => {
+      if (err) {
+        console.error('压缩日记内容失败:', err);
+        return res.status(500).json({ success: false, message: '内容压缩失败' });
+      }
+
+      // 开始数据库事务
+      db.beginTransaction((err) => {
+        if (err) {
+          console.error('事务开始失败:', err);
+          return res.status(500).json({ success: false, message: '数据库错误' });
+        }
+
+        // 插入主日记内容
+        db.query(
+          `INSERT INTO travel_diaries 
+           (user_id, title, content, search_content, is_compressed, created_at) 
+           VALUES (?, ?, ?, ?, ?, NOW())`,
+          [userId, title, compressedDiary.content, compressedDiary.search_content, true],
+          (err, result) => {
+            if (err) {
+              return db.rollback(() => {
+                console.error('插入日记失败:', err);
+                res.status(500).json({ success: false, message: '数据库错误' });
+              });
+            }
+
+            const diaryId = result.insertId;
+
+            // 如果没有章节，直接提交事务
+            if (!compressedDiary.sections || !compressedDiary.sections.length) {
+              return db.commit((err) => {
+                if (err) {
+                  return db.rollback(() => {
+                    console.error('提交事务失败:', err);
+                    res.status(500).json({ success: false, message: '数据库错误' });
+                  });
+                }
+                res.json({ success: true, diaryId });
+              });
+            }
+
+            // 插入章节内容
+            let insertedSections = 0;
+            compressedDiary.sections.forEach((section) => {
+              db.query(
+                `INSERT INTO diary_sections 
+                 (diary_id, section_title, section_content, day_number, section_order, is_compressed) 
+                 VALUES (?, ?, ?, ?, ?, ?)`,
+                [diaryId, section.title, section.content, section.dayNumber, section.order, true],
+                (err) => {
+                  if (err) {
+                    return db.rollback(() => {
+                      console.error('插入章节失败:', err);
+                      res.status(500).json({ success: false, message: '数据库错误' });
+                    });
+                  }
+
+                  insertedSections++;
+                  if (insertedSections === compressedDiary.sections.length) {
+                    // 所有章节插入完成，提交事务
+                    db.commit((err) => {
+                      if (err) {
+                        return db.rollback(() => {
+                          console.error('提交事务失败:', err);
+                          res.status(500).json({ success: false, message: '数据库错误' });
+                        });
+                      }
+                      res.json({ success: true, diaryId });
+                    });
+                  }
+                }
+              );
+            });
+          }
+        );
+      });
+    });
   },
 
   updateDiary: (req, res) => {
@@ -312,11 +415,13 @@ const diaryController = {
             `UPDATE travel_diaries 
              SET title = ?, 
                  content = ?, 
+                 search_content = ?,
                  tips = ?,
                  cover_image = ?,
+                 is_compressed = ?,
                  updated_at = NOW()
              WHERE id = ? AND user_id = ?`,
-            [title, content, tips, coverImagePath, diaryId, userId],
+            [title, compressedDiary.content, compressedDiary.search_content, tips, coverImagePath, true, diaryId, userId],
             (err) => {
               if (err) {
                 return db.rollback(() => {
@@ -710,6 +815,192 @@ const diaryController = {
       message: '链接已生成'
     });
   }
+};
+
+// 在发送到模板前处理日记内容
+function prepareContentForDisplay(diary) {
+  if (!diary) return diary;
+
+  // 创建一个新对象，避免修改原始数据
+  const processed = { ...diary };
+
+  // 处理内容
+  if (processed.content) {
+    if (Buffer.isBuffer(processed.content)) {
+      processed.content = processed.content.toString();
+    } else if (typeof processed.content !== 'string') {
+      processed.content = String(processed.content);
+    }
+
+    // 生成摘要
+    if (!processed.excerpt) {
+      const cleanContent = processed.content
+        .replace(/<[^>]*>/g, ' ')  // 移除 HTML 标签
+        .replace(/\s+/g, ' ')      // 规范化空白字符
+        .trim();
+      processed.excerpt = cleanContent.length > 100 ? 
+        cleanContent.substring(0, 100) + '...' : 
+        cleanContent;
+    }
+  } else {
+    processed.content = '';
+    processed.excerpt = '暂无内容预览';
+  }
+
+  return processed;
+}
+
+// 修改获取日记列表的函数
+exports.getDiaries = (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const offset = (page - 1) * limit;
+  const userId = req.query.userId;
+  const category = req.query.category;
+  const sort = req.query.sort || 'latest';
+
+  let query = `
+    SELECT 
+      d.*,
+      u.username,
+      u.avatar,
+      COUNT(DISTINCT dl.id) as like_count,
+      COUNT(DISTINCT c.id) as comment_count,
+      AVG(dr.rating) as rating
+    FROM travel_diaries d
+    JOIN user_information u ON d.user_id = u.id
+    LEFT JOIN diary_likes dl ON d.id = dl.diary_id
+    LEFT JOIN comments c ON d.id = c.diary_id
+    LEFT JOIN diary_ratings dr ON d.id = dr.diary_id
+  `;
+
+  const params = [];
+  let whereClause = ' WHERE 1=1';
+
+  if (userId) {
+    whereClause += ' AND d.user_id = ?';
+    params.push(userId);
+  }
+
+  if (category && category !== '全部主题') {
+    whereClause += ' AND d.categories LIKE ?';
+    params.push(`%${category}%`);
+  }
+
+  query += whereClause + ' GROUP BY d.id';
+
+  // 添加排序
+  switch (sort) {
+    case 'hot':
+      query += ' ORDER BY (like_count * 0.4 + comment_count * 0.3 + COALESCE(rating, 0) * 0.3) DESC';
+      break;
+    case 'rating':
+      query += ' ORDER BY rating DESC';
+      break;
+    case 'latest':
+    default:
+      query += ' ORDER BY d.created_at DESC';
+  }
+
+  query += ' LIMIT ? OFFSET ?';
+  params.push(limit, offset);
+
+  // 获取总数的查询
+  const countQuery = `
+    SELECT COUNT(DISTINCT d.id) as total 
+    FROM travel_diaries d 
+    ${whereClause}
+  `;
+
+  db.query(query, params, (err, diaries) => {
+    if (err) {
+      console.error('获取日记列表失败:', err);
+      return res.status(500).json({ success: false, message: '获取日记列表失败' });
+    }
+
+    db.query(countQuery, params.slice(0, -2), (err, countResult) => {
+      if (err) {
+        console.error('获取日记总数失败:', err);
+        return res.status(500).json({ success: false, message: '获取日记总数失败' });
+      }
+
+      const total = countResult[0].total;
+      const totalPages = Math.ceil(total / limit);
+
+      // 处理每个日记的内容
+      const processedDiaries = diaries.map(diary => prepareContentForDisplay(diary));
+
+      res.render('diary-discovery', {
+        diaries: processedDiaries,
+        currentPage: page,
+        totalPages,
+        total,
+        category: category || '全部主题',
+        sort
+      });
+    });
+  });
+};
+
+// 修改获取单个日记的函数
+exports.getDiary = (req, res) => {
+  const diaryId = req.params.id;
+  const userId = req.session.user ? req.session.user.id : null;
+
+  const query = `
+    SELECT 
+      d.*,
+      u.username,
+      u.avatar,
+      COUNT(DISTINCT dl.id) as like_count,
+      COUNT(DISTINCT c.id) as comment_count,
+      AVG(dr.rating) as rating,
+      CASE WHEN dl2.id IS NOT NULL THEN 1 ELSE 0 END as is_liked,
+      CASE WHEN df.id IS NOT NULL THEN 1 ELSE 0 END as is_favorited,
+      dr2.rating as user_rating
+    FROM travel_diaries d
+    JOIN user_information u ON d.user_id = u.id
+    LEFT JOIN diary_likes dl ON d.id = dl.diary_id
+    LEFT JOIN comments c ON d.id = c.diary_id
+    LEFT JOIN diary_ratings dr ON d.id = dr.diary_id
+    LEFT JOIN diary_likes dl2 ON d.id = dl2.diary_id AND dl2.user_id = ?
+    LEFT JOIN diary_favorites df ON d.id = df.diary_id AND df.user_id = ?
+    LEFT JOIN diary_ratings dr2 ON d.id = dr2.diary_id AND dr2.user_id = ?
+    WHERE d.id = ?
+    GROUP BY d.id
+  `;
+
+  db.query(query, [userId, userId, userId, diaryId], (err, results) => {
+    if (err) {
+      console.error('获取日记详情失败:', err);
+      return res.status(500).json({ success: false, message: '获取日记详情失败' });
+    }
+
+    if (results.length === 0) {
+      return res.status(404).render('error', { message: '日记不存在' });
+    }
+
+    const diary = prepareContentForDisplay(results[0]);
+    
+    // 增加浏览次数
+    db.query(
+      'UPDATE travel_diaries SET view_count = view_count + 1 WHERE id = ?',
+      [diaryId]
+    );
+
+    // 记录用户浏览历史
+    if (userId) {
+      db.query(
+        'INSERT INTO diary_views (diary_id, user_id) VALUES (?, ?) ON DUPLICATE KEY UPDATE viewed_at = CURRENT_TIMESTAMP',
+        [diaryId, userId]
+      );
+    }
+
+    res.render('diary-detail', {
+      diary,
+      user: req.session.user || null
+    });
+  });
 };
 
 module.exports = diaryController; 
