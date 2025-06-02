@@ -26,6 +26,14 @@
           />
         </div>
         <div class="input-group">
+          <label for="strategy">规划策略</label>
+          <select id="strategy" class="input-field">
+            <option value="distance" selected>最短距离</option>
+            <option value="time_walk">最短步行时间 (考虑拥挤)</option>
+            <option value="time_bike">最短骑行时间 (考虑拥挤与可骑行路段)</option>
+          </select>
+        </div>
+        <div class="input-group">
           <label for="waypoints">途经点 (多个请用英文逗号隔开)</label>
           <input
             type="text"

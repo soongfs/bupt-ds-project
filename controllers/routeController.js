@@ -52,34 +52,8 @@ const { getAllEdges } = require("../models/edgeModel");
 // 改用astar
 const { computeShortestPath } = require("../services/astarService");
 
-// Helper function to calculate path distance given node IDs and edges
-function calculatePathDistance(pathNodeIds, edges) {
-  if (!pathNodeIds || pathNodeIds.length < 2) {
-    return 0;
-  }
-  let distance = 0;
-
-  for (let i = 0; i < pathNodeIds.length - 1; i++) {
-    const u = pathNodeIds[i].toString();
-    const v = pathNodeIds[i + 1].toString();
-    // Find the edge between u and v
-    const edge = edges.find(
-      (e) =>
-        (e.from_node.toString() === u && e.to_node.toString() === v) ||
-        (e.from_node.toString() === v && e.to_node.toString() === u)
-    );
-    if (edge) {
-      distance += edge.length;
-    } else {
-      // This case should ideally not happen if computeShortestPath returns a valid path based on these edges
-      console.warn(`Edge not found between ${u} and ${v} for distance calculation.`);
-      // Fallback or error handling - for now, let's assume edges are always found for valid paths
-      // Or, if a path segment is just one node (start=end), its length is 0.
-      // But computeShortestPath should return at least [startId] if startId=endId.
-    }
-  }
-  return distance;
-}
+const WALKING_SPEED = 1.2; // m/s, approx 4.32 km/h
+const BICYCLE_SPEED = 4.0; // m/s, approx 14.4 km/h
 
 // Helper function to find permutations of an array
 function permute(arr) {
@@ -115,24 +89,23 @@ function permute(arr) {
     return result;
 }
 
-
 async function getRoute(req, res) {
-  const fromName = req.query.from;
-  const toName = req.query.to;
+  const { from: fromName, to: toName, strategy = "distance" } = req.query;
+
   if (!fromName || !toName) {
     return res.status(400).json({ error: "必须提供 from 和 to 参数" });
   }
 
   try {
-    const { all: nodes, byName } = await getAllNodes();
+    const { all: nodes } = await getAllNodes();
     const edges = await getAllEdges();
 
     const findMatchingNode = (name) => {
       const regex = new RegExp(name, 'i');
-      const matches = nodes.filter(node => regex.test(node.name));
+      const matches = nodes.filter(node => node.name && regex.test(node.name));
       if (matches.length === 0) return null;
       if (matches.length === 1) return matches[0];
-      const exactMatch = matches.find(node => node.name.toLowerCase() === name.toLowerCase());
+      const exactMatch = matches.find(node => node.name && node.name.toLowerCase() === name.toLowerCase());
       return exactMatch || matches[0];
     };
 
@@ -144,76 +117,82 @@ async function getRoute(req, res) {
       if (!fromNode) errors.push(`找不到匹配的起点: ${fromName}`);
       if (!toNode) errors.push(`找不到匹配的终点: ${toName}`);
       const suggestions = {
-        from: fromNode ? null : nodes.filter(n => n.name.toLowerCase().includes(fromName.toLowerCase())).map(n => n.name).slice(0, 5),
-        to: toNode ? null : nodes.filter(n => n.name.toLowerCase().includes(toName.toLowerCase())).map(n => n.name).slice(0, 5)
+        from: fromNode ? null : nodes.filter(n => n.name && n.name.toLowerCase().includes(fromName.toLowerCase())).map(n => n.name).slice(0, 5),
+        to: toNode ? null : nodes.filter(n => n.name && n.name.toLowerCase().includes(toName.toLowerCase())).map(n => n.name).slice(0, 5)
       };
-      return res.status(404).json({
-        error: errors.join("; "),
-        suggestions
-      });
+      return res.status(404).json({ error: errors.join("; "), suggestions });
     }
 
-    const pathIds = await computeShortestPath(
+    const result = await computeShortestPath(
       fromNode.node_id,
       toNode.node_id,
       nodes,
-      edges
+      edges,
+      strategy
     );
 
-    if (!pathIds || pathIds.length === 0) {
-      // If start and end node are the same, pathIds might be just [node_id]
+    if (!result || !result.pathNodeIds || result.pathNodeIds.length === 0) {
       if (fromNode.node_id === toNode.node_id) {
         const path = [{ node_id: fromNode.node_id, lat: fromNode.lat, lon: fromNode.lon, name: fromNode.name }];
         return res.json({
           path,
           totalDistance: 0,
-          matchedNames: {
-            from: fromNode.name,
-            to: toNode.name
-          }
+          totalTime: 0,
+          strategy,
+          matchedNames: { from: fromNode.name, to: toNode.name }
         });
       }
       return res.status(404).json({ error: "无可达路径" });
     }
 
-    const totalDistance = calculatePathDistance(pathIds, edges);
+    const { pathNodeIds, totalCost, totalActualDistance } = result;
 
-    const path = pathIds.map((id) => {
+    const path = pathNodeIds.map((id) => {
       const n = nodes.find((x) => x.node_id === id);
       return { node_id: id, lat: n.lat, lon: n.lon, name: n.name };
     });
 
+    let totalTime = 0;
+    if (strategy === "time_walk") {
+      totalTime = totalCost / WALKING_SPEED;
+    } else if (strategy === "time_bike") {
+      totalTime = totalCost / BICYCLE_SPEED;
+    } else { // distance strategy or fallback
+      totalTime = totalActualDistance / WALKING_SPEED; // Default time for distance strategy is walking
+    }
+
     res.json({
       path,
-      totalDistance,
-      matchedNames: {
-        from: fromNode.name,
-        to: toNode.name
-      }
+      totalDistance: totalActualDistance, // actual geometric distance
+      totalTime: Math.round(totalTime), // seconds, rounded
+      strategy,
+      rawCost: totalCost, // For debugging or internal use
+      matchedNames: { from: fromNode.name, to: toNode.name }
     });
+
   } catch (error) {
-    console.error("Error in getRoute:", error);
+    console.error(`Error in getRoute (strategy: ${strategy}):`, error);
     res.status(500).json({ error: "服务器内部错误，获取路径失败" });
   }
 }
 
 async function getMultiStopRoute(req, res) {
-  const { startPointName, waypointNames, endPointName } = req.body;
+  const { startPointName, waypointNames, endPointName, strategy = "distance" } = req.body;
 
   if (!startPointName || !waypointNames || !endPointName || !Array.isArray(waypointNames)) {
     return res.status(400).json({ error: "必须提供 startPointName, waypointNames (数组), 和 endPointName" });
   }
 
   try {
-    const { all: nodes, byName } = await getAllNodes();
+    const { all: nodes } = await getAllNodes();
     const edges = await getAllEdges();
 
     const findNodeByName = (name) => {
       const regex = new RegExp(name, 'i');
-      const matches = nodes.filter(node => regex.test(node.name));
+      const matches = nodes.filter(node => node.name && regex.test(node.name));
       if (matches.length === 0) return null;
       if (matches.length === 1) return matches[0];
-      const exactMatch = matches.find(node => node.name.toLowerCase() === name.toLowerCase());
+      const exactMatch = matches.find(node => node.name && node.name.toLowerCase() === name.toLowerCase());
       return exactMatch || matches[0];
     };
 
@@ -227,134 +206,125 @@ async function getMultiStopRoute(req, res) {
       if (!node) acc.push(index);
       return acc;
     }, []);
-
     if (missingWaypointIndices.length > 0) {
       const missingNames = missingWaypointIndices.map(index => waypointNames[index]);
       return res.status(404).json({ error: `找不到以下途经点: ${missingNames.join(', ')}` });
     }
-    
-    // Handle cases with very few unique points (e.g. start=A, waypoints=[], end=A)
+
     const allPointObjects = [startNode, ...waypointNodes, endNode];
     const uniqueNodeIds = [...new Set(allPointObjects.map(n => n.node_id))];
 
     if (uniqueNodeIds.length <= 1) {
-        const singleNode = nodes.find(n => n.node_id === uniqueNodeIds[0]);
-        if (singleNode) {
-            return res.json({
-                path: [{ node_id: singleNode.node_id, lat: singleNode.lat, lon: singleNode.lon, name: singleNode.name }],
-                totalDistance: 0,
-                matchedNames: {
-                    start: startNode.name,
-                    waypoints: waypointNodes.map(n => n.name),
-                    end: endNode.name
-                }
-            });
-        } else { // Should not happen if nodes were found initially
-             return res.status(404).json({ error: "无法解析单点路径的节点" });
-        }
+      const singleNode = nodes.find(n => n.node_id === uniqueNodeIds[0]);
+      if (singleNode) {
+        return res.json({
+          path: [{ node_id: singleNode.node_id, lat: singleNode.lat, lon: singleNode.lon, name: singleNode.name }],
+          totalDistance: 0,
+          totalTime: 0,
+          strategy,
+          matchedNames: { start: startNode.name, waypoints: waypointNodes.map(n => n.name), end: endNode.name }
+        });
+      }
+      return res.status(404).json({ error: "无法解析单点路径的节点" });
     }
 
-
-    let refinedMinPathCoords = [];
-    let minTotalDistance = Infinity;
-
-    const actualWaypointsForPermutation = waypointNodes.filter(
-        (wn) => wn.node_id !== startNode.node_id || wn.node_id !== endNode.node_id // this logic seems a bit off
-                                                                                // It should be unique waypoints not overlapping with start/end IF start/end are distinct
-                                                                                // If start=A, end=A, waypoints=[B,C], permute [B,C]
-                                                                                // If start=A, end=A, waypoints=[A,B,C,A], permute [B,C] (effectively)
-    );
-     // A better way for `actualWaypointsForPermutation`:
-     // These are the nodes that must be visited *between* start and end.
-     // We need to ensure we are permuting the *unique* waypoint nodes that are not the start or end node if start and end are part of the "journey"
-     // but for TSP, we usually define a set of cities to visit, starting from one and ending at another (or same).
-     // Let's assume waypointNodes are the distinct places to visit *in addition* to start and end.
-     // And the problem asks for start -> waypoints -> end.
+    let bestOverallPathCoords = [];
+    let minOverallCostForStrategy = Infinity;
+    let totalActualDistanceForBestPath = 0;
 
     const uniqueWaypointNodesForPermutation = [...new Set(waypointNodes.map(w => w.node_id))]
-        .map(id => waypointNodes.find(w => w.node_id === id))
-        .filter(wn => wn.node_id !== startNode.node_id && wn.node_id !== endNode.node_id);
+      .map(id => waypointNodes.find(w => w.node_id === id))
+      .filter(wn => wn.node_id !== startNode.node_id && wn.node_id !== endNode.node_id);
 
-
-    if (uniqueWaypointNodesForPermutation.length === 0) { // Direct path from start to end, or start -> (nodes that are start/end) -> end
-        const pathIds = await computeShortestPath(startNode.node_id, endNode.node_id, nodes, edges);
-        if (pathIds && pathIds.length > 0) {
-            minTotalDistance = calculatePathDistance(pathIds, edges);
-            refinedMinPathCoords = pathIds.map(id => {
-                const n = nodes.find((x) => x.node_id === id);
-                return { node_id: id, lat: n.lat, lon: n.lon, name: n.name };
-            });
-        } else if (startNode.node_id === endNode.node_id) { // If start and end are same, no waypoints in between, path is just the point
-            minTotalDistance = 0;
-            refinedMinPathCoords = [{ node_id: startNode.node_id, lat: startNode.lat, lon: startNode.lon, name: startNode.name}];
-        }
-         else {
-            return res.status(404).json({ error: `无法规划从 ${startPointName} 到 ${endPointName} 的直接路径` });
-        }
+    if (uniqueWaypointNodesForPermutation.length === 0) {
+      const result = await computeShortestPath(startNode.node_id, endNode.node_id, nodes, edges, strategy);
+      if (result && result.pathNodeIds && result.pathNodeIds.length > 0) {
+        minOverallCostForStrategy = result.totalCost;
+        totalActualDistanceForBestPath = result.totalActualDistance;
+        bestOverallPathCoords = result.pathNodeIds.map(id => {
+          const n = nodes.find((x) => x.node_id === id);
+          return { node_id: id, lat: n.lat, lon: n.lon, name: n.name };
+        });
+      } else if (startNode.node_id === endNode.node_id) {
+        minOverallCostForStrategy = 0;
+        totalActualDistanceForBestPath = 0;
+        bestOverallPathCoords = [{ node_id: startNode.node_id, lat: startNode.lat, lon: startNode.lon, name: startNode.name }];
+      } else {
+        return res.status(404).json({ error: `无法规划从 ${startPointName} 到 ${endPointName} 的直接路径 (策略: ${strategy})` });
+      }
     } else {
-        const waypointPermutations = permute(uniqueWaypointNodesForPermutation);
+      const waypointPermutations = permute(uniqueWaypointNodesForPermutation);
+      for (const perm of waypointPermutations) {
+        let currentPermutationPathCoords = [];
+        let currentPermutationTotalCost = 0;
+        let currentPermutationTotalActualDistance = 0;
+        let pathPossible = true;
+        let lastVisitedNodeInPermutation = startNode;
 
-        for (const perm of waypointPermutations) {
-            let currentFullPathNodeObjects = [];
-            let currentTotalPathDistance = 0;
-            let pathPossible = true;
-            let lastVisitedNode = startNode;
+        // 1. Start to first waypoint in permutation
+        let segmentResult = await computeShortestPath(lastVisitedNodeInPermutation.node_id, perm[0].node_id, nodes, edges, strategy);
+        if (!segmentResult || !segmentResult.pathNodeIds) { pathPossible = false; continue; }
+        currentPermutationTotalCost += segmentResult.totalCost;
+        currentPermutationTotalActualDistance += segmentResult.totalActualDistance;
+        currentPermutationPathCoords.push(...segmentResult.pathNodeIds.slice(0, -1).map(id => nodes.find(n => n.node_id === id)));
+        lastVisitedNodeInPermutation = perm[0];
 
-            // 1. Start to first waypoint in permutation
-            let segmentPathIds = await computeShortestPath(lastVisitedNode.node_id, perm[0].node_id, nodes, edges);
-            if (!segmentPathIds) { pathPossible = false; continue; } // No path to first waypoint
-            currentTotalPathDistance += calculatePathDistance(segmentPathIds, edges);
-            currentFullPathNodeObjects.push(...segmentPathIds.slice(0, -1).map(id => nodes.find(n=>n.node_id === id)));
-            lastVisitedNode = perm[0];
-            
-            // 2. Between waypoints in permutation
-            for (let i = 0; i < perm.length - 1; i++) {
-                segmentPathIds = await computeShortestPath(lastVisitedNode.node_id, perm[i+1].node_id, nodes, edges);
-                if (!segmentPathIds) { pathPossible = false; break; }
-                currentTotalPathDistance += calculatePathDistance(segmentPathIds, edges);
-                currentFullPathNodeObjects.push(...segmentPathIds.slice(0, -1).map(id => nodes.find(n=>n.node_id === id)));
-                lastVisitedNode = perm[i+1];
-            }
-            if (!pathPossible) continue;
-
-            // 3. Last waypoint in permutation to End
-            segmentPathIds = await computeShortestPath(lastVisitedNode.node_id, endNode.node_id, nodes, edges);
-            if (!segmentPathIds) { pathPossible = false; continue; }
-            currentTotalPathDistance += calculatePathDistance(segmentPathIds, edges);
-            // Add all nodes of the last segment, including the endNode
-            currentFullPathNodeObjects.push(...segmentPathIds.map(id => nodes.find(n=>n.node_id === id))); 
-
-            if (pathPossible && currentTotalPathDistance < minTotalDistance) {
-                minTotalDistance = currentTotalPathDistance;
-                refinedMinPathCoords = currentFullPathNodeObjects.map(n => ({ node_id: n.node_id, lat: n.lat, lon: n.lon, name: n.name }));
-            }
+        // 2. Between waypoints in permutation
+        for (let i = 0; i < perm.length - 1; i++) {
+          segmentResult = await computeShortestPath(lastVisitedNodeInPermutation.node_id, perm[i + 1].node_id, nodes, edges, strategy);
+          if (!segmentResult || !segmentResult.pathNodeIds) { pathPossible = false; break; }
+          currentPermutationTotalCost += segmentResult.totalCost;
+          currentPermutationTotalActualDistance += segmentResult.totalActualDistance;
+          currentPermutationPathCoords.push(...segmentResult.pathNodeIds.slice(0, -1).map(id => nodes.find(n => n.node_id === id)));
+          lastVisitedNodeInPermutation = perm[i + 1];
         }
+        if (!pathPossible) continue;
+
+        // 3. Last waypoint in permutation to End
+        segmentResult = await computeShortestPath(lastVisitedNodeInPermutation.node_id, endNode.node_id, nodes, edges, strategy);
+        if (!segmentResult || !segmentResult.pathNodeIds) { pathPossible = false; continue; }
+        currentPermutationTotalCost += segmentResult.totalCost;
+        currentPermutationTotalActualDistance += segmentResult.totalActualDistance;
+        currentPermutationPathCoords.push(...segmentResult.pathNodeIds.map(id => nodes.find(n => n.node_id === id)));
+
+        if (pathPossible && currentPermutationTotalCost < minOverallCostForStrategy) {
+          minOverallCostForStrategy = currentPermutationTotalCost;
+          totalActualDistanceForBestPath = currentPermutationTotalActualDistance;
+          bestOverallPathCoords = currentPermutationPathCoords.map(n => ({ node_id: n.node_id, lat: n.lat, lon: n.lon, name: n.name }));
+        }
+      }
     }
 
-    if (refinedMinPathCoords.length === 0 && !(startNode.node_id === endNode.node_id && uniqueWaypointNodesForPermutation.length === 0)) {
-      return res.status(404).json({ error: "无法规划经过所有指定途经点的有效路径" });
+    if (bestOverallPathCoords.length === 0 && !(startNode.node_id === endNode.node_id && uniqueWaypointNodesForPermutation.length === 0)) {
+      return res.status(404).json({ error: `无法规划经过所有指定途经点的有效路径 (策略: ${strategy})` });
     }
-    
-    // Ensure the final path is not empty, even for start=end case handled earlier for direct path
-    if (refinedMinPathCoords.length === 0 && startNode.node_id === endNode.node_id && uniqueWaypointNodesForPermutation.length === 0) {
-        refinedMinPathCoords = [{ node_id: startNode.node_id, lat: startNode.lat, lon: startNode.lon, name: startNode.name}];
-        minTotalDistance = 0;
+    if (bestOverallPathCoords.length === 0 && startNode.node_id === endNode.node_id && uniqueWaypointNodesForPermutation.length === 0) {
+      bestOverallPathCoords = [{ node_id: startNode.node_id, lat: startNode.lat, lon: startNode.lon, name: startNode.name }];
+      minOverallCostForStrategy = 0;
+      totalActualDistanceForBestPath = 0;
     }
 
+    let totalTime = 0;
+    if (strategy === "time_walk") {
+      totalTime = minOverallCostForStrategy / WALKING_SPEED;
+    } else if (strategy === "time_bike") {
+      totalTime = minOverallCostForStrategy / BICYCLE_SPEED;
+    } else { // distance strategy or fallback
+      totalTime = totalActualDistanceForBestPath / WALKING_SPEED;
+    }
 
     res.json({
-      path: refinedMinPathCoords,
-      totalDistance: minTotalDistance,
-      matchedNames: {
-        start: startNode.name,
-        waypoints: waypointNodes.map(n => n.name), // original requested waypoints
-        end: endNode.name,
-      }
+      path: bestOverallPathCoords,
+      totalDistance: totalActualDistanceForBestPath,
+      totalTime: Math.round(totalTime),
+      strategy,
+      rawCost: minOverallCostForStrategy, // For debugging or internal use
+      matchedNames: { start: startNode.name, waypoints: waypointNodes.map(n => n.name), end: endNode.name }
     });
 
   } catch (error) {
-    console.error("Error in getMultiStopRoute:", error);
-    res.status(500).json({ error: "服务器内部错误，路径规划失败" });
+    console.error(`Error in getMultiStopRoute (strategy: ${strategy}):`, error);
+    res.status(500).json({ error: "服务器内部错误，多点路径规划失败" });
   }
 }
 
