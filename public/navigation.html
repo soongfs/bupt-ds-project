@@ -60,6 +60,40 @@
           <p id="info-time">⏱️ 预计时间：--</p>
           <p id="info-via">🚩 途径：--</p>
         </div>
+
+        <!-- Facility Search Section -->
+        <div class="facility-search-panel">
+          <h3 class="facility-search-title">周边设施查询</h3>
+          <div class="input-group">
+            <label for="facilitySourceLocation">我的位置 (场所名称)</label>
+            <input type="text" id="facilitySourceLocation" class="input-field" placeholder="例如：主楼" value="主楼">
+          </div>
+          <div class="input-group">
+            <label>快速查找附近 (半径500米)</label>
+            <div class="quick-search-buttons">
+              <button class="quick-search-btn" data-category="超市">超市</button>
+              <button class="quick-search-btn" data-category="卫生间">卫生间</button>
+              <button class="quick-search-btn" data-category="餐饮">餐饮</button>
+              <button class="quick-search-btn" data-category="ATM">ATM</button>
+            </div>
+          </div>
+          <div class="input-group">
+            <label for="customFacilityCategory">自定义查找类别</label>
+            <input type="text" id="customFacilityCategory" class="input-field" placeholder="例如：打印店">
+          </div>
+          <div class="input-group">
+            <label for="searchRadius">搜索半径 (米)</label>
+            <input type="number" id="searchRadius" class="input-field" value="500" min="50" max="2000" step="50">
+          </div>
+          <button id="findNearbyBtn" class="nav-button">查找周边</button>
+          <div id="facilityResultsPanel" class="facility-results">
+            <h4>查询结果:</h4>
+            <ul id="facilityList"></ul>
+            <p id="facilitySearchMessage"></p>
+          </div>
+        </div>
+        <!-- End Facility Search Section -->
+
       </div>
     </div>
     <script src="./js/navigation.js"></script>

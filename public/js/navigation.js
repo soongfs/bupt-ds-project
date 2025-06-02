@@ -99,6 +99,8 @@ document.getElementById("searchBtn").onclick = async () => {
     const fullPathNames = data.path.map(p => p.name).join(" → ");
     document.getElementById("info-via").innerText = `🚩 详细路线：${fullPathNames}`;
 
+    clearFacilityResults();
+
   } catch (error) {
     console.error("Error fetching two-point route:", error);
     alert("请求两点路径失败，请检查网络或联系管理员。");
@@ -252,8 +254,145 @@ document.getElementById("multiStopSearchBtn").onclick = async () => {
     const fullPathNamesMulti = data.path.map(p => p.name).join(" → ");
     document.getElementById("info-via").innerText = `🚩 详细路线：${fullPathNamesMulti}`;
 
+    clearFacilityResults();
+
   } catch (error) {
     console.error("Error fetching multi-stop route:", error);
     alert("请求多点路径失败，请检查网络或联系管理员。");
   }
 };
+
+// --- Facility Search Logic ---
+const facilitySourceLocationInput = document.getElementById("facilitySourceLocation");
+const quickSearchButtons = document.querySelectorAll(".quick-search-btn");
+const customFacilityCategoryInput = document.getElementById("customFacilityCategory");
+const searchRadiusInput = document.getElementById("searchRadius");
+const findNearbyBtn = document.getElementById("findNearbyBtn");
+const facilityListUl = document.getElementById("facilityList");
+const facilitySearchMessageP = document.getElementById("facilitySearchMessage");
+
+let facilityMarkers = []; // To store markers for found facilities
+
+async function performFacilitySearch(sourceName, categoriesArray, customCategory, radius) {
+  facilityListUl.innerHTML = ""; // Clear previous results
+  facilitySearchMessageP.textContent = "正在搜索...";
+  clearFacilityMarkers();
+
+  const payload = {
+    sourceNodeName: sourceName,
+    searchRadius: parseInt(radius, 10) || 500, // Ensure radius is an int
+  };
+
+  if (categoriesArray && categoriesArray.length > 0) {
+    payload.categories = categoriesArray;
+  }
+  if (customCategory && customCategory.trim() !== "") {
+    payload.customCategory = customCategory.trim();
+  }
+  
+  // If no categories are specified by quick search or custom input, 
+  // the backend will search for all facility types (is_facility = true).
+
+  try {
+    const response = await fetch("/api/places/nearby", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      facilitySearchMessageP.textContent = data.error || "搜索附近设施失败。";
+      return;
+    }
+
+    if (data.places && data.places.length > 0) {
+      facilitySearchMessageP.textContent = `找到 ${data.places.length} 个设施：`;
+      data.places.forEach(place => {
+        const li = document.createElement("li");
+        li.innerHTML = `<strong>${place.name}</strong> (${place.category}) - 距离约 ${place.distance.toFixed(0)} 米`;
+        li.style.cursor = "pointer";
+        li.onclick = () => {
+          // Optional: Highlight on map or draw path from source to this place
+          // For now, just log or pan to it.
+          console.log("Clicked place:", place);
+          map.panTo(new TMap.LatLng(place.lat, place.lon));
+          // You could also draw a temporary path here if path_to_place was returned and handled
+          // For example: drawTemporaryPath(data.sourceNode, place, place.path_to_place_nodes)
+        };
+        facilityListUl.appendChild(li);
+        
+        // Add marker for the facility
+        const facilityMarker = new TMap.MultiMarker({
+            map,
+            styles: {
+                facilityStyle: new TMap.MarkerStyle({
+                    width: 25, height: 25, बीमारियों: {x: 12.5, y: 25},
+                    src: "https://mapapi.qq.com/web/lbs/javascriptGL/demo/img/markerGray.png" // Example icon
+                })
+            },
+            geometries: [{
+                id: `facility_${place.node_id}`,
+                styleId: "facilityStyle",
+                position: new TMap.LatLng(place.lat, place.lon),
+                properties: { title: `${place.name} (${place.category})` }
+            }]
+        });
+        facilityMarkers.push(facilityMarker);
+      });
+    } else {
+      facilitySearchMessageP.textContent = data.message || "未找到符合条件的设施。";
+    }
+
+  } catch (error) {
+    console.error("Facility search error:", error);
+    facilitySearchMessageP.textContent = "搜索请求失败，请检查网络或联系管理员。";
+  }
+}
+
+function clearFacilityMarkers() {
+    facilityMarkers.forEach(marker => marker.setMap(null));
+    facilityMarkers = [];
+}
+
+// Event listener for the main "查找周边" button
+findNearbyBtn.addEventListener("click", () => {
+  const sourceName = facilitySourceLocationInput.value.trim();
+  const customCategory = customFacilityCategoryInput.value.trim();
+  const radius = searchRadiusInput.value;
+
+  if (!sourceName) {
+    alert("请输入您的位置（场所名称）。");
+    return;
+  }
+  // Categories array is null here, customCategory will be used if provided.
+  // If customCategory is empty, backend searches all facility types.
+  performFacilitySearch(sourceName, null, customCategory, radius);
+});
+
+// Event listeners for quick search buttons
+quickSearchButtons.forEach(button => {
+  button.addEventListener("click", () => {
+    const sourceName = facilitySourceLocationInput.value.trim();
+    const category = button.dataset.category; // Get category from data-* attribute
+    const radius = searchRadiusInput.value; // Use current radius input
+
+    if (!sourceName) {
+      alert("请输入您的位置（场所名称）。");
+      return;
+    }
+    if (category) {
+      customFacilityCategoryInput.value = ""; // Clear custom category if quick search is used
+      performFacilitySearch(sourceName, [category], null, radius);
+    }
+  });
+});
+
+// Clear facility search results when main route search is performed.
+// Modify existing searchBtn and multiStopSearchBtn onclick handlers to call clearFacilityResults
+function clearFacilityResults() {
+    facilityListUl.innerHTML = "";
+    facilitySearchMessageP.textContent = "";
+    clearFacilityMarkers();
+}
