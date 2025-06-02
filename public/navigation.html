@@ -94,6 +94,46 @@
         </div>
         <!-- End Facility Search Section -->
 
+        <!-- Food Search Section -->
+        <div class="food-search-panel">
+          <h3 class="food-search-title">校园美食搜索</h3>
+          <div class="input-group">
+            <label for="foodSourceLocation">我的位置 (用于距离排序)</label>
+            <input type="text" id="foodSourceLocation" class="input-field" placeholder="例如：主楼 (可选)">
+          </div>
+          <div class="input-group">
+            <label for="foodKeyword">关键词 (菜品/餐厅/窗口)</label>
+            <input type="text" id="foodKeyword" class="input-field" placeholder="例如：宫保鸡丁 或 学一食堂">
+          </div>
+          <div class="input-group">
+            <label for="cuisineType">菜系类型 (可选)</label>
+            <input type="text" id="cuisineType" class="input-field" placeholder="例如：川菜, 清真">
+          </div>
+          <div class="input-group">
+            <label for="foodSortBy">排序方式</label>
+            <select id="foodSortBy" class="input-field">
+              <option value="popularity_score" selected>热门度</option>
+              <option value="rating_score">评分</option>
+              <option value="average_price">均价</option>
+              <option value="distance">距离 (需提供位置)</option>
+            </select>
+          </div>
+           <div class="input-group">
+            <label for="foodSortOrder">排序顺序</label>
+            <select id="foodSortOrder" class="input-field">
+              <option value="DESC" selected>降序</option>
+              <option value="ASC">升序</option>
+            </select>
+          </div>
+          <button id="searchFoodBtn" class="nav-button">搜索美食</button>
+          <div id="foodResultsPanel" class="food-results">
+            <h4>美食结果:</h4>
+            <ul id="foodList"></ul>
+            <p id="foodSearchMessage"></p>
+          </div>
+        </div>
+        <!-- End Food Search Section -->
+
       </div>
     </div>
     <script src="./js/navigation.js"></script>

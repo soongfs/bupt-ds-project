@@ -10,6 +10,27 @@ let startMarker = null;
 let endMarker = null;
 // Store waypoint markers if we decide to show them
 let waypointMarkers = [];
+let facilityMarkers = []; // For facility search
+let foodMarkers = []; // For food search
+
+// DOM Elements for Facility Search
+const facilitySourceLocationInput = document.getElementById("facilitySourceLocation");
+const quickSearchButtons = document.querySelectorAll(".quick-search-btn");
+const customFacilityCategoryInput = document.getElementById("customFacilityCategory");
+const searchRadiusInput = document.getElementById("searchRadius");
+const findNearbyBtn = document.getElementById("findNearbyBtn");
+const facilityListUl = document.getElementById("facilityList");
+const facilitySearchMessageP = document.getElementById("facilitySearchMessage");
+
+// DOM Elements for Food Search
+const foodSourceLocationInput = document.getElementById("foodSourceLocation");
+const foodKeywordInput = document.getElementById("foodKeyword");
+const cuisineTypeInput = document.getElementById("cuisineType");
+const foodSortBySelect = document.getElementById("foodSortBy");
+const foodSortOrderSelect = document.getElementById("foodSortOrder");
+const searchFoodBtn = document.getElementById("searchFoodBtn");
+const foodListUl = document.getElementById("foodList");
+const foodSearchMessageP = document.getElementById("foodSearchMessage");
 
 document.getElementById("searchBtn").onclick = async () => {
   const fromName = document.getElementById("from").value.trim();
@@ -100,6 +121,7 @@ document.getElementById("searchBtn").onclick = async () => {
     document.getElementById("info-via").innerText = `🚩 详细路线：${fullPathNames}`;
 
     clearFacilityResults();
+    clearFoodResults(); // Clear food results when planning a new route
 
   } catch (error) {
     console.error("Error fetching two-point route:", error);
@@ -255,6 +277,7 @@ document.getElementById("multiStopSearchBtn").onclick = async () => {
     document.getElementById("info-via").innerText = `🚩 详细路线：${fullPathNamesMulti}`;
 
     clearFacilityResults();
+    clearFoodResults(); // Clear food results when planning a new multi-stop route
 
   } catch (error) {
     console.error("Error fetching multi-stop route:", error);
@@ -263,20 +286,10 @@ document.getElementById("multiStopSearchBtn").onclick = async () => {
 };
 
 // --- Facility Search Logic ---
-const facilitySourceLocationInput = document.getElementById("facilitySourceLocation");
-const quickSearchButtons = document.querySelectorAll(".quick-search-btn");
-const customFacilityCategoryInput = document.getElementById("customFacilityCategory");
-const searchRadiusInput = document.getElementById("searchRadius");
-const findNearbyBtn = document.getElementById("findNearbyBtn");
-const facilityListUl = document.getElementById("facilityList");
-const facilitySearchMessageP = document.getElementById("facilitySearchMessage");
-
-let facilityMarkers = []; // To store markers for found facilities
-
 async function performFacilitySearch(sourceName, categoriesArray, customCategory, radius) {
-  facilityListUl.innerHTML = ""; // Clear previous results
-  facilitySearchMessageP.textContent = "正在搜索...";
   clearFacilityMarkers();
+  facilityListUl.innerHTML = "";
+  facilitySearchMessageP.textContent = "正在搜索...";
 
   const payload = {
     sourceNodeName: sourceName,
@@ -389,10 +402,141 @@ quickSearchButtons.forEach(button => {
   });
 });
 
-// Clear facility search results when main route search is performed.
-// Modify existing searchBtn and multiStopSearchBtn onclick handlers to call clearFacilityResults
 function clearFacilityResults() {
-    facilityListUl.innerHTML = "";
-    facilitySearchMessageP.textContent = "";
-    clearFacilityMarkers();
+  clearFacilityMarkers();
+  facilityListUl.innerHTML = "";
+  if(facilitySearchMessageP) facilitySearchMessageP.textContent = "";
+}
+
+// --- Food Search Logic ---
+function clearFoodMarkers() {
+  foodMarkers.forEach((marker) => marker.setMap(null));
+  foodMarkers = [];
+}
+
+function clearFoodResults() {
+  clearFoodMarkers();
+  if (foodListUl) foodListUl.innerHTML = "";
+  if (foodSearchMessageP) foodSearchMessageP.textContent = "";
+}
+
+async function performFoodSearch() {
+  const sourceNodeName = foodSourceLocationInput.value.trim();
+  const keyword = foodKeywordInput.value.trim();
+  const cuisine = cuisineTypeInput.value.trim();
+  const sortBy = foodSortBySelect.value;
+  const sortOrder = foodSortOrderSelect.value;
+
+  if (sortBy === "distance" && !sourceNodeName) {
+    alert("按距离排序时，请输入您的位置。");
+    foodSearchMessageP.textContent = "按距离排序时，请输入您的位置。";
+    return;
+  }
+
+  clearFoodResults();
+  foodSearchMessageP.textContent = "正在搜索美食...";
+
+  try {
+    const response = await fetch("/api/food/search", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sourceNodeName: sourceNodeName || undefined, // Send undefined if empty, so backend uses default or handles it
+        name: keyword || undefined, // For food name
+        restaurant_name: keyword || undefined, // Also use keyword for restaurant
+        window_name: keyword || undefined, // and window name. Or have separate inputs.
+        cuisine_type: cuisine || undefined,
+        sortBy: sortBy,
+        sortOrder: sortOrder,
+        limit: 10, // You can make this configurable if needed
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      foodSearchMessageP.textContent = data.error || "美食搜索失败，请稍后再试。";
+      alert(data.error || "美食搜索失败，请稍后再试。");
+      return;
+    }
+
+    if (!data.results || data.results.length === 0) {
+      foodSearchMessageP.textContent = data.message || "未找到符合条件的美食。";
+      return;
+    }
+
+    foodSearchMessageP.textContent = `找到了 ${data.results.length} 个美食结果：`;
+    const foodGeometries = [];
+
+    data.results.forEach((food, index) => {
+      const li = document.createElement("li");
+      let content = `<strong>${food.name}</strong> (餐厅: ${food.restaurant_name || 'N/A'}, 窗口: ${food.window_name || 'N/A'})`;
+      content += `<br>菜系: ${food.cuisine_type || '未知'}, 评分: ${food.rating_score || 'N/A'}, 人气: ${food.popularity_score || 'N/A'}, 均价: ¥${food.average_price || 'N/A'}`;
+      if (food.location && food.location.name) {
+        content += `<br>位置: ${food.location.name}`;
+      }
+      if (food.distance !== null && food.distance !== undefined) {
+        content += `, 距离: ${food.distance.toFixed(0)}米`;
+      }
+      li.innerHTML = content;
+
+      if (food.location && food.location.lat && food.location.lon) {
+        const position = new TMap.LatLng(food.location.lat, food.location.lon);
+        foodGeometries.push({
+          id: `food_${index}`,
+          styleId: "foodMarkerStyle",
+          position: position,
+          properties: { title: `${food.name} (${food.restaurant_name})` },
+        });
+        li.onclick = () => {
+          map.panTo(position, { duration: 300 });
+          map.setZoom(18);
+        };
+      }
+      foodListUl.appendChild(li);
+    });
+
+    if (foodGeometries.length > 0) {
+      const newFoodMarkers = new TMap.MultiMarker({
+        map,
+        styles: {
+          foodMarkerStyle: new TMap.MarkerStyle({
+            width: 25,
+            height: 35,
+            anchor: { x: 12.5, y: 35 },
+            src: "https://mapapi.qq.com/web/lbs/javascriptGL/demo/img/markerCustom.png", // A different marker for food
+          }),
+        },
+        geometries: foodGeometries,
+      });
+      foodMarkers.push(newFoodMarkers);
+
+      // Fit map to food markers if source location was not given, or just show them.
+      // If source location is given, map might be already focused there.
+      // For simplicity, let's fit to new markers if they exist.
+      const bounds = foodGeometries.reduce((b, geo) => b.extend(geo.position), new TMap.LatLngBounds());
+      if (data.sourceNode && data.sourceNode.lat && data.sourceNode.lon){
+         bounds.extend(new TMap.LatLng(data.sourceNode.lat, data.sourceNode.lon));
+      }
+      if (!bounds.isEmpty()){
+        map.fitBounds(bounds, { padding: {top:50, bottom:50, left:50, right:50} });
+      }
+    }
+
+  } catch (error) {
+    console.error("Error performing food search:", error);
+    foodSearchMessageP.textContent = "美食搜索请求失败，请检查网络或联系管理员。";
+    alert("美食搜索请求失败，请检查网络或联系管理员。");
+  }
+}
+
+if (searchFoodBtn) {
+  searchFoodBtn.onclick = performFoodSearch;
+}
+
+// Also, clear food results if a facility search is performed
+const originalPerformFacilitySearch = performFacilitySearch;
+performFacilitySearch = async (sourceName, categoriesArray, customCategory, radius) => {
+    clearFoodResults();
+    await originalPerformFacilitySearch(sourceName, categoriesArray, customCategory, radius);
 }
