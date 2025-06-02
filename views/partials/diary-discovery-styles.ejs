@@ -1,0 +1,137 @@
+.diary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 2rem;
+    padding: 2rem 5%;
+}
+
+.diary-card {
+    background: white;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    transition: transform 0.3s;
+}
+
+.diary-card:hover {
+    transform: translateY(-5px);
+}
+
+.diary-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+}
+
+.diary-content {
+    padding: 1.5rem;
+}
+
+.diary-title {
+    font-size: 1.2rem;
+    color: var(--secondary);
+    margin-bottom: 0.5rem;
+}
+
+.diary-excerpt {
+    color: var(--text);
+    margin-bottom: 1rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.diary-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.diary-author {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.author-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.diary-stats {
+    display: flex;
+    gap: 1rem;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+/* 发布按钮 */
+.publish-fab {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    width: 60px;
+    height: 60px;
+    background: var(--primary);
+    border-radius: 50%;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    transition: transform 0.3s;
+    z-index: 100;
+}
+
+.publish-fab::before {
+    content: "+";
+    color: white;
+    font-size: 2rem;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.publish-fab:hover {
+    transform: scale(1.1);
+}
+
+/* 筛选栏 */
+.filter-container {
+    padding: 1rem 5%;
+    background: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    margin-bottom: 1rem;
+}
+
+.filter-options {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.filter-label {
+    color: var(--secondary);
+    font-weight: 500;
+}
+
+.filter-select {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    outline: none;
+    color: var(--text);
+    background: white;
+    cursor: pointer;
+}
+
+.filter-select:focus {
+    border-color: var(--primary);
+} 
