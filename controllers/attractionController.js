@@ -121,16 +121,41 @@ exports.rateAttraction = (req, res, next) => {
 // 搜索景点
 exports.searchAttraction = (req, res, next) => {
   const { name } = req.query;
-  if (!name) {
-    return res.status(400).json({ success: false, message: "缺少搜索关键词" });
+  if (!name || name.trim() === "") {
+    return res.status(400).json({ success: false, message: "请输入搜索关键词" });
   }
 
-  Attraction.searchAttractionsByName(name, (err, attractionId) => {
-    if (err) return next(err);
-    if (!attractionId) {
-      return res.status(404).json({ success: false, message: "未找到相关景点" });
+  Attraction.searchAttractionsByName(name.trim(), (err, result) => {
+    if (err) {
+      console.error("[Controller] searchAttraction: Error from model:", err);
+      return next(err); // Pass to global error handler
     }
-    res.json({ success: true, attractionId: attractionId });
+
+    if (result.matchType === 'exact') {
+      console.log("[Controller] searchAttraction: Exact match found:", result.attraction);
+      // 为了与前端之前的逻辑兼容，即使是精确匹配，也返回一个包含 attractionId 的对象
+      // 或者前端可以直接使用 result.attraction.id
+      return res.json({ 
+        success: true, 
+        matchType: 'exact', 
+        attractionId: result.attraction.id 
+        // attraction: result.attraction // 也可以直接传递整个对象
+      });
+    } else if (result.matchType === 'fuzzy') {
+      console.log("[Controller] searchAttraction: Fuzzy matches found:", result.attractions.length);
+      return res.json({ 
+        success: true, 
+        matchType: 'fuzzy', 
+        attractions: result.attractions 
+      });
+    } else { // matchType === 'none'
+      console.log("[Controller] searchAttraction: No matches found for:", name.trim());
+      return res.json({ 
+        success: true, // 仍然是成功的请求，只是没有结果
+        matchType: 'none', 
+        message: "未找到相关景点，请尝试其他关键词。" 
+      });
+    }
   });
 };
 
