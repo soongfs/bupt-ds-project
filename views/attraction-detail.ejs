@@ -130,6 +130,19 @@
             transform: translateY(-2px);
         }
 
+        /* 新增按钮样式 */
+        .btn-block {
+            display: block;
+            width: 100%;
+            text-align: center;
+            margin-bottom: 1rem; /*与其他元素的间距*/
+        }
+
+        .btn-lg {
+            padding: 0.8rem 1.5rem; /* 增大按钮的内边距 */
+            font-size: 1.1rem; /* 增大字体大小 */
+        }
+
         :root {
             --primary: #2a9d8f;
             --secondary: #264653;
@@ -383,6 +396,13 @@
                             <span>建议游玩：<%= Math.floor(attraction.duration / 60) %>小时<%= attraction.duration % 60 %>分钟</span>
                         </li>
                     </ul>
+                </section>
+
+                <!-- 进入地图按钮 -->
+                <section style="margin-top: 2rem;">
+                    <a href="/attraction/map/<%= attraction.id %>" class="btn btn-primary btn-block btn-lg">
+                        <i class="fas fa-map-marked-alt"></i> 进入地图
+                    </a>
                 </section>
 
                 <% if (currentUser) { %>

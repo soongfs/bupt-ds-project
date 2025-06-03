@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>景点地图 - <%= attraction.name %></title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #2a9d8f; /* 主题绿 */
+            --secondary-color: #264653; /* 深蓝灰 */
+            --accent-color: #e9c46a; /* 强调黄 */
+            --background-color: #f8f9fa; /* 背景浅灰 */
+            --text-color: #333;
+            --card-bg: #ffffff;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            --border-radius: 12px;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .main-container {
+            display: flex;
+            flex-grow: 1;
+            overflow: hidden; /* 防止内部滚动条影响布局 */
+        }
+
+        #map-container {
+            flex-grow: 1;
+            height: 100%; /* 确保地图容器占满左侧可用高度 */
+            border-right: 1px solid #ddd;
+        }
+
+        .info-panel {
+            width: 380px;
+            flex-shrink: 0;
+            background-color: var(--card-bg);
+            padding: 25px;
+            overflow-y: auto; /* 如果内容过多则允许滚动 */
+            height: 100%; /* 占满右侧可用高度 */
+            box-sizing: border-box;
+        }
+
+        .attraction-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 10px;
+        }
+
+        .info-section {
+            margin-bottom: 25px;
+        }
+
+        .info-section h3 {
+            font-size: 1.4rem;
+            color: var(--secondary-color);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+        }
+        .info-section h3 i {
+            margin-right: 10px;
+            color: var(--primary-color);
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+            color: #555;
+        }
+
+        .info-item i {
+            width: 20px;
+            text-align: center;
+            margin-right: 12px;
+            color: var(--primary-color);
+        }
+         .info-item span {
+            flex-grow: 1;
+        }
+
+        /* 简易导航栏，如果需要可以从其他页面引入完整的 */
+        .simple-nav {
+            background-color: var(--secondary-color);
+            padding: 0.8rem 5%;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+         .simple-nav a {
+            color: white;
+            text-decoration: none;
+        }
+
+        /* 响应式考虑 - 简单示例 */
+        @media (max-width: 768px) {
+            .main-container {
+                flex-direction: column;
+            }
+            .info-panel {
+                width: 100%;
+                height: auto; /* 高度自动，内容撑开 */
+                max-height: 50vh; /* 限制最大高度，避免过长 */
+                border-top: 1px solid #ddd;
+            }
+            #map-container {
+                height: 50vh; /* 地图也分配一部分高度 */
+            }
+        }
+
+        /* 按钮通用样式 */
+        .btn-action {
+            display: block;
+            width: 100%;
+            padding: 0.8rem 1.2rem;
+            margin-top: 1rem; /* 与上方元素的间距 */
+            background-color: var(--primary-color);
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            border-radius: var(--border-radius);
+            font-size: 1.05rem;
+            font-weight: 500;
+            transition: background-color 0.3s, transform 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .btn-action i {
+            margin-right: 8px;
+        }
+
+        .btn-action:hover {
+            background-color: #22867a; /* 主题色加深 */
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+    </style>
+    <!-- 腾讯地图API -->
+    <script charset="utf-8" src="https://map.qq.com/api/gljs?v=1.exp&key=3HGBZ-SKRCT-UKNXT-V7KT6-T5LI2-XGF5F"></script>
+</head>
+<body>
+    <%- include('partials/nav-simple', { currentUser: currentUser }) %>
+
+    <div class="main-container">
+        <div id="map-container"></div>
+        <div class="info-panel">
+            <h2 class="attraction-title"><%= attraction.name %></h2>
+            
+            <div class="info-section">
+                <h3><i class="fas fa-info-circle"></i>基本信息</h3>
+                <div class="info-item">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span><strong>详细地址：</strong><%= attraction.location || '暂无信息' %></span>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-star"></i>
+                    <span><strong>评分：</strong><%= attraction.rating ? attraction.rating.toFixed(1) : '暂无评分' %> / 5.0</span>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-fire"></i>
+                    <span><strong>热门度：</strong><%= attraction.popularity || '暂无信息' %></span>
+                </div>
+            </div>
+
+            <!-- 路径规划按钮 -->
+            <div class="info-section">
+                <a href="/navigation.html" class="btn-action">
+                    <i class="fas fa-route"></i> 路径规划
+                </a>
+            </div>
+
+            <!-- 热门日记部分暂时忽略 -->
+            <!-- 
+            <div class="info-section">
+                <h3><i class="fas fa-book-open"></i>热门日记</h3>
+                <p>此功能待后续开发...</p>
+            </div>
+            -->
+        </div>
+    </div>
+
+    <script>
+        function initMap() {
+            // 检查景点数据和经纬度
+            // 1. Inject data onto the window object
+            window.tempAttractionData = <%- JSON.stringify(attraction) %>;
+            
+            // 2. Assign to a const variable from the window object
+            const attractionData = window.tempAttractionData;
+            
+            // 3. (Optional) Clean up the temporary window property
+            delete window.tempAttractionData;
+
+            if (!attractionData || typeof attractionData.latitude !== 'number' || typeof attractionData.longitude !== 'number') {
+                console.error("地图初始化失败：无效的景点经纬度数据。", attractionData);
+                document.getElementById('map-container').innerHTML = '<p style="padding:20px; text-align:center; color:red;">地图加载失败：景点经纬度信息不正确。</p>';
+                return;
+            }
+
+            const center = new TMap.LatLng(attractionData.latitude, attractionData.longitude);
+            
+            // 初始化地图
+            const map = new TMap.Map(document.getElementById('map-container'), {
+                rotation: 20, // 设置地图旋转角度
+                pitch: 30, // 设置俯仰角度（0~45）
+                zoom: 16, // 设置地图缩放级别
+                center: center // 设置地图中心点坐标
+            });
+
+            // 创建标记
+            const markerLayer = new TMap.MultiMarker({
+                map: map,
+                styles: {
+                    "default": new TMap.MarkerStyle({
+                        "width": 25,
+                        "height": 35,
+                        "anchor": { "x": 16, "y": 32 },
+                        "src": "https://mapapi.qq.com/web/lbs/javascriptGL/demo/img/markerDefault.png"
+                    })
+                },
+                geometries: [{
+                    "id": "marker-" + attractionData.id,
+                    "styleId": "default",
+                    "position": center,
+                    "properties": {
+                        "title": attractionData.name
+                    }
+                }]
+            });
+        }
+        // 等待DOM加载完毕后初始化地图
+        document.addEventListener('DOMContentLoaded', initMap);
+    </script>
+</body>
+</html> 

@@ -1,0 +1,9 @@
+<nav class="simple-nav">
+    <a href="/">TravelMate 首页</a>
+    <!-- 可以根据 currentUser 状态添加更多链接，例如登录/用户中心 -->
+    <% if (locals.currentUser) { %>
+        <span style="float: right;">欢迎, <%= currentUser.username %>! <a href="/logout" style="margin-left: 10px; color: #e9c46a;">退出</a></span>
+    <% } else { %>
+        <a href="/login" style="float: right; color: #e9c46a;">登录</a>
+    <% } %>
+</nav> 
