@@ -65,6 +65,7 @@ const messageRouter = require("./routes/messageRoutes"); // 新增：消息路�
 const authRouter = require('./routes/auth');  // 添加认证路由
 const placeRouter = require("./routes/placeRoutes"); // 新增：场所查询路由
 const foodRouter = require("./routes/foodRoutes"); // 新增：美食搜索路由
+const animationRoutes = require('./routes/animationRoutes'); // 新增：动画生成路由
 
 // 注册路由
 app.use("/", indexRouter);
@@ -76,6 +77,7 @@ app.use("/api", routeRouter); // 路径规划新增
 app.use("/messages", messageRouter); // 新增：注册消息路由
 app.use("/api/places", placeRouter); // 新增：注册场所查询路由, e.g., /api/places/nearby
 app.use("/api/food", foodRouter); // 新增：注册美食搜索路由, e.g., /api/food/search
+app.use('/animation', animationRoutes); // 新增：注册动画生成路由
 
 db.connect((err) => {
   if (err) throw err;

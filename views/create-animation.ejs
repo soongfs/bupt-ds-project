@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>创建旅游动画</title>
+    <!-- 引入项目现有的 CSS 或添加新的样式 -->
+    <link rel="stylesheet" href="/css/style.css"> <!- hypothetical path ->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="file"],
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result-container {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+        }
+        .loading {
+            display: none; /* Hidden by default */
+            text-align: center;
+            font-style: italic;
+        }
+        #errorMessage {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>根据景点图片生成旅游动画</h1>
+
+        <div class="form-group">
+            <label>图片来源：</label>
+            <input type="radio" name="imageSource" value="upload" id="sourceUpload" checked> <label for="sourceUpload" style="font-weight: normal; display: inline;">上传图片</label>
+            <input type="radio" name="imageSource" value="url" id="sourceUrl"> <label for="sourceUrl" style="font-weight: normal; display: inline;">图片URL</label>
+        </div>
+
+        <form id="animationForm" enctype="multipart/form-data">
+            <div id="uploadSection" class="form-group">
+                <label for="image">选择景点图片：</label>
+                <input type="file" id="image" name="image" accept="image/*" required>
+            </div>
+            <div id="urlSection" class="form-group" style="display:none;">
+                <label for="imageUrl">图片URL：</label>
+                <input type="text" id="imageUrl" name="imageUrl" placeholder="例如：https://example.com/image.jpg">
+            </div>
+            <div class="form-group">
+                <label for="text">输入动画描述：</label>
+                <textarea id="text" name="text" rows="4" required placeholder="例如：女孩抱着狐狸，女孩睁开眼，温柔地看向镜头，狐狸友善地抱着，镜头缓缓拉出，女孩的头发被风吹动  --resolution 720p --duration 5"></textarea>
+            </div>
+            <button type="submit">生成动画</button>
+        </form>
+        <div class="loading" id="loadingIndicator">正在生成动画，请稍候...</div>
+        <div id="errorMessage" class="result-container" style="display:none;"></div>
+        <div id="result" class="result-container" style="display:none;">
+            <h3>生成任务已提交：</h3>
+            <p>任务ID: <strong id="taskId"></strong></p>
+            <pre id="apiResponse"></pre>
+            <p>请注意：这通常是一个异步任务，您可能需要稍后根据任务ID查询最终结果。</p>
+            <button id="checkStatusBtn" style="display:none; margin-top: 10px;">查询状态</button>
+            <div id="animationResult" style="margin-top:10px;"></div>
+        </div>
+    </div>
+
+    <script>
+        const sourceUploadRadio = document.getElementById('sourceUpload');
+        const sourceUrlRadio = document.getElementById('sourceUrl');
+        const uploadSection = document.getElementById('uploadSection');
+        const urlSection = document.getElementById('urlSection');
+        const imageInput = document.getElementById('image');
+        const imageUrlInput = document.getElementById('imageUrl');
+        
+        // 将这些DOM元素的获取移到外部作用域
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const resultDiv = document.getElementById('result');
+        const apiResponsePre = document.getElementById('apiResponse');
+        const errorDiv = document.getElementById('errorMessage');
+        const taskIdStrong = document.getElementById('taskId');
+        const checkStatusBtn = document.getElementById('checkStatusBtn');
+        const animationResultDiv = document.getElementById('animationResult'); // 移到这里
+
+        sourceUploadRadio.addEventListener('change', function() {
+            if (this.checked) {
+                uploadSection.style.display = 'block';
+                urlSection.style.display = 'none';
+                imageInput.required = true;
+                imageUrlInput.required = false;
+            }
+        });
+
+        sourceUrlRadio.addEventListener('change', function() {
+            if (this.checked) {
+                uploadSection.style.display = 'none';
+                urlSection.style.display = 'block';
+                imageInput.required = false;
+                imageUrlInput.required = true;
+            }
+        });
+
+        document.getElementById('animationForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            const formData = new FormData();
+            const imageSource = document.querySelector('input[name="imageSource"]:checked').value;
+
+            if (imageSource === 'upload') {
+                if (!imageInput.files || imageInput.files.length === 0) {
+                    alert('请选择要上传的图片文件。');
+                    return;
+                }
+                formData.append('image', imageInput.files[0]);
+            } else { // imageSource === 'url'
+                if (!imageUrlInput.value) {
+                    alert('请输入图片URL。');
+                    return;
+                }
+                formData.append('imageUrl', imageUrlInput.value);
+            }
+            
+            formData.append('text', document.getElementById('text').value);
+            formData.append('imageSource', imageSource); // 发送图片来源类型到后端
+
+            loadingIndicator.style.display = 'block';
+            resultDiv.style.display = 'none';
+            errorDiv.style.display = 'none';
+
+            try {
+                const response = await fetch('/animation/api/generate-animation', { // 注意这里的路径
+                    method: 'POST',
+                    body: formData
+                });
+
+                loadingIndicator.style.display = 'none';
+                const data = await response.json();
+
+                if (response.ok) {
+                    apiResponsePre.textContent = JSON.stringify(data, null, 2);
+                    if (data.success && data.data && data.data.id) {
+                        taskIdStrong.textContent = data.data.id;
+                        checkStatusBtn.style.display = 'block';
+                        checkStatusBtn.dataset.taskId = data.data.id; // Store task ID on the button
+                        animationResultDiv.innerHTML = ''; // Clear previous results
+                    } else {
+                        taskIdStrong.textContent = '无法获取任务ID';
+                        checkStatusBtn.style.display = 'none';
+                    }
+                    resultDiv.style.display = 'block';
+                } else {
+                    errorDiv.textContent = '错误: ' + (data.message || '生成动画失败');
+                    errorDiv.style.display = 'block';
+                }
+            } catch (error) {
+                loadingIndicator.style.display = 'none';
+                errorDiv.textContent = '请求失败: ' + error.message;
+                errorDiv.style.display = 'block';
+            }
+        });
+
+        checkStatusBtn.addEventListener('click', async function() {
+            console.log('"查询状态"按钮被点击');
+            const taskId = this.dataset.taskId;
+            console.log('获取到的任务ID:', taskId);
+
+            if (!taskId) {
+                console.error('无法获取任务ID，查询中止');
+                return;
+            }
+            // animationResultDiv 现在可以从外部作用域访问了
+            animationResultDiv.innerHTML = `正在查询任务 ${taskId} 的状态...`;
+            checkStatusBtn.disabled = true;
+            console.log('按钮已禁用，准备发起fetch请求');
+
+            try {
+                const statusResponse = await fetch(`/animation/api/status/${taskId}`);
+                console.log('Fetch请求URL:', statusResponse.url);
+                console.log('Fetch响应状态:', statusResponse.status);
+                
+                const responseData = await statusResponse.json();
+                console.log('Fetch响应数据 (JSON解析后):', responseData);
+
+                if (!statusResponse.ok) {
+                    console.error('Fetch请求失败，状态码:', statusResponse.status, '消息:', responseData.message);
+                    throw new Error(responseData.message || `HTTP error! status: ${statusResponse.status}`);
+                }
+
+                const doubaoApiResponse = responseData.data;
+
+                if (responseData.success && doubaoApiResponse) {
+                    let html = `<p>任务 <strong>${doubaoApiResponse.id}</strong> 状态: <strong>${doubaoApiResponse.status}</strong></p>`;
+                    
+                    if (doubaoApiResponse.status === 'succeeded') {
+                        checkStatusBtn.disabled = false; 
+                        if (doubaoApiResponse.content && doubaoApiResponse.content.video_url) {
+                            const videoUrl = doubaoApiResponse.content.video_url;
+                            html += `<p>动画视频:</p><video controls width="320" src="${videoUrl}"></video>`;
+                        } else {
+                            html += `<p>任务已成功，但未找到视频URL。API响应详情:</p><pre>${JSON.stringify(doubaoApiResponse, null, 2)}</pre>`;
+                        }
+                    } else if (doubaoApiResponse.status === 'failed') {
+                        checkStatusBtn.disabled = false;
+                        html += `<p>错误信息: ${doubaoApiResponse.error_message || doubaoApiResponse.error?.message || '未知错误'}</p>`;
+                        if(doubaoApiResponse.error_details) {
+                             html += `<pre>${JSON.stringify(doubaoApiResponse.error_details, null, 2)}</pre>`;
+                        }
+                    } else if (doubaoApiResponse.status === 'processing') {
+                        html += `<p>仍在处理中，请稍后再试...</p>`;
+                        setTimeout(() => { checkStatusBtn.disabled = false; }, 5000);
+                    } else {
+                        checkStatusBtn.disabled = false;
+                    }
+                    animationResultDiv.innerHTML = html;
+                } else {
+                    animationResultDiv.innerHTML = `<p>查询失败: ${responseData.message || '无法从后端获取有效状态'}</p>`;
+                    checkStatusBtn.disabled = false;
+                }
+            } catch (e) {
+                console.error('查询过程中发生 JavaScript 错误:', e);
+                animationResultDiv.innerHTML = `<p>查询请求错误: ${e.message}</p>`;
+                checkStatusBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html> 

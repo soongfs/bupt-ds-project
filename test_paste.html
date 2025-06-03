@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>粘贴测试</title>
+</head>
+<body>
+    <p>请尝试在此输入框中粘贴内容：</p>
+    <input type="text" id="testInput" style="width: 300px; padding: 5px;" placeholder="在此粘贴...">
+    <p id="pastedContent"></p>
+
+    <script>
+        document.getElementById('testInput').addEventListener('paste', function(event) {
+            // 只是为了演示粘贴事件被触发，并显示粘贴的内容
+            // 不会阻止默认行为
+            console.log('粘贴事件触发！');
+            // event.clipboardData 在现代浏览器中可用
+            let paste = (event.clipboardData || window.clipboardData).getData('text');
+            console.log('粘贴的内容: ', paste);
+            // 你可以在这里做一些事情，但不要 preventDefault() 除非有特定理由
+            // document.getElementById('pastedContent').textContent = '已粘贴: ' + paste;
+        });
+    </script>
+</body>
+</html> 
