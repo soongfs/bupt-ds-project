@@ -14,7 +14,12 @@ const storage = multer.diskStorage({
     filename: (req, file, cb) => {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
         // 根据字段名添加不同的前缀
-        const prefix = file.fieldname === 'coverImage' ? 'cover-' : 'media-';
+        let prefix = 'media-'; // 默认前缀
+        if (file.fieldname === 'coverImage') {
+            prefix = 'cover-';
+        } else if (file.fieldname === 'avatar') {
+            prefix = 'avatar-';
+        }
         cb(null, prefix + uniqueSuffix + path.extname(file.originalname));
     }
 });
@@ -37,6 +42,13 @@ const fileFilter = (req, file, cb) => {
             cb(null, true);
         } else {
             cb(new Error('封面图片只能上传图片文件'), false);
+        }
+    } else if (file.fieldname === 'avatar') {
+        // 用户头像只允许图片格式
+        if (file.mimetype.startsWith('image/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('用户头像只能上传图片文件'), false);
         }
     } else if (file.fieldname === 'mediaFiles' || file.fieldname === 'image') {
         // 媒体文件允许图片和视频

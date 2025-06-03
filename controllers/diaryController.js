@@ -84,6 +84,12 @@ const diaryController = {
     const userId = req.query.userId;
     const category = req.query.category || '全部主题';
     const sort = req.query.sort || 'latest';
+    
+    // 添加调试日志
+    console.log('日记发现页面请求参数:', {
+      page, limit, offset, userId, category, sort,
+      originalQuery: req.query
+    });
 
     let query = `
       SELECT 
@@ -104,11 +110,15 @@ const diaryController = {
     if (category && category !== '全部主题') {
       whereClauses.push('d.categories LIKE ?');
       params.push(`%${category}%`);
+      console.log(`添加分类筛选: ${category}`);
     }
 
     if (whereClauses.length > 0) {
       query += ' WHERE ' + whereClauses.join(' AND ');
     }
+    
+    console.log('最终SQL查询:', query);
+    console.log('查询参数:', params);
 
     let countQuery = `SELECT COUNT(DISTINCT d.id) as total FROM travel_diaries d`;
     const countParamsInitial = []; // Separate params for count query before whereClauses
@@ -431,8 +441,17 @@ const diaryController = {
   },
 
   createDiary: function(req, res) {
-    const { title, content, sections } = req.body;
+    const { title, content, sections, tags } = req.body;
     const userId = req.session.user.id;
+    
+    // 添加调试日志
+    console.log('创建日记请求参数:', {
+      title,
+      content: content ? content.substring(0, 100) + '...' : '',
+      sections: sections ? JSON.parse(sections).length + ' sections' : '0 sections',
+      tags: tags || '无标签',
+      hasFiles: req.files ? Object.keys(req.files) : '无文件'
+    });
 
     compressionService.compressDiary({
       content: content || '', // Ensure content is not undefined
@@ -449,11 +468,21 @@ const diaryController = {
           return res.status(500).json({ success: false, message: '数据库错误' });
         }
 
+        // 处理封面图片
+        let coverImagePath = null;
+        if (req.files && req.files['coverImage'] && req.files['coverImage'][0]) {
+          coverImagePath = req.files['coverImage'][0].filename;
+        }
+
+        // 处理分类标签 - 将前端的tags转换为categories
+        const categories = tags || '';
+        console.log('保存的分类:', categories);
+
         db.query(
           `INSERT INTO travel_diaries 
-           (user_id, title, content, search_content, is_compressed, created_at) 
-           VALUES (?, ?, ?, ?, ?, NOW())`,
-          [userId, title, compressedDiary.content, compressedDiary.search_content, true],
+           (user_id, title, content, search_content, categories, cover_image, is_compressed, created_at) 
+           VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`,
+          [userId, title, compressedDiary.content, compressedDiary.search_content, categories, coverImagePath, true],
           function(err, result) {
             if (err) {
               return db.rollback(function() {
@@ -463,48 +492,87 @@ const diaryController = {
             }
 
             const diaryId = result.insertId;
+            console.log('日记创建成功，ID:', diaryId, '分类:', categories);
 
+            // 处理章节
             if (!compressedDiary.sections || compressedDiary.sections.length === 0) {
-              return db.commit(function(err) {
-                if (err) {
-                  return db.rollback(function() {
-                    console.error('提交事务失败 (无章节):', err);
-                    res.status(500).json({ success: false, message: '数据库错误' });
-                  });
-                }
-                res.json({ success: true, diaryId });
+              // 没有章节，直接处理媒体文件
+              handleMediaFiles(diaryId);
+            } else {
+              // 插入章节
+              let insertedSections = 0;
+              compressedDiary.sections.forEach(function(section) {
+                db.query(
+                  `INSERT INTO diary_sections 
+                   (diary_id, section_title, section_content, day_number, section_order, is_compressed) 
+                   VALUES (?, ?, ?, ?, ?, ?)`,
+                  [diaryId, section.title, section.content, section.dayNumber, section.order, true],
+                  function(err) {
+                    if (err) {
+                      return db.rollback(function() {
+                        console.error('插入日记章节失败:', err);
+                        res.status(500).json({ success: false, message: '数据库错误' });
+                      });
+                    }
+                    insertedSections++;
+                    if (insertedSections === compressedDiary.sections.length) {
+                      handleMediaFiles(diaryId);
+                    }
+                  }
+                );
               });
             }
 
-            let insertedSections = 0;
-            compressedDiary.sections.forEach(function(section) {
-              db.query(
-                `INSERT INTO diary_sections 
-                 (diary_id, section_title, section_content, day_number, section_order, is_compressed) 
-                 VALUES (?, ?, ?, ?, ?, ?)`,
-                [diaryId, section.title, section.content, section.dayNumber, section.order, true],
-                function(err) {
+            function handleMediaFiles(diaryId) {
+              const mediaFiles = (req.files && req.files['mediaFiles']) ? req.files['mediaFiles'] : [];
+              
+              if (mediaFiles.length === 0) {
+                // 没有媒体文件，直接提交事务
+                return db.commit(function(err) {
                   if (err) {
                     return db.rollback(function() {
-                      console.error('插入日记章节失败:', err);
+                      console.error('提交事务失败 (无媒体):', err);
                       res.status(500).json({ success: false, message: '数据库错误' });
                     });
                   }
-                  insertedSections++;
-                  if (insertedSections === compressedDiary.sections.length) {
-                    db.commit(function(err) {
-                      if (err) {
-                        return db.rollback(function() {
-                          console.error('提交事务失败 (有章节):', err);
-                          res.status(500).json({ success: false, message: '数据库错误' });
-                        });
-                      }
-                      res.json({ success: true, diaryId });
-                    });
+                  res.json({ success: true, diaryId });
+                });
+              }
+
+              // 插入媒体文件记录
+              let insertedMedia = 0;
+              mediaFiles.forEach(function(file, index) {
+                const mediaUrl = `/uploads/${file.filename}`;
+                const mediaType = file.mimetype.startsWith('video/') ? 'video' : 'image';
+                
+                db.query(
+                  `INSERT INTO diary_media 
+                   (diary_id, media_url, media_type, caption, display_order) 
+                   VALUES (?, ?, ?, ?, ?)`,
+                  [diaryId, mediaUrl, mediaType, '', index + 1],
+                  function(err) {
+                    if (err) {
+                      return db.rollback(function() {
+                        console.error('插入媒体文件失败:', err);
+                        res.status(500).json({ success: false, message: '数据库错误' });
+                      });
+                    }
+                    insertedMedia++;
+                    if (insertedMedia === mediaFiles.length) {
+                      db.commit(function(err) {
+                        if (err) {
+                          return db.rollback(function() {
+                            console.error('提交事务失败 (有媒体):', err);
+                            res.status(500).json({ success: false, message: '数据库错误' });
+                          });
+                        }
+                        res.json({ success: true, diaryId });
+                      });
+                    }
                   }
-                }
-              );
-            });
+                );
+              });
+            }
           }
         );
       });

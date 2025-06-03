@@ -36,6 +36,9 @@ router.get('/diary-discovery', diaryController.getDiaryDiscovery);
 // 创建新日记页面
 router.get('/diaries/new', auth.requireLogin, diaryController.getNewDiary);
 
+// 创建新日记页面 - 路由别名
+router.get('/diary/new', auth.requireLogin, diaryController.getNewDiary);
+
 // 日记详情页
 router.get('/diary-detail/:id', diaryController.getDiaryDetail);
 
