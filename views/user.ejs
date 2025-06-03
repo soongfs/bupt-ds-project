@@ -532,7 +532,7 @@
               <% diaries.forEach(diary => { %>
                 <article class="diary-card">
                   <a href="/diary-detail/<%= diary.id %>" class="card-link">
-                    <div class="card-image" style="background-image: url(<%= diary.cover_image ? `'/uploads/${diary.cover_image}'` : "'/images/default-diary.jpg'" %>)">
+                    <div class="card-image" style="background-image: url('<% if (diary.cover_image) { %>/uploads/<%= diary.cover_image %><% } else { %>/images/diary1.jpg<% } %>')">
                       <% if (diary.is_featured) { %>
                         <span class="card-badge">🔥 热门精选</span>
                       <% } %>
@@ -578,7 +578,7 @@
               <% favorites.forEach(diary => { %>
                 <article class="diary-card">
                   <a href="/diary-detail/<%= diary.id %>" class="card-link">
-                    <div class="card-image" style="background-image: url(<%= diary.cover_image ? `'/uploads/${diary.cover_image}'` : "'/images/default-diary.jpg'" %>)">
+                    <div class="card-image" style="background-image: url('<% if (diary.cover_image) { %>/uploads/<%= diary.cover_image %><% } else { %>/images/diary1.jpg<% } %>')">
                       <% if (diary.is_featured) { %>
                         <span class="card-badge">🔥 热门精选</span>
                       <% } %>

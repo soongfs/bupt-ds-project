@@ -507,6 +507,11 @@
         <i class="fas fa-city"></i>
         城市地标
       </button>
+      <button class="filter-btn <%= currentCategory === 'entertainment' ? 'active' : '' %>"
+              onclick="window.location.href='/attraction/explorer?category=entertainment&sort=<%= currentSort %>'">
+        <i class="fas fa-gamepad"></i>
+        娱乐休闲
+      </button>
     </div>
 
     <div class="sort-options">
@@ -556,7 +561,7 @@
             <div class="card-image" style="background-image: url('<%= attraction.cover_image %>')">
               <span class="recommendation-badge">
                 <i class="fas fa-thumbs-up"></i>
-                推荐指数: <%= (attraction.recommendation_score * 100).toFixed(0) %>%
+                推荐指数: <%= Math.round((attraction.recommendation_score || 0) * 100) %>%
               </span>
             </div>
             <div class="card-content">
@@ -579,6 +584,29 @@
               </div>
               <p class="poi-desc"><%= attraction.description %></p>
               <div class="poi-tags">
+                <% if (attraction.inferred_category) { %>
+                  <% if (attraction.inferred_category === 'natural') { %>
+                    <span class="tag">
+                      <i class="fas fa-leaf"></i>
+                      自然风光
+                    </span>
+                  <% } else if (attraction.inferred_category === 'historical') { %>
+                    <span class="tag">
+                      <i class="fas fa-monument"></i>
+                      历史人文
+                    </span>
+                  <% } else if (attraction.inferred_category === 'landmark') { %>
+                    <span class="tag">
+                      <i class="fas fa-building"></i>
+                      城市地标
+                    </span>
+                  <% } else if (attraction.inferred_category === 'entertainment') { %>
+                    <span class="tag">
+                      <i class="fas fa-game"></i>
+                      娱乐休闲
+                    </span>
+                  <% } %>
+                <% } %>
                 <% if (attraction.is_5a) { %>
                   <span class="tag">
                     <i class="fas fa-award"></i>
@@ -591,17 +619,37 @@
                     免费开放
                   </span>
                 <% } %>
-                <span class="tag">
-                  <i class="fas fa-clock"></i>
-                  <%= attraction.tags || '全天开放' %>
-                </span>
+                <% if (attraction.tags && typeof attraction.tags === 'string') { %>
+                  <% try { %>
+                    <% const tags = JSON.parse(attraction.tags); %>
+                    <% if (Array.isArray(tags)) { %>
+                      <% tags.slice(0, 2).forEach(tag => { %>
+                        <span class="tag">
+                          <i class="fas fa-hashtag"></i>
+                          <%= tag %>
+                        </span>
+                      <% }); %>
+                    <% } %>
+                  <% } catch(e) { %>
+                    <% // 如果不是JSON格式，尝试按逗号分割 %>
+                    <% const tagList = String(attraction.tags).split(','); %>
+                    <% tagList.slice(0, 2).forEach(tag => { %>
+                      <% if (tag && tag.trim()) { %>
+                        <span class="tag">
+                          <i class="fas fa-hashtag"></i>
+                          <%= tag.trim() %>
+                        </span>
+                      <% } %>
+                    <% }); %>
+                  <% } %>
+                <% } %>
                 <span class="tag">
                   <i class="fas fa-wallet"></i>
-                  ￥<%= '¥'.repeat(attraction.price_level) %>
+                  ¥<%= '¥'.repeat(Math.min(attraction.price_level || 1, 4)) %>
                 </span>
                 <span class="tag">
                   <i class="fas fa-hourglass-half"></i>
-                  <%= Math.floor(attraction.duration / 60) %>小时<%= attraction.duration % 60 %>分钟
+                  <%= Math.floor((attraction.duration || 180) / 60) %>小时<%= (attraction.duration || 180) % 60 %>分钟
                 </span>
               </div>
             </div>
@@ -634,6 +682,29 @@
           </div>
           <p class="poi-desc"><%= attraction.description %></p>
           <div class="poi-tags">
+            <% if (attraction.inferred_category) { %>
+              <% if (attraction.inferred_category === 'natural') { %>
+                <span class="tag">
+                  <i class="fas fa-leaf"></i>
+                  自然风光
+                </span>
+              <% } else if (attraction.inferred_category === 'historical') { %>
+                <span class="tag">
+                  <i class="fas fa-monument"></i>
+                  历史人文
+                </span>
+              <% } else if (attraction.inferred_category === 'landmark') { %>
+                <span class="tag">
+                  <i class="fas fa-building"></i>
+                  城市地标
+                </span>
+              <% } else if (attraction.inferred_category === 'entertainment') { %>
+                <span class="tag">
+                  <i class="fas fa-game"></i>
+                  娱乐休闲
+                </span>
+              <% } %>
+            <% } %>
             <% if (attraction.is_5a) { %>
               <span class="tag">
                 <i class="fas fa-award"></i>
@@ -646,9 +717,37 @@
                 免费开放
               </span>
             <% } %>
+            <% if (attraction.tags && typeof attraction.tags === 'string') { %>
+              <% try { %>
+                <% const tags = JSON.parse(attraction.tags); %>
+                <% if (Array.isArray(tags)) { %>
+                  <% tags.slice(0, 2).forEach(tag => { %>
+                    <span class="tag">
+                      <i class="fas fa-hashtag"></i>
+                      <%= tag %>
+                    </span>
+                  <% }); %>
+                <% } %>
+              <% } catch(e) { %>
+                <% // 如果不是JSON格式，尝试按逗号分割 %>
+                <% const tagList = String(attraction.tags).split(','); %>
+                <% tagList.slice(0, 2).forEach(tag => { %>
+                  <% if (tag && tag.trim()) { %>
+                    <span class="tag">
+                      <i class="fas fa-hashtag"></i>
+                      <%= tag.trim() %>
+                    </span>
+                  <% } %>
+                <% }); %>
+              <% } %>
+            <% } %>
             <span class="tag">
-              <i class="fas fa-clock"></i>
-              <%= attraction.tags || '全天开放' %>
+              <i class="fas fa-wallet"></i>
+              ¥<%= '¥'.repeat(Math.min(attraction.price_level || 1, 4)) %>
+            </span>
+            <span class="tag">
+              <i class="fas fa-hourglass-half"></i>
+              <%= Math.floor((attraction.duration || 180) / 60) %>小时<%= (attraction.duration || 180) % 60 %>分钟
             </span>
           </div>
         </div>
