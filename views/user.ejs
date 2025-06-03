@@ -226,6 +226,57 @@
         transform: translateY(-2px);
       }
 
+      /* 用户操作按钮样式 */
+      .user-actions {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+      }
+
+      .action-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.8rem 1.5rem;
+        border-radius: 25px;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s;
+        cursor: pointer;
+        border: 2px solid transparent;
+      }
+
+      .message-btn {
+        background: var(--primary);
+        color: white;
+      }
+
+      .message-btn:hover {
+        background: #248a7c;
+        transform: translateY(-2px);
+      }
+
+      .follow-btn {
+        background: transparent;
+        color: var(--primary);
+        border-color: var(--primary);
+      }
+
+      .follow-btn:hover {
+        background: var(--primary);
+        color: white;
+      }
+
+      .follow-btn.following {
+        background: var(--primary);
+        color: white;
+      }
+
+      .follow-btn.following:hover {
+        background: #e76f51;
+        border-color: #e76f51;
+      }
+
       .content-tabs {
         background: white;
         border-radius: 15px;
@@ -515,6 +566,17 @@
             <a href="/user/<%= user.id %>/edit" class="edit-profile-btn">
               <i class="fas fa-edit"></i> 编辑资料
             </a>
+          <% } else if (currentUser) { %>
+            <!-- 查看其他用户时显示的操作按钮 -->
+            <div class="user-actions">
+              <a href="/messages/new/<%= user.id %>" class="action-btn message-btn">
+                <i class="fas fa-envelope"></i> 发私信
+              </a>
+              <button class="action-btn follow-btn" onclick="toggleFollow(<%= user.id %>)">
+                <i class="fas fa-user-plus"></i> 
+                <span id="followText">关注</span>
+              </button>
+            </div>
           <% } %>
         </div>
       </div>
@@ -640,6 +702,75 @@
           document.getElementById(button.dataset.tab).classList.add('active');
         });
       });
+
+      // 关注/取消关注功能
+      async function toggleFollow(userId) {
+        try {
+          const response = await fetch(`/user/${userId}/follow`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include'
+          });
+
+          const result = await response.json();
+          
+          if (result.success) {
+            const followBtn = document.querySelector('.follow-btn');
+            const followText = document.getElementById('followText');
+            const followIcon = followBtn.querySelector('i');
+            
+            if (result.isFollowing) {
+              followBtn.classList.add('following');
+              followText.textContent = '已关注';
+              followIcon.className = 'fas fa-user-check';
+            } else {
+              followBtn.classList.remove('following');
+              followText.textContent = '关注';
+              followIcon.className = 'fas fa-user-plus';
+            }
+            
+            // 更新关注者数量
+            const followersCountElements = document.querySelectorAll('.stat-item .stat-value');
+            if (followersCountElements.length >= 2) {
+              const followersElement = followersCountElements[1]; // 第二个是关注者数量
+              const currentCount = parseInt(followersElement.textContent.replace(/,/g, '')) || 0;
+              const newCount = result.isFollowing ? currentCount + 1 : currentCount - 1;
+              followersElement.textContent = Math.max(0, newCount).toLocaleString();
+            }
+          } else {
+            alert(result.message || '操作失败，请重试');
+          }
+        } catch (error) {
+          console.error('关注操作失败:', error);
+          alert('网络错误，请稍后重试');
+        }
+      }
+
+      // 页面加载时检查关注状态
+      <% if (currentUser && user.id !== currentUser.id) { %>
+      document.addEventListener('DOMContentLoaded', async () => {
+        try {
+          const response = await fetch(`/user/<%= user.id %>/follow-status`, {
+            credentials: 'include'
+          });
+          const result = await response.json();
+          
+          if (result.success && result.isFollowing) {
+            const followBtn = document.querySelector('.follow-btn');
+            const followText = document.getElementById('followText');
+            const followIcon = followBtn.querySelector('i');
+            
+            followBtn.classList.add('following');
+            followText.textContent = '已关注';
+            followIcon.className = 'fas fa-user-check';
+          }
+        } catch (error) {
+          console.error('获取关注状态失败:', error);
+        }
+      });
+      <% } %>
     </script>
   </body>
 </html>

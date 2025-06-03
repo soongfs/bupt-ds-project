@@ -16,6 +16,9 @@ router.post('/:id/edit', auth.requireLogin, upload.single('avatar'), userControl
 // 关注/取消关注用户
 router.post('/:id/follow', auth.requireLogin, userController.followUser);
 
+// 获取关注状态
+router.get('/:id/follow-status', auth.requireLogin, userController.getFollowStatus);
+
 // 获取用户游记列表
 router.get('/:id/diaries', auth.setCurrentUser, userController.getUserDiaries);
 

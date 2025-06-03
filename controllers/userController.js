@@ -429,3 +429,29 @@ exports.getUserFavorites = (req, res) => {
     }
   );
 };
+
+// 获取关注状态
+exports.getFollowStatus = (req, res) => {
+  const followerId = req.session.user.id;
+  const followedId = req.params.id;
+
+  if (followerId === parseInt(followedId)) {
+    return res.json({ success: false, message: '不能关注自己' });
+  }
+
+  db.query(
+    'SELECT * FROM user_follows WHERE follower_id = ? AND followed_id = ?',
+    [followerId, followedId],
+    (err, results) => {
+      if (err) {
+        console.error('查询关注状态失败:', err);
+        return res.status(500).json({ success: false, message: '查询关注状态失败' });
+      }
+
+      res.json({ 
+        success: true, 
+        isFollowing: results.length > 0 
+      });
+    }
+  );
+};

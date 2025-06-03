@@ -84,10 +84,11 @@ const diaryController = {
     const userId = req.query.userId;
     const category = req.query.category || '全部主题';
     const sort = req.query.sort || 'latest';
+    const searchQuery = req.query.q || ''; // 添加搜索关键词
     
     // 添加调试日志
     console.log('日记发现页面请求参数:', {
-      page, limit, offset, userId, category, sort,
+      page, limit, offset, userId, category, sort, searchQuery,
       originalQuery: req.query
     });
 
@@ -107,10 +108,19 @@ const diaryController = {
       whereClauses.push('d.user_id = ?');
       params.push(userId);
     }
+    
     if (category && category !== '全部主题') {
       whereClauses.push('d.categories LIKE ?');
       params.push(`%${category}%`);
       console.log(`添加分类筛选: ${category}`);
+    }
+
+    // 添加搜索功能
+    if (searchQuery.trim()) {
+      whereClauses.push('(d.title LIKE ? OR d.search_content LIKE ? OR u.username LIKE ?)');
+      const searchPattern = `%${searchQuery.trim()}%`;
+      params.push(searchPattern, searchPattern, searchPattern);
+      console.log(`添加搜索条件: ${searchQuery}`);
     }
 
     if (whereClauses.length > 0) {
@@ -120,15 +130,15 @@ const diaryController = {
     console.log('最终SQL查询:', query);
     console.log('查询参数:', params);
 
-    let countQuery = `SELECT COUNT(DISTINCT d.id) as total FROM travel_diaries d`;
-    const countParamsInitial = []; // Separate params for count query before whereClauses
-    if (userId) { countParamsInitial.push(userId); }
-    if (category && category !== '全部主题') { countParamsInitial.push(`%${category}%`); }
-
+    // 构建计数查询，确保与主查询条件一致
+    let countQuery = `SELECT COUNT(DISTINCT d.id) as total FROM travel_diaries d JOIN user_information u ON d.user_id = u.id`;
+    
     if (whereClauses.length > 0) {
-      let countWhere = whereClauses.join(' AND ');
-      countQuery += ' WHERE ' + countWhere;
+      countQuery += ' WHERE ' + whereClauses.join(' AND ');
     }
+
+    // 为计数查询准备参数（排除LIMIT和OFFSET）
+    const countParams = [...params];
 
     switch (sort) {
       case 'hot':
@@ -144,14 +154,12 @@ const diaryController = {
     query += ' LIMIT ? OFFSET ?';
     params.push(limit, offset);
     
-    const finalCountParams = params.slice(0, params.length - 2); // These are the params for the main query, minus limit/offset
-
     db.query(query, params, function(err, diaries) {
       if (err) {
         console.error('获取日记列表失败:', err);
         return res.status(500).json({ success: false, message: '获取日记列表失败' });
       }
-      db.query(countQuery, finalCountParams, function(err, countResult) {
+      db.query(countQuery, countParams, function(err, countResult) {
         if (err) {
           console.error('获取日记总数失败:', err);
           return res.status(500).json({ success: false, message: '获取日记总数失败' });
