@@ -13,4 +13,7 @@ router.get("/detail/:id", auth.setCurrentUser, attrCtrl.getDetail);
 // 用户对景点评分 (需要登录)
 router.post("/detail/:id/rate", auth.requireLogin, attrCtrl.rateAttraction);
 
+// 景点搜索
+router.get("/search", attrCtrl.searchAttraction);
+
 module.exports = router;

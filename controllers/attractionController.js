@@ -117,3 +117,19 @@ exports.rateAttraction = (req, res, next) => {
     res.json({ success: true, message: "评分已保存" }); 
   });
 };
+
+// 搜索景点
+exports.searchAttraction = (req, res, next) => {
+  const { name } = req.query;
+  if (!name) {
+    return res.status(400).json({ success: false, message: "缺少搜索关键词" });
+  }
+
+  Attraction.searchAttractionsByName(name, (err, attractionId) => {
+    if (err) return next(err);
+    if (!attractionId) {
+      return res.status(404).json({ success: false, message: "未找到相关景点" });
+    }
+    res.json({ success: true, attractionId: attractionId });
+  });
+};

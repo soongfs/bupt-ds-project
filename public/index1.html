@@ -424,9 +424,8 @@
   <section class="hero-section">
     <h1 class="title">探索世界的新方式</h1>
     <div class="hero-search">
-      <input type="text" placeholder="输入你想去的目的地，例如「杭州西湖」" />
-      <!-- <button class="search-btn">开始探索</button> -->
-      <a href="attraction-detail.html" class="search-btn">开始探索</a>
+      <input type="text" id="searchInput" placeholder="输入景点名称...">
+      <button id="searchButton" class="search-btn">开始探索</button>
     </div>
   </section>
 
@@ -490,40 +489,104 @@
   </main>
 
   <script>
-  // 下拉菜单功能
-  const userAvatar = document.getElementById('userAvatar');
-  const dropdownMenu = document.getElementById('dropdownMenu');
-
-  // 鼠标悬停显示菜单
-  userAvatar.addEventListener('mouseenter', () => {
-    dropdownMenu.classList.add('show');
-  });
-
-  // 鼠标离开隐藏菜单
-  userAvatar.addEventListener('mouseleave', () => {
-    setTimeout(() => {
-      if (!dropdownMenu.matches(':hover')) {
-        dropdownMenu.classList.remove('show');
+    // 导航栏交互
+    const nav = document.querySelector(".global-nav");
+    let lastScrollY = window.scrollY;
+    window.addEventListener("scroll", () => {
+      if (lastScrollY < window.scrollY && window.scrollY > 80) {
+        nav.classList.add("nav-hidden");
+      } else {
+        nav.classList.remove("nav-hidden");
       }
-    }, 100);
-  });
+      lastScrollY = window.scrollY;
+    });
 
-  // 菜单本身的事件
-  dropdownMenu.addEventListener('mouseenter', () => {
-    dropdownMenu.classList.add('show');
-  });
+    // 搜索按钮功能
+    const searchButton = document.getElementById('searchButton');
+    const searchInput = document.getElementById('searchInput');
 
-  dropdownMenu.addEventListener('mouseleave', () => {
-    dropdownMenu.classList.remove('show');
-  });
+    if (searchButton && searchInput) {
+      console.log('调试: 搜索按钮和输入框已找到。');
+      searchButton.addEventListener('click', () => {
+        console.log('调试: 搜索按钮被点击。');
+        const searchTerm = searchInput.value.trim();
+        console.log('调试: 搜索关键词为:', searchTerm);
 
-  // 点击菜单项关闭菜单
-  document.querySelectorAll('.dropdown-item').forEach(item => {
-    item.addEventListener('click', () => {
+        if (searchTerm) {
+          const fetchUrl = `/attraction/search?name=${encodeURIComponent(searchTerm)}`;
+          console.log('调试: 正在请求URL:', fetchUrl);
+
+          fetch(fetchUrl)
+            .then(response => {
+              console.log('调试: Fetch响应状态:', response.status);
+              if (!response.ok) {
+                // 尝试读取错误信息体
+                return response.text().then(text => {
+                  console.error('调试: Fetch响应错误内容:', text);
+                  throw new Error(`HTTP error! status: ${response.status}, body: ${text}`);
+                });
+              }
+              return response.json();
+            })
+            .then(data => {
+              console.log('调试: 从服务器接收到的数据:', data);
+              if (data.success && data.attractionId) {
+                const redirectUrl = `/attraction/detail/${data.attractionId}`;
+                console.log('调试: 即将跳转到:', redirectUrl);
+                window.location.href = redirectUrl;
+              } else {
+                const alertMessage = data.message || '未能找到相关景点，请尝试其他关键词。';
+                console.log('调试: 搜索不成功或未找到attractionId:', alertMessage);
+                alert(alertMessage);
+              }
+            })
+            .catch(error => {
+              console.error('调试: 搜索请求失败:', error);
+              alert('搜索功能暂时无法使用，请稍后再试。错误详情请查看控制台。');
+            });
+        } else {
+          console.log('调试: 搜索关键词为空。');
+          alert('请输入景点名称进行搜索。');
+        }
+      });
+    } else {
+      console.error('调试: 未能找到搜索按钮或输入框!');
+    }
+
+    // 下拉菜单功能
+    const userAvatar = document.getElementById('userAvatar');
+    const dropdownMenu = document.getElementById('dropdownMenu');
+
+    // 鼠标悬停显示菜单
+    userAvatar.addEventListener('mouseenter', () => {
+      dropdownMenu.classList.add('show');
+    });
+
+    // 鼠标离开隐藏菜单
+    userAvatar.addEventListener('mouseleave', () => {
+      setTimeout(() => {
+        if (!dropdownMenu.matches(':hover')) {
+          dropdownMenu.classList.remove('show');
+        }
+      }, 100);
+    });
+
+    // 菜单本身的事件
+    dropdownMenu.addEventListener('mouseenter', () => {
+      dropdownMenu.classList.add('show');
+    });
+
+    dropdownMenu.addEventListener('mouseleave', () => {
       dropdownMenu.classList.remove('show');
     });
-  });
-</script>
+
+    // 点击菜单项关闭菜单
+    document.querySelectorAll('.dropdown-item').forEach(item => {
+      item.addEventListener('click', () => {
+        dropdownMenu.classList.remove('show');
+      });
+    });
+  </script>
 </body>
 
 </html>

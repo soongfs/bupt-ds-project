@@ -487,9 +487,8 @@
   <section class="hero-section">
     <h1 class="title">探索世界的新方式</h1>
     <div class="hero-search">
-      <input type="text" placeholder="输入你想去的目的地，例如「杭州西湖」" />
-      <!-- <button class="search-btn">开始探索</button> -->
-      <a href="attraction-detail.html" class="search-btn">开始探索</a>
+      <input type="text" id="searchInput" placeholder="输入景点名称...">
+      <button id="searchButton" class="search-btn">开始探索</button>
     </div>
   </section>
 
@@ -563,61 +562,98 @@
   </main>
 
   <script>
-    // 下拉菜单功能
-    const userAvatar = document.getElementById('userAvatar');
-    const dropdownMenu = document.getElementById('dropdownMenu');
-
-    // 鼠标悬停显示菜单
-    userAvatar.addEventListener('mouseenter', () => {
-      dropdownMenu.classList.add('show');
-    });
-
-    // 鼠标离开隐藏菜单
-    userAvatar.addEventListener('mouseleave', () => {
-      setTimeout(() => {
-        if (!dropdownMenu.matches(':hover')) {
-          dropdownMenu.classList.remove('show');
-        }
-      }, 100);
-    });
-
-    // 菜单本身的事件
-    dropdownMenu.addEventListener('mouseenter', () => {
-      dropdownMenu.classList.add('show');
-    });
-
-    dropdownMenu.addEventListener('mouseleave', () => {
-      dropdownMenu.classList.remove('show');
-    });
-
-    // 点击菜单项关闭菜单
-    document.querySelectorAll('.dropdown-item').forEach(item => {
-      item.addEventListener('click', () => {
-        dropdownMenu.classList.remove('show');
-      });
-    });
-
-    // 显式定义全局函数
-    window.logout = async function () {
-      console.log("退出登录函数被调用");
-      try {
-        const response = await fetch('/api/logout', {
-          method: 'POST',
-          credentials: 'same-origin'
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('调试: DOMContentLoaded event fired on views/index.ejs');
+      const nav = document.querySelector(".global-nav");
+      if (nav) {
+        let lastScrollY = window.scrollY;
+        window.addEventListener("scroll", () => {
+          if (lastScrollY < window.scrollY && window.scrollY > 80) {
+            nav.classList.add("nav-hidden");
+          } else {
+            nav.classList.remove("nav-hidden");
+          }
+          lastScrollY = window.scrollY;
         });
-        const data = await response.json();
-        if (data.success) {
-          window.location.href = "/";
-        }
-      } catch (error) {
-        console.error("退出登录失败:", error);
+      } else {
+        console.warn('调试: Navigation element .global-nav not found.');
       }
-    };
 
-    // 动态绑定事件
-    document.getElementById('logoutBtn')?.addEventListener('click', (e) => {
-      e.preventDefault();
-      logout();
+      console.log('调试: Attempting to find search button and input in views/index.ejs');
+      const searchButton = document.getElementById('searchButton');
+      const searchInput = document.getElementById('searchInput');
+      console.log('调试: searchButton element in views/index.ejs:', searchButton);
+      console.log('调试: searchInput element in views/index.ejs:', searchInput);
+
+      if (searchButton && searchInput) {
+        console.log('调试: Search button and input field FOUND in views/index.ejs. Attaching listener.');
+        searchButton.addEventListener('click', (event) => {
+          event.preventDefault(); // Crucial: prevent any default action
+          console.log('调试: Search button CLICKED in views/index.ejs! Default action prevented.');
+          const searchTerm = searchInput.value.trim();
+          console.log('调试: Search term from views/index.ejs:', searchTerm);
+
+          if (searchTerm) {
+            const fetchUrl = `/attraction/search?name=${encodeURIComponent(searchTerm)}`;
+            console.log('调试: Fetching URL from views/index.ejs:', fetchUrl);
+            fetch(fetchUrl)
+              .then(response => {
+                console.log('调试: Fetch response status from views/index.ejs:', response.status);
+                if (!response.ok) {
+                  return response.text().then(text => {
+                    console.error('调试: Fetch response error body from views/index.ejs:', text);
+                    throw new Error(`HTTP error! status: ${response.status}, body: ${text}`);
+                  });
+                }
+                return response.json();
+              })
+              .then(data => {
+                console.log('调试: Data received from server in views/index.ejs:', data);
+                if (data.success && data.attractionId) {
+                  const redirectUrl = `/attraction/detail/${data.attractionId}`;
+                  console.log('调试: Redirecting from views/index.ejs to:', redirectUrl);
+                  window.location.href = redirectUrl;
+                } else {
+                  const alertMessage = data.message || '未能找到相关景点，请尝试其他关键词。';
+                  console.log('调试: Search unsuccessful or no attractionId in views/index.ejs:', alertMessage);
+                  alert(alertMessage);
+                }
+              })
+              .catch(error => {
+                console.error('调试: Fetch request FAILED in views/index.ejs:', error);
+                alert('搜索功能暂时无法使用，请稍后再试。错误详情请查看控制台。');
+              });
+          } else {
+            console.log('调试: Search term is EMPTY in views/index.ejs.');
+            alert('请输入景点名称进行搜索。');
+          }
+        });
+      } else {
+        console.error('调试: Search button or input field NOT FOUND in views/index.ejs!');
+      }
+
+      // 用户头像下拉菜单
+      const userAvatar = document.getElementById('userAvatar');
+      const dropdownMenu = document.getElementById('dropdownMenu');
+      // console.log('调试: userAvatar element in views/index.ejs:', userAvatar);
+      // console.log('调试: dropdownMenu element in views/index.ejs:', dropdownMenu);
+
+      if (userAvatar && dropdownMenu) {
+        // console.log('调试: User avatar and dropdown menu FOUND in views/index.ejs. Attaching listeners.');
+        userAvatar.addEventListener('mouseenter', () => dropdownMenu.classList.add('show'));
+        userAvatar.addEventListener('mouseleave', () => {
+          setTimeout(() => {
+            if (!dropdownMenu.matches(':hover')) dropdownMenu.classList.remove('show');
+          }, 150);
+        });
+        dropdownMenu.addEventListener('mouseenter', () => dropdownMenu.classList.add('show'));
+        dropdownMenu.addEventListener('mouseleave', () => dropdownMenu.classList.remove('show'));
+        document.querySelectorAll('.dropdown-item').forEach(item => {
+          item.addEventListener('click', () => dropdownMenu.classList.remove('show'));
+        });
+      } else {
+        // console.warn("调试: User avatar or dropdown menu elements NOT FOUND in views/index.ejs. Dropdown interactivity might be affected.");
+      }
     });
   </script>
 </body>

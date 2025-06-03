@@ -209,3 +209,16 @@ exports.getAttractionById = (id, userId = null, callback) => {
     callback(null, attraction);
   });
 };
+
+// 根据名称搜索景点
+exports.searchAttractionsByName = (name, callback) => {
+  const sql = "SELECT id FROM attractions WHERE name LIKE ? LIMIT 1";
+  // 使用 % 通配符进行模糊匹配
+  db.query(sql, [`%${name}%`], (err, results) => {
+    if (err) return callback(err);
+    if (!results || results.length === 0) {
+      return callback(null, null); // 没有找到景点
+    }
+    callback(null, results[0].id); // 返回景点 ID
+  });
+};
