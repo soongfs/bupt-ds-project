@@ -1113,7 +1113,7 @@
           <% } %>
           <h1 id="diaryTitle"><%= diary.title %></h1>
           <div class="author-info">
-            <img src="<%= '/uploads/' + diary.avatar || '/images/default-avatar.jpg' %>" class="author-avatar" />
+            <img src="<%= diary.avatar ? '/uploads/' + diary.avatar : '/uploads/default-avatar.jpg' %>" class="author-avatar" />
             <div>
               <h3><%= diary.username %></h3>
               <p>发布于 <%= new Date(diary.created_at).toLocaleDateString() %> • 阅读量 <%= diary.view_count %></p>
@@ -1408,7 +1408,7 @@
           <% comments.forEach(comment => { %>
             <div class="comment-card">
               <img
-                src="<%= comment.avatar || '/images/default-avatar.jpg' %>"
+                src="<%= comment.avatar ? '/uploads/' + comment.avatar : '/uploads/default-avatar.jpg' %>"
                 width="50"
                 height="50"
                 style="border-radius: 50%"

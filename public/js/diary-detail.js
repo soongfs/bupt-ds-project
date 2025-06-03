@@ -601,13 +601,13 @@ document.addEventListener('DOMContentLoaded', function() {
             order: index + 1
           };
         });
-        formData.append('mediaData', JSON.stringify(mediaData));
+        formData.append('media', JSON.stringify(mediaData));
 
         // 添加新上传的媒体文件
         const mediaFiles = document.getElementById('mediaUpload').files;
         if (mediaFiles.length > 0) {
           for (let i = 0; i < mediaFiles.length; i++) {
-            formData.append('media', mediaFiles[i]);
+            formData.append('mediaFiles', mediaFiles[i]);
           }
         }
 
@@ -617,7 +617,7 @@ document.addEventListener('DOMContentLoaded', function() {
           tips: formData.get('tips'),
           cover_image: formData.get('coverImage'),
           sections: JSON.parse(formData.get('sections')),
-          media: JSON.parse(formData.get('mediaData'))
+          media: JSON.parse(formData.get('media'))
         });
 
         const response = await fetch(`/diary/api/diaries/${diaryId}`, {

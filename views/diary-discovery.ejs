@@ -622,8 +622,19 @@
     <div class="diary-grid">
         <% if (diaries.length> 0) { %>
             <% diaries.forEach(diary=> { %>
+                <% 
+                let coverImageUrl = diary.cover_image;
+                if (coverImageUrl) {
+                    // 如果cover_image不是以/开头，添加/uploads/前缀
+                    if (!coverImageUrl.startsWith('/') && !coverImageUrl.startsWith('http')) {
+                        coverImageUrl = `/uploads/${coverImageUrl}`;
+                    }
+                } else {
+                    coverImageUrl = `/uploads/default-diary.jpg`;
+                }
+                %>
                 <div class="diary-card">
-                    <div class="card-image" style="background-image: url('<%= diary.cover_image ? `/uploads/${diary.cover_image}` : `/images/default-diary.jpg` %>');">
+                    <div class="card-image" style="background-image: url('<%= coverImageUrl %>');">
                         <% if (diary.is_featured) { %>
                             <span class="hot-badge">
                                 <% if (diary.like_count> 3000) { %>
@@ -639,7 +650,7 @@
                     <div class="card-content">
                         <div class="diary-header">
                             <a href="/user/<%= diary.user_id %>">
-                                <img src="<%= '/uploads/' + diary.avatar || '/images/default-avatar.jpg' %>"
+                                <img src="<%= diary.avatar ? '/uploads/' + diary.avatar : '/uploads/default-avatar.jpg' %>"
                                     class="author-avatar" alt="作者头像">
                             </a>
                             <div class="author-info">

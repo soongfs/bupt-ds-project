@@ -26,16 +26,14 @@ exports.getAttractions = (category, sort, userId = null, callback) => {
   let joinClause = "";
   const whereConditions = [];
   const queryParams = [];
-  let orderByClause = "ORDER BY CAST(a.popularity AS DECIMAL(10,0)) DESC"; // Default
+  let orderByClause = "";
 
   if (userId) {
-    // Always join user tables if userId is present, simplifies logic and makes data available
     joinClause += ` LEFT JOIN user_attraction_ratings ur ON a.id = ur.attraction_id AND ur.user_id = ?`;
     queryParams.push(userId);
     joinClause += ` LEFT JOIN user_attraction_history uh ON a.id = uh.attraction_id AND uh.user_id = ?`;
     queryParams.push(userId);
 
-    // Add fields for user rating, views, last_viewed, using aliases to avoid conflicts
     selectFields.push("COALESCE(ur.rating, 0) as user_rating_val");
     selectFields.push("COALESCE(uh.view_count, 0) as user_views_val");
     selectFields.push("COALESCE(uh.last_viewed_at, '1970-01-01') as last_viewed_val");
@@ -43,28 +41,63 @@ exports.getAttractions = (category, sort, userId = null, callback) => {
 
   if (sort === 'personalized' && userId) {
     selectFields.push(`(
-        COALESCE(ur.rating, 0) * 0.4 + 
-        (CAST(a.aaa_rating AS DECIMAL(3,1)) / 5) * 0.3 +
-        LEAST(COALESCE(uh.view_count, 0) / 5, 1) * 0.2 +
-        CASE WHEN DATEDIFF(NOW(), COALESCE(uh.last_viewed_at, '1970-01-01')) < 30 THEN 0.1 ELSE 0 END
-      ) as preference_score`);
+      COALESCE(ur.rating, 0) * 0.5 +
+      CAST(NULLIF(a.aaa_rating, '') AS DECIMAL(3,1)) / 5 * 0.2 +
+      LEAST(COALESCE(uh.view_count, 0) / 10, 1) * 0.2 +
+      CASE 
+        WHEN DATEDIFF(NOW(), COALESCE(uh.last_viewed_at, '1970-01-01')) < 7 THEN 0.1
+        WHEN DATEDIFF(NOW(), COALESCE(uh.last_viewed_at, '1970-01-01')) < 30 THEN 0.05
+        ELSE 0 
+      END
+    ) as preference_score`);
+    
     selectFields.push(`(
-        SELECT COALESCE(AVG(r2.rating), 0)
-        FROM user_attraction_ratings r2
-        JOIN attractions a2 ON r2.attraction_id = a2.id
-        WHERE r2.user_id = ? AND a2.category = a.category
-      ) as category_preference`);
-    queryParams.push(userId); // For category_preference subquery
-    orderByClause = "ORDER BY category_preference DESC, preference_score DESC, CAST(a.aaa_rating AS DECIMAL(3,1)) DESC";
+      SELECT AVG(r2.rating) * 1.5
+      FROM user_attraction_ratings r2
+      JOIN attractions a2 ON r2.attraction_id = a2.id
+      WHERE r2.user_id = ? AND a2.category = a.category
+    ) as category_preference`);
+    
+    queryParams.push(userId);
+    orderByClause = "ORDER BY category_preference DESC, preference_score DESC";
   } else if (sort === "rating") {
-    orderByClause = "ORDER BY CAST(a.aaa_rating AS DECIMAL(3,1)) DESC";
+    selectFields.push(`(
+      CAST(NULLIF(a.aaa_rating, '') AS DECIMAL(3,1)) * 0.7 +
+      COALESCE(
+        (SELECT AVG(rating) FROM user_attraction_ratings WHERE attraction_id = a.id),
+        0
+      ) * 0.3
+    ) as overall_rating`);
+    orderByClause = "ORDER BY overall_rating DESC, CAST(NULLIF(REGEXP_REPLACE(a.popularity, '[^0-9]', ''), '') AS DECIMAL(10,0)) DESC";
   } else if (sort === "distance") {
-    orderByClause = "ORDER BY CAST(a.distance AS DECIMAL(10,2)) ASC";
+    orderByClause = "ORDER BY CAST(NULLIF(REGEXP_REPLACE(a.distance, '[^0-9.]', ''), '') AS DECIMAL(10,2)) ASC";
   } else if (sort === 'my_ratings' && userId) {
-    orderByClause = "ORDER BY user_rating_val DESC, CAST(a.aaa_rating AS DECIMAL(3,1)) DESC";
+    selectFields.push(`(
+      COALESCE(ur.rating, 0) * 0.8 +
+      CAST(NULLIF(a.aaa_rating, '') AS DECIMAL(3,1)) * 0.2
+    ) as user_rating_score`);
+    orderByClause = "ORDER BY user_rating_score DESC";
   } else if (sort === 'my_views' && userId) {
-    orderByClause = "ORDER BY user_views_val DESC, last_viewed_val DESC, CAST(a.aaa_rating AS DECIMAL(3,1)) DESC";
-  } // Default is popularity (hot)
+    selectFields.push(`(
+      COALESCE(uh.view_count, 0) * 0.6 +
+      CASE 
+        WHEN DATEDIFF(NOW(), COALESCE(uh.last_viewed_at, '1970-01-01')) < 7 THEN 40
+        WHEN DATEDIFF(NOW(), COALESCE(uh.last_viewed_at, '1970-01-01')) < 30 THEN 20
+        ELSE 0 
+      END
+    ) as view_score`);
+    orderByClause = "ORDER BY view_score DESC";
+  } else {  // 默认为热度排序
+    selectFields.push(`(
+      CAST(NULLIF(REGEXP_REPLACE(a.popularity, '[^0-9]', ''), '') AS DECIMAL(10,0)) * 0.4 +
+      CAST(COALESCE(a.comment_count, 0) AS DECIMAL(10,0)) * 0.3 +
+      COALESCE(
+        (SELECT SUM(view_count) FROM user_attraction_history WHERE attraction_id = a.id),
+        0
+      ) * 0.3
+    ) as hot_score`);
+    orderByClause = "ORDER BY hot_score DESC";
+  }
 
   if (category && category !== "all") {
     whereConditions.push("a.category = ?");
@@ -79,11 +112,7 @@ exports.getAttractions = (category, sort, userId = null, callback) => {
 
   db.query(sql, queryParams, (err, results) => {
     if (err) return callback(err);
-
     results = results.map(processAttractionData);
-    
-    // The user_rating, user_views, and last_viewed are now directly populated by processAttractionData
-    // using the _val aliases if userId was present. No separate userData query needed here anymore.
     callback(null, results);
   });
 };
@@ -220,5 +249,52 @@ exports.searchAttractionsByName = (name, callback) => {
       return callback(null, null); // 没有找到景点
     }
     callback(null, results[0].id); // 返回景点 ID
+  });
+};
+
+// 搜索景点并按综合指标排序
+exports.searchAttractionsByNameWithRanking = (name, userId = null, callback) => {
+  let selectFields = [
+    "a.*",
+    "a.aaa_rating",
+    "a.popularity",
+    `(
+      CAST(NULLIF(REGEXP_REPLACE(a.popularity, '[^0-9]', ''), '') AS DECIMAL(10,0)) * 0.4 +
+      CAST(COALESCE(a.comment_count, 0) AS DECIMAL(10,0)) * 0.3 +
+      COALESCE(
+        (SELECT SUM(view_count) FROM user_attraction_history WHERE attraction_id = a.id),
+        0
+      ) * 0.3
+    ) as ranking_score`
+  ];
+  
+  let fromClause = "FROM attractions a";
+  let joinClause = "";
+  const queryParams = [name];
+  
+  if (userId) {
+    joinClause += ` LEFT JOIN user_attraction_ratings ur ON a.id = ur.attraction_id AND ur.user_id = ?`;
+    queryParams.push(userId);
+    joinClause += ` LEFT JOIN user_attraction_history uh ON a.id = uh.attraction_id AND uh.user_id = ?`;
+    queryParams.push(userId);
+    
+    selectFields.push("COALESCE(ur.rating, 0) as user_rating_val");
+    selectFields.push("COALESCE(uh.view_count, 0) as user_views_val");
+    selectFields.push("COALESCE(uh.last_viewed_at, '1970-01-01') as last_viewed_val");
+  }
+
+  const sql = `
+    SELECT ${selectFields.join(', ')}
+    ${fromClause}
+    ${joinClause}
+    WHERE a.name LIKE CONCAT('%', ?, '%')
+    ORDER BY ranking_score DESC
+    LIMIT 10
+  `;
+
+  db.query(sql, queryParams, (err, results) => {
+    if (err) return callback(err);
+    results = results.map(processAttractionData);
+    callback(null, results);
   });
 };

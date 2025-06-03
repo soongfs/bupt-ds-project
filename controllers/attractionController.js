@@ -121,15 +121,32 @@ exports.rateAttraction = (req, res, next) => {
 // 搜索景点
 exports.searchAttraction = (req, res, next) => {
   const { name } = req.query;
+  const userId = req.session?.user?.id || null;
+
   if (!name) {
     return res.status(400).json({ success: false, message: "缺少搜索关键词" });
   }
 
-  Attraction.searchAttractionsByName(name, (err, attractionId) => {
+  Attraction.searchAttractionsByNameWithRanking(name, userId, (err, attractions) => {
     if (err) return next(err);
-    if (!attractionId) {
+    if (!attractions || attractions.length === 0) {
       return res.status(404).json({ success: false, message: "未找到相关景点" });
     }
-    res.json({ success: true, attractionId: attractionId });
+    res.json({ 
+      success: true, 
+      attractions: attractions.map(attraction => ({
+        id: attraction.id,
+        name: attraction.name,
+        description: attraction.description,
+        image_url: attraction.image_url,
+        rating: attraction.rating,
+        popularity: attraction.popularity,
+        comment_count: attraction.comment_count,
+        view_count: attraction.view_count,
+        ranking_score: attraction.ranking_score,
+        user_rating: attraction.user_rating,
+        user_views: attraction.user_views
+      }))
+    });
   });
 };

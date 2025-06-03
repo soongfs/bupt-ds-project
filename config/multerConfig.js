@@ -38,7 +38,7 @@ const fileFilter = (req, file, cb) => {
         } else {
             cb(new Error('封面图片只能上传图片文件'), false);
         }
-    } else if (file.fieldname === 'mediaFiles') {
+    } else if (file.fieldname === 'mediaFiles' || file.fieldname === 'image') {
         // 媒体文件允许图片和视频
         if (allowedTypes[file.mimetype]) {
             cb(null, true);
