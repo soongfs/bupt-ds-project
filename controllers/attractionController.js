@@ -121,32 +121,91 @@ exports.rateAttraction = (req, res, next) => {
 // 搜索景点
 exports.searchAttraction = (req, res, next) => {
   const { name } = req.query;
-  const userId = req.session?.user?.id || null;
-
-  if (!name) {
-    return res.status(400).json({ success: false, message: "缺少搜索关键词" });
+  if (!name || name.trim() === "") {
+    return res.status(400).json({ success: false, message: "请输入搜索关键词" });
   }
 
-  Attraction.searchAttractionsByNameWithRanking(name, userId, (err, attractions) => {
-    if (err) return next(err);
-    if (!attractions || attractions.length === 0) {
-      return res.status(404).json({ success: false, message: "未找到相关景点" });
+  Attraction.searchAttractionsByName(name.trim(), (err, result) => {
+    if (err) {
+      console.error("[Controller] searchAttraction: Error from model:", err);
+      return next(err); // Pass to global error handler
     }
-    res.json({ 
-      success: true, 
-      attractions: attractions.map(attraction => ({
-        id: attraction.id,
-        name: attraction.name,
-        description: attraction.description,
-        image_url: attraction.image_url,
-        rating: attraction.rating,
-        popularity: attraction.popularity,
-        comment_count: attraction.comment_count,
-        view_count: attraction.view_count,
-        ranking_score: attraction.ranking_score,
-        user_rating: attraction.user_rating,
-        user_views: attraction.user_views
-      }))
+
+    if (result.matchType === 'exact') {
+      console.log("[Controller] searchAttraction: Exact match found:", result.attraction);
+      // 为了与前端之前的逻辑兼容，即使是精确匹配，也返回一个包含 attractionId 的对象
+      // 或者前端可以直接使用 result.attraction.id
+      return res.json({ 
+        success: true, 
+        matchType: 'exact', 
+        attractionId: result.attraction.id 
+        // attraction: result.attraction // 也可以直接传递整个对象
+      });
+    } else if (result.matchType === 'fuzzy') {
+      console.log("[Controller] searchAttraction: Fuzzy matches found:", result.attractions.length);
+      return res.json({ 
+        success: true, 
+        matchType: 'fuzzy', 
+        attractions: result.attractions 
+      });
+    } else { // matchType === 'none'
+      console.log("[Controller] searchAttraction: No matches found for:", name.trim());
+      return res.json({ 
+        success: true, // 仍然是成功的请求，只是没有结果
+        matchType: 'none', 
+        message: "未找到相关景点，请尝试其他关键词。" 
+      });
+    }
+  });
+};
+
+// 获取景点地图详情页面
+exports.getAttractionMap = (req, res, next) => {
+  const rawAttractionId = req.params.id;
+  console.log(`[Controller] getAttractionMap: Received raw ID from params: '${rawAttractionId}'`);
+  
+  const attractionId = parseInt(rawAttractionId, 10);
+  if (isNaN(attractionId)) {
+    console.error(`[Controller] getAttractionMap: Invalid attraction ID format: '${rawAttractionId}'`);
+    return res.status(400).render('error', {
+      message: '无效的景点ID格式',
+      error: { status: 400 }
+    });
+  }
+  console.log(`[Controller] getAttractionMap: Parsed attraction ID: ${attractionId}`);
+
+  const userId = req.session?.user?.id || null;
+  console.log(`[Controller] getAttractionMap: Current userId: ${userId}`);
+
+  Attraction.getAttractionById(attractionId, userId, (err, attraction) => {
+    if (err) {
+      console.error(`[Controller] getAttractionMap: Error from Attraction.getAttractionById for ID ${attractionId}:`, err);
+      return next(err); // Pass to global error handler
+    }
+
+    console.log(`[Controller] getAttractionMap: Attraction data received from model for ID ${attractionId}:`, attraction);
+
+    if (!attraction) {
+      console.warn(`[Controller] getAttractionMap: No attraction found for ID ${attractionId}. Rendering 404 page.`);
+      return res.status(404).render('error', {
+        message: '未找到该景点',
+        error: { status: 404 }
+      });
+    }
+
+    // 确保经纬度存在且是数字，否则地图无法加载
+    if (typeof attraction.latitude !== 'number' || typeof attraction.longitude !== 'number') {
+      console.error(`[Controller] getAttractionMap: Attraction ID ${attractionId} has invalid latitude/longitude. Lat: ${attraction.latitude}, Lon: ${attraction.longitude}`);
+      return res.status(500).render('error', {
+        message: '景点地图信息不完整，无法显示地图。',
+        error: { status: 500 }
+      });
+    }
+    console.log(`[Controller] getAttractionMap: Attraction ID ${attractionId} has valid lat/lon. Rendering attraction-map-detail.`);
+
+    res.render('attraction-map-detail', {
+      attraction,
+      currentUser: req.session.user 
     });
   });
 };

@@ -154,11 +154,52 @@ async function getRoute(req, res) {
 
     let totalTime = 0;
     if (strategy === "time_walk") {
-      totalTime = totalCost / WALKING_SPEED;
+      totalTime = totalCost; // For time_walk, totalCost is already time-like (length * congestion)
+      // To convert this to actual seconds, we might need to divide by WALKING_SPEED if totalCost is not already in time units.
+      // Assuming totalCost for time_walk IS effectively (length * congestion), representing a weighted distance.
+      // Time = (Weighted Distance) / Speed. If A* cost is already time, then this is fine.
+      // Let's assume astarService for time_walk returns totalCost as sum(length * congestion).
+      // So, time = sum(length * congestion) / WALKING_SPEED - this seems more consistent.
+      // However, if astarService's weight IS ALREADY time, then totalTime = totalCost.
+      // Given the current astar weight `length * congestion`, this is a weighted distance.
+      // So, time should be `totalCost / WALKING_SPEED`.
+      totalTime = totalCost / WALKING_SPEED; 
+
     } else if (strategy === "time_bike") {
+      // Similar to time_walk, totalCost is sum(length * congestion)
       totalTime = totalCost / BICYCLE_SPEED;
+
     } else { // distance strategy or fallback
-      totalTime = totalActualDistance / WALKING_SPEED; // Default time for distance strategy is walking
+      // For "distance" strategy, totalActualDistance is the pure geometric distance.
+      // We need to calculate the time along THIS path considering congestion for walking.
+      let congestedTimeForDistancePath = 0;
+      for (let i = 0; i < pathNodeIds.length - 1; i++) {
+        const uNodeId = pathNodeIds[i];
+        const vNodeId = pathNodeIds[i + 1];
+        // Find the edge in allEdges. Edges are bidirectional in astarService's adj list construction, 
+        // but allEdges is the original list.
+        const edge = edges.find(
+          (e) =>
+            (e.from_node === uNodeId && e.to_node === vNodeId) ||
+            (e.to_node === uNodeId && e.from_node === vNodeId)
+        );
+        if (edge) {
+          const edgeLength = edge.length;
+          const edgeCongestion = (edge.congestion !== null && typeof edge.congestion === 'number') ? edge.congestion : 1.0;
+          congestedTimeForDistancePath += (edgeLength * edgeCongestion) / WALKING_SPEED;
+        } else {
+          // Fallback if edge not found (should not happen for a valid path)
+          // Or, if a segment of the path was from nodeModel directly (e.g. start=end)
+          // This part needs to be robust.
+          // For now, let's assume edges are found.
+        }
+      }
+      // If the path was just a single point (start=end), pathNodeIds.length is 1, loop won't run.
+      if (pathNodeIds.length <= 1 && totalActualDistance === 0) {
+        totalTime = 0; // No travel time if start and end are the same
+      } else {
+        totalTime = congestedTimeForDistancePath;
+      }
     }
 
     res.json({

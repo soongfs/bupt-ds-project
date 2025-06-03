@@ -239,16 +239,32 @@ exports.getAttractionById = (id, userId = null, callback) => {
   });
 };
 
-// 根据名称搜索景点
+// 根据名称搜索景点，支持精确和模糊匹配
 exports.searchAttractionsByName = (name, callback) => {
-  const sql = "SELECT id FROM attractions WHERE name LIKE ? LIMIT 1";
-  // 使用 % 通配符进行模糊匹配
-  db.query(sql, [`%${name}%`], (err, results) => {
+  // 1. 尝试精确匹配
+  const exactSql = "SELECT id, name, rating, popularity FROM attractions WHERE name = ? LIMIT 1";
+  db.query(exactSql, [name], (err, exactResults) => {
     if (err) return callback(err);
-    if (!results || results.length === 0) {
-      return callback(null, null); // 没有找到景点
+
+    if (exactResults && exactResults.length > 0) {
+      // 找到精确匹配
+      return callback(null, { matchType: 'exact', attraction: exactResults[0] });
     }
-    callback(null, results[0].id); // 返回景点 ID
+
+    // 2. 如果没有精确匹配，进行模糊匹配
+    // 按热度（popularity）降序，然后按评分（rating）降序排序
+    const fuzzySql = "SELECT id, name, rating, popularity FROM attractions WHERE name LIKE ? ORDER BY CAST(popularity AS DECIMAL(10,0)) DESC, rating DESC LIMIT 10";
+    db.query(fuzzySql, [`%${name}%`], (err, fuzzyResults) => {
+      if (err) return callback(err);
+
+      if (fuzzyResults && fuzzyResults.length > 0) {
+        // 找到模糊匹配项
+        return callback(null, { matchType: 'fuzzy', attractions: fuzzyResults });
+      } else {
+        // 没有找到任何匹配项
+        return callback(null, { matchType: 'none' });
+      }
+    });
   });
 };
 

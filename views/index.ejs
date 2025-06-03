@@ -153,6 +153,60 @@
       transition: transform 0.3s;
     }
 
+    /* 模糊搜索结果容器样式 */
+    .fuzzy-results-container {
+      background-color: rgba(255, 255, 255, 0.95); /* 半透明背景 */
+      padding: 20px;
+      border-radius: 10px;
+      margin-top: 15px;
+      width: min(90%, 600px);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+      text-align: left;
+      color: #333;
+      position: relative; /* 为了关闭按钮定位 */
+    }
+    .fuzzy-results-container h4 {
+      margin-top: 0;
+      margin-bottom: 10px;
+      color: var(--secondary-color);
+    }
+    .fuzzy-results-container ul {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 15px 0;
+      max-height: 200px; /* 限制最大高度，出现滚动条 */
+      overflow-y: auto;
+    }
+    .fuzzy-results-container li {
+      padding: 8px 0;
+      border-bottom: 1px solid #eee;
+    }
+    .fuzzy-results-container li:last-child {
+      border-bottom: none;
+    }
+    .fuzzy-results-container a {
+      text-decoration: none;
+      color: var(--primary-color);
+      font-weight: 500;
+    }
+    .fuzzy-results-container a:hover {
+      text-decoration: underline;
+    }
+    .close-fuzzy-btn {
+        background-color: var(--accent);
+        color: white;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 20px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+        display: block; /* 块级元素方便居中或靠右 */
+        margin: 10px auto 0; /* 上方间距，自动左右居中 */
+    }
+    .close-fuzzy-btn:hover {
+        background-color: #d4ac0d;
+    }
+
     /* 分类导航 */
     .category-nav {
       display: grid;
@@ -490,6 +544,12 @@
       <input type="text" id="searchInput" placeholder="输入景点名称...">
       <button id="searchButton" class="search-btn">开始探索</button>
     </div>
+    <!-- 用于显示模糊搜索结果的容器 -->
+    <div id="fuzzyResultsContainer" class="fuzzy-results-container" style="display: none;">
+      <h4>您是不是想找：</h4>
+      <ul id="fuzzyResultsList"></ul>
+      <button id="closeFuzzyResults" class="close-fuzzy-btn">关闭</button>
+    </div>
   </section>
 
   <!-- 分类导航 -->
@@ -582,64 +642,94 @@
       console.log('调试: Attempting to find search button and input in views/index.ejs');
       const searchButton = document.getElementById('searchButton');
       const searchInput = document.getElementById('searchInput');
+      const fuzzyResultsContainer = document.getElementById('fuzzyResultsContainer');
+      const fuzzyResultsList = document.getElementById('fuzzyResultsList');
+      const closeFuzzyResultsButton = document.getElementById('closeFuzzyResults');
+
       console.log('调试: searchButton element in views/index.ejs:', searchButton);
       console.log('调试: searchInput element in views/index.ejs:', searchInput);
+      console.log('调试: fuzzyResultsContainer element:', fuzzyResultsContainer);
 
-      if (searchButton && searchInput) {
-        console.log('调试: Search button and input field FOUND in views/index.ejs. Attaching listener.');
+      if (closeFuzzyResultsButton) {
+        closeFuzzyResultsButton.addEventListener('click', () => {
+          fuzzyResultsContainer.style.display = 'none';
+        });
+      }
+
+      if (searchButton && searchInput && fuzzyResultsContainer && fuzzyResultsList) {
+        console.log('调试: Search elements FOUND. Attaching listener.');
         searchButton.addEventListener('click', (event) => {
-          event.preventDefault(); // Crucial: prevent any default action
-          console.log('调试: Search button CLICKED in views/index.ejs! Default action prevented.');
+          event.preventDefault(); 
+          console.log('调试: Search button CLICKED.');
           const searchTerm = searchInput.value.trim();
-          console.log('调试: Search term from views/index.ejs:', searchTerm);
+          console.log('调试: Search term:', searchTerm);
+          
+          // 清空并隐藏旧的模糊搜索结果
+          fuzzyResultsList.innerHTML = '';
+          fuzzyResultsContainer.style.display = 'none';
 
           if (searchTerm) {
             const fetchUrl = `/attraction/search?name=${encodeURIComponent(searchTerm)}`;
-            console.log('调试: Fetching URL from views/index.ejs:', fetchUrl);
+            console.log('调试: Fetching URL:', fetchUrl);
             fetch(fetchUrl)
               .then(response => {
-                console.log('调试: Fetch response status from views/index.ejs:', response.status);
+                console.log('调试: Fetch response status:', response.status);
                 if (!response.ok) {
                   return response.text().then(text => {
-                    console.error('调试: Fetch response error body from views/index.ejs:', text);
+                    console.error('调试: Fetch response error body:', text);
                     throw new Error(`HTTP error! status: ${response.status}, body: ${text}`);
                   });
                 }
                 return response.json();
               })
               .then(data => {
-                console.log('调试: Data received from server in views/index.ejs:', data);
-                if (data.success && data.attractionId) {
-                  const redirectUrl = `/attraction/detail/${data.attractionId}`;
-                  console.log('调试: Redirecting from views/index.ejs to:', redirectUrl);
-                  window.location.href = redirectUrl;
-                } else {
-                  const alertMessage = data.message || '未能找到相关景点，请尝试其他关键词。';
-                  console.log('调试: Search unsuccessful or no attractionId in views/index.ejs:', alertMessage);
-                  alert(alertMessage);
+                console.log('调试: Data received from server:', data);
+                if (data.success) {
+                  if (data.matchType === 'exact' && data.attractionId) {
+                    const redirectUrl = `/attraction/detail/${data.attractionId}`;
+                    console.log('调试: Exact match. Redirecting to:', redirectUrl);
+                    window.location.href = redirectUrl;
+                  } else if (data.matchType === 'fuzzy' && data.attractions && data.attractions.length > 0) {
+                    console.log('调试: Fuzzy matches found:', data.attractions);
+                    data.attractions.forEach(attraction => {
+                      const listItem = document.createElement('li');
+                      const link = document.createElement('a');
+                      link.href = `/attraction/detail/${attraction.id}`;
+                      link.textContent = `${attraction.name} (评分: ${attraction.rating}, 热度: ${attraction.popularity})`;
+                      listItem.appendChild(link);
+                      fuzzyResultsList.appendChild(listItem);
+                    });
+                    fuzzyResultsContainer.style.display = 'block';
+                  } else if (data.matchType === 'none') {
+                    console.log('调试: No matches found (matchType: none).');
+                    alert(data.message || '未能找到相关景点，请尝试其他关键词。');
+                  } else {
+                     // 可能存在未明确处理的成功情况或数据不完整
+                    console.warn('调试: Search successful but no clear action taken for matchType:', data.matchType, data);
+                    alert('收到未知搜索结果，请稍后再试。');
+                  }
+                } else { // data.success is false
+                  console.error('调试: Search request marked as unsuccessful by server:', data.message);
+                  alert(data.message || '搜索失败，请稍后再试。');
                 }
               })
               .catch(error => {
-                console.error('调试: Fetch request FAILED in views/index.ejs:', error);
+                console.error('调试: Fetch request FAILED:', error);
                 alert('搜索功能暂时无法使用，请稍后再试。错误详情请查看控制台。');
               });
           } else {
-            console.log('调试: Search term is EMPTY in views/index.ejs.');
+            console.log('调试: Search term is EMPTY.');
             alert('请输入景点名称进行搜索。');
           }
         });
       } else {
-        console.error('调试: Search button or input field NOT FOUND in views/index.ejs!');
+        console.error('调试: One or more search-related elements NOT FOUND!');
       }
 
       // 用户头像下拉菜单
       const userAvatar = document.getElementById('userAvatar');
       const dropdownMenu = document.getElementById('dropdownMenu');
-      // console.log('调试: userAvatar element in views/index.ejs:', userAvatar);
-      // console.log('调试: dropdownMenu element in views/index.ejs:', dropdownMenu);
-
       if (userAvatar && dropdownMenu) {
-        // console.log('调试: User avatar and dropdown menu FOUND in views/index.ejs. Attaching listeners.');
         userAvatar.addEventListener('mouseenter', () => dropdownMenu.classList.add('show'));
         userAvatar.addEventListener('mouseleave', () => {
           setTimeout(() => {
@@ -652,7 +742,6 @@
           item.addEventListener('click', () => dropdownMenu.classList.remove('show'));
         });
       } else {
-        // console.warn("调试: User avatar or dropdown menu elements NOT FOUND in views/index.ejs. Dropdown interactivity might be affected.");
       }
     });
   </script>

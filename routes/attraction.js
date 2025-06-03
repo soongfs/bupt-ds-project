@@ -16,4 +16,7 @@ router.post("/detail/:id/rate", auth.requireLogin, attrCtrl.rateAttraction);
 // 景点搜索
 router.get("/search", attrCtrl.searchAttraction);
 
+// 景点地图详情页路由
+router.get("/map/:id", auth.setCurrentUser, attrCtrl.getAttractionMap);
+
 module.exports = router;
